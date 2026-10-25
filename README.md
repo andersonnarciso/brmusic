@@ -31,7 +31,7 @@ Gerador de músicas com IA **gratuito, local-first e open source**. Crie faixas 
 | <img src="docs/01-criar.png" alt="Tela de criação" /> | <img src="docs/03-biblioteca.png" alt="Biblioteca" /> |
 | **Criação**: Simples e Avançado, com a faixa gerada na lista | **Biblioteca**: faixas, playlists, busca, filtros e lixeira |
 | <img src="docs/06-admin.png" alt="Painel de configuração" /> | <img src="docs/07-admin-provedores.png" alt="Provedores de IA" /> |
-| **Configuração**: visão geral com KPIs e saúde da plataforma | **Provedores de IA**: APIs OpenAI-compatible, MiniMax e runtimes locais |
+| **Configuração**: visão geral com KPIs e saúde da plataforma | **Provedores de IA**: APIs OpenAI-compatible e runtimes locais |
 | <img src="docs/05-studio.png" alt="Studio" /> | <img src="docs/10-confirmacao-exclusao.png" alt="Confirmação de exclusão" /> |
 | **Studio**: faixas, timeline, transport e prompt na timeline | **Confirmação**: aviso explícito do que será apagado antes de excluir |
 
@@ -78,7 +78,7 @@ O transporte tem play/stop, posição, zoom e seleção de região. As edições
 - **Playlists**: organize as faixas localmente.
 - **Paleta de comandos**: `⌘K` / `Ctrl+K` com busca e ações; atalhos: `⌘N` (criar), `Espaço` (play/pausa).
 - **Capas geradas**: arte de álbum procedural em canvas, a partir da paleta do estilo e do seed da faixa.
-- **Conecte qualquer IA**: presets OpenAI-compatible, Anthropic, Gemini, OpenRouter, Groq, **MiniMax** e o **modo nativo da API de Música da MiniMax**, além de 10 runtimes locais (Ollama, LM Studio, llama.cpp, vLLM, LocalAI, KoboldCpp, GPT4All, text-generation-webui, Jan, SGLang) com varredura automática de porta.
+- **Conecte qualquer IA**: presets OpenAI-compatible, Anthropic, Gemini, OpenRouter, Groq, MiniMax e o modo nativo da API de Música da MiniMax, além de 10 runtimes locais (Ollama, LM Studio, llama.cpp, vLLM, LocalAI, KoboldCpp, GPT4All, text-generation-webui, Jan, SGLang) com varredura automática de porta.
 - **Editor multipista** com mixer por canal, corte, reverso, velocidade com pitch preservado, fades, remaster e exportação dos stems editados.
 - **Hospedagem FTP**: envie as músicas geradas direto para a sua conta de hospedagem tradicional (cPanel, Hostinger, Locaweb), com teste de conexão e envio automático opcional.
 - **Lixeira**: exclusão reversível, com restauração ou apagar em definitivo (sempre com confirmação).
@@ -136,7 +136,7 @@ Chaves são gravadas **apenas no servidor** (`server/data/config.json`) e nunca 
 
 | Preset | Base URL | Formato |
 |---|---|---|
-| **MiniMax** | `https://api.minimax.io/v1` | OpenAI-compatible (`/chat/completions`, `Bearer`) |
+| MiniMax | `https://api.minimax.io/v1` | OpenAI-compatible (`/chat/completions`, `Bearer`), custo de uso extremamente baixo |
 | OpenAI | `https://api.openai.com/v1` | OpenAI-compatible |
 | Personalizado (OpenAI-compatible) | qualquer URL | qualquer `/chat/completions` (Together, Groq, vLLM, LM Studio, OpenRouter…) |
 | Anthropic | `https://api.anthropic.com/v1` | `/messages` com `x-api-key` |
@@ -144,7 +144,7 @@ Chaves são gravadas **apenas no servidor** (`server/data/config.json`) e nunca 
 | OpenRouter | `https://openrouter.ai/api/v1` | OpenAI-compatible |
 | Groq | `https://api.groq.com/openai/v1` | OpenAI-compatible |
 
-Modelos MiniMax disponíveis no campo de modelo: `MiniMax-M3.1-Flash-Preview`, `MiniMax-M3`, `MiniMax-M2.7`, `MiniMax-M2.5`, `MiniMax-M2.1`, `MiniMax-M2`.
+O campo de modelo é livre: basta digitar o identificador. Na MiniMax, os modelos em produção são `MiniMax-M3.2-Flash`, `MiniMax-M3`, `MiniMax-M2.1` e `MiniMax-M2`, e o custo por token é extremamente baixo, o que a torna uma boa escolha para o uso frequente dentro do app.
 
 ### Runtimes locais de LLM (todos compatíveis)
 

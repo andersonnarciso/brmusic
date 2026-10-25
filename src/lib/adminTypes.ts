@@ -190,21 +190,6 @@ export const PROVIDER_PRESETS: Array<{
   models: string[];
 }> = [
   {
-    id: 'minimax',
-    label: 'MiniMax (OpenAI-compatible)',
-    baseUrl: 'https://api.minimax.io/v1',
-    endpoint: '/chat/completions',
-    hint: 'Endpoint compatível com OpenAI: Authorization: Bearer <API_KEY>. Modelos: MiniMax-M3.1-Flash-Preview, MiniMax-M3, MiniMax-M2.7, MiniMax-M2.5, MiniMax-M2.1.',
-    models: [
-      'MiniMax-M3.1-Flash-Preview',
-      'MiniMax-M3',
-      'MiniMax-M2.7',
-      'MiniMax-M2.5',
-      'MiniMax-M2.1',
-      'MiniMax-M2',
-    ],
-  },
-  {
     id: 'openai',
     label: 'OpenAI',
     baseUrl: 'https://api.openai.com/v1',
@@ -243,6 +228,14 @@ export const PROVIDER_PRESETS: Array<{
     endpoint: '/chat/completions',
     hint: 'API compatível com OpenAI, latência muito baixa.',
     models: ['llama-3.3-70b-versatile', 'gemma2-9b-it'],
+  },
+  {
+    id: 'minimax',
+    label: 'MiniMax (OpenAI-compatible)',
+    baseUrl: 'https://api.minimax.io/v1',
+    endpoint: '/chat/completions',
+    hint: 'Endpoint compatível com OpenAI: Authorization: Bearer <API_KEY>. O custo por token é extremamente baixo, o que compensa no uso frequente.',
+    models: ['MiniMax-M3.2-Flash', 'MiniMax-M3', 'MiniMax-M2.1', 'MiniMax-M2'],
   },
   {
     id: 'ollama',
