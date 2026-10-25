@@ -7,11 +7,14 @@ import {
 } from '../lib/adminTypes';
 import {
   discoverLocalRuntimes,
+  discoverProviderModels,
   testLlmProvider,
   testMusicProvider,
+  type DiscoveredModels,
   type LocalRuntime,
 } from '../lib/adminClient';
 import { Badge, Button, Card, Field, Select, TextInput, Toggle } from './ui';
+import { showToast } from '../lib/store';
 
 type Update = (updater: (current: AdminConfig) => AdminConfig) => void;
 
@@ -202,6 +205,8 @@ function ProviderCard({
   const [result, setResult] = useState<{ ok: boolean; message: string; latencyMs: number } | null>(
     null,
   );
+  const [discovering, setDiscovering] = useState(false);
+  const [discovered, setDiscovered] = useState<DiscoveredModels | null>(null);
 
   const preset = PROVIDER_PRESETS.find((p) => p.id === provider.preset);
 
@@ -224,6 +229,18 @@ function ProviderCard({
     setTesting(false);
   };
 
+  const runDiscovery = async () => {
+    setDiscovering(true);
+    const res = await discoverProviderModels(provider.id);
+    setDiscovered(res);
+    setDiscovering(false);
+    showToast(
+      res.music.length
+        ? `${res.music.length} modelo(s) de música encontrado(s)`
+        : 'Nenhum modelo de música encontrado neste provedor',
+    );
+  };
+
   return (
     <Card
       title={provider.label}
@@ -240,6 +257,9 @@ function ProviderCard({
           </Badge>
           <Button onClick={() => void runTest()} disabled={testing}>
             {testing ? 'Testando…' : 'Testar conexão'}
+          </Button>
+          <Button onClick={() => void runDiscovery()} disabled={discovering}>
+            {discovering ? 'Carregando…' : 'Carregar modelos de música'}
           </Button>
         </>
       }
@@ -262,7 +282,14 @@ function ProviderCard({
           </Select>
         </Field>
 
-        <Field label="Modelo">
+        <Field
+          label="Modelo"
+          hint={
+            discovered && discovered.music.length
+              ? 'Sugestões: modelos de música detectados no provedor.'
+              : undefined
+          }
+        >
           {preset && preset.models.length > 0 ? (
             <>
               <TextInput
@@ -271,17 +298,25 @@ function ProviderCard({
                 onChange={(e) => onChange({ ...provider, model: e.target.value })}
               />
               <datalist id={`models-${provider.id}`}>
-                {preset.models.map((m) => (
+                {(discovered?.music.length ? discovered.music : preset.models).map((m) => (
                   <option key={m} value={m} />
                 ))}
               </datalist>
             </>
           ) : (
             <TextInput
+              list={`models-${provider.id}`}
               value={provider.model}
               onChange={(e) => onChange({ ...provider, model: e.target.value })}
             />
           )}
+          {discovered?.music.length ? (
+            <datalist id={`models-${provider.id}`}>
+              {discovered.music.map((m) => (
+                <option key={m} value={m} />
+              ))}
+            </datalist>
+          ) : null}
         </Field>
 
         <Field label="Base URL">

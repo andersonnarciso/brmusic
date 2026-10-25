@@ -640,6 +640,61 @@ export async function startRadio(songId: string, count = 6): Promise<void> {
   showToast(`Rádio iniciada com ${count} faixas`);
 }
 
+/**
+ * Cria uma faixa a partir do harness de produção (o áudio já vem renderizado).
+ */
+export async function addHarnessSong(input: {
+  prompt: string;
+  lyrics: string;
+  style: string;
+  plan: { title?: string; bpm?: number; key?: string; scale?: string };
+  instrumental: boolean;
+  wav: Blob;
+  duration: number;
+}): Promise<Song | null> {
+  const id = `brm-${Date.now().toString(36)}-${(generationCounter += 1)}`;
+  const seed = hashText(`${input.prompt}|${input.lyrics}|${Date.now()}`);
+  const preset = matchPreset(`${input.prompt} ${input.style}`).preset;
+
+  const cover = generateCover(seed, preset.palette);
+  const coverUrl = URL.createObjectURL(cover.blob);
+  await putAsset(assetKey.cover(id), cover.blob);
+  await putAsset(assetKey.audio(id), input.wav);
+
+  const song: Song = {
+    id,
+    title: input.plan.title?.trim() || 'Faixa do harness',
+    prompt: input.prompt,
+    lyrics: input.lyrics,
+    style: input.style,
+    model: 'brm-v1',
+    instrumental: input.instrumental,
+    vocal: 'auto',
+    weirdness: 50,
+    styleInfluence: 60,
+    variety: 1,
+    createdAt: Date.now(),
+    status: 'ready',
+    progress: 1,
+    duration: input.duration,
+    bpm: input.plan.bpm ?? preset.bpm,
+    musicalKey: input.plan.key ?? '',
+    tags: ['HARNESS'],
+    liked: false,
+    disliked: false,
+    plays: 0,
+    coverUrl,
+    audioUrl: URL.createObjectURL(input.wav),
+  };
+
+  appStore.set((s) => {
+    const songs = [song, ...s.songs];
+    saveSongs(songs);
+    return { ...s, songs };
+  });
+  return song;
+}
+
 /* ------------------------------------------------------------------ */
 /* playlists                                                           */
 /* ------------------------------------------------------------------ */

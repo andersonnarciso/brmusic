@@ -20,6 +20,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { extname, join, normalize, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DEFAULT_FTP, testFtp, uploadToFtp } from './ftp.mjs';
+import { discoverMusicModels } from './models.mjs';
 
 const ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const DIST = join(ROOT, 'dist');
@@ -70,13 +71,14 @@ const DEFAULT_CONFIG = {
       preset: 'minimax',
       baseUrl: 'https://api.minimax.io/v1',
       endpoint: '/chat/completions',
-      model: 'MiniMax-M3',
+      model: 'MiniMax-M3.1-Flash',
       apiKey: '',
       temperature: 0.8,
       maxTokens: 2000,
       timeoutMs: 60000,
       jsonMode: true,
       enabled: false,
+      musicModels: [],
     },
     {
       id: 'ollama',
@@ -91,6 +93,7 @@ const DEFAULT_CONFIG = {
       timeoutMs: 120000,
       jsonMode: false,
       enabled: false,
+      musicModels: [],
     },
   ],
   musicProvider: {
@@ -555,6 +558,26 @@ async function handleAdminApi(req, res, pathname, body) {
     return;
   }
 
+  if (pathname === '/api/admin/provider/discover-models' && req.method === 'POST') {
+    const { providerId } = body ?? {};
+    const provider = config.llmProviders.find((p) => p.id === providerId);
+    if (!provider) {
+      sendJson(res, 404, { error: 'Provedor não encontrado' });
+      return;
+    }
+    const result = await discoverMusicModels(provider);
+    config.llmProviders = config.llmProviders.map((p) =>
+      p.id === providerId ? { ...p, musicModels: result.music } : p,
+    );
+    logActivity(
+      'config',
+      `Modelos de música descobertos em ${provider.label}: ${result.music.length}`,
+    );
+    await saveConfig(config);
+    sendJson(res, 200, result);
+    return;
+  }
+
   if (pathname === '/api/admin/ftp/test' && req.method === 'POST') {
     try {
       const result = await testFtp(config.ftp);
@@ -591,8 +614,10 @@ async function handleAdminApi(req, res, pathname, body) {
         { role: 'user', content: 'Responda apenas com a palavra: ok' },
       ]);
       const latencyMs = Date.now() - started;
+      const discovered = await discoverMusicModels(provider);
       const updated = {
         ...provider,
+        musicModels: discovered.music,
         lastTest: {
           ok: true,
           at: Date.now(),

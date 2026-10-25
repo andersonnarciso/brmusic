@@ -266,9 +266,15 @@ if (builder) {
   const linuxTargets = asArray(linux.target).map(String);
   check(linuxTargets.includes('AppImage'), 'linux.target inclui AppImage', linuxTargets.join(', '));
   check(linuxTargets.includes('deb'), 'linux.target inclui deb', linuxTargets.join(', '));
+  check(linuxTargets.includes('zip'), 'linux.target inclui zip (pronto para uso)', linuxTargets.join(', '));
+  check(linuxTargets.includes('zip'), 'linux.target inclui zip (pronto para uso)', linuxTargets.join(', '));
   check(linux.category === 'AudioVideo', 'linux.category: AudioVideo', String(linux.category));
   check(linux.executableName === 'brmusic', 'linux.executableName: brmusic', String(linux.executableName));
-  check(linux.artifactName === 'BRMusic-${version}-${arch}.${ext}', 'linux.artifactName padrão', String(linux.artifactName));
+  check(
+    linux.artifactName === 'BRMusic-${version}-${arch}-linux.${ext}',
+    'linux.artifactName padrão',
+    String(linux.artifactName),
+  );
 
   const buildResources = path.join(ROOT, String(builder.directories?.buildResources ?? 'build'));
   const iconPath = path.resolve(buildResources, String(linux.icon ?? 'icon.png'));
@@ -297,7 +303,12 @@ if (builder) {
     String(nsis.allowToChangeInstallationDirectory),
   );
   check(nsis.perMachine === false, 'nsis.perMachine: false', String(nsis.perMachine));
-  check(nsis.shortcutName === 'BR Music', 'nsis.shortcutName: BR Music', String(nsis.shortcutName));  check(win.artifactName === 'BRMusic-${version}-${arch}.${ext}', 'win.artifactName padrão', String(win.artifactName));
+  check(nsis.shortcutName === 'BR Music', 'nsis.shortcutName: BR Music', String(nsis.shortcutName));
+  check(
+    win.artifactName === 'BRMusic-${version}-${arch}-windows.${ext}',
+    'win.artifactName padrão',
+    String(win.artifactName),
+  );
   const winIcon = path.resolve(buildResources, String(win.icon ?? 'icon.ico'));
   check(existsSync(winIcon), `win.icon existe (${path.relative(ROOT, winIcon)})`);
 

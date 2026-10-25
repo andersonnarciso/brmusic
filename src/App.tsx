@@ -20,6 +20,7 @@ import { Library } from './pages/Library';
 import { Explore } from './pages/Explore';
 import { Studio } from './pages/Studio';
 import { EditorPage } from './pages/Editor';
+import { HarnessPage } from './pages/Harness';
 import {
   CreditsPage,
   LabsPage,
@@ -51,6 +52,8 @@ function RouteView({ route }: { route: string }) {
       return <Explore />;
     case '/studio':
       return <Studio />;
+    case '/harness':
+      return <HarnessPage />;
     case '/credits':
     case '/downloads':
       return <CreditsPage />;

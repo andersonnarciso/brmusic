@@ -138,6 +138,37 @@ export async function discoverLocalRuntimes(): Promise<{
   }
 }
 
+export interface DiscoveredModels {
+  /** Todos os ids devolvidos pelo provedor. */
+  all: string[];
+  /** Só os que servem para gerar música. */
+  music: string[];
+  /** Quantos foram descartados por serem de texto. */
+  filtered: number;
+  source: string;
+}
+
+/**
+ * Carrega a lista de modelos do provedor e devolve apenas os que servem para
+ * gerar música (os de texto são descartados).
+ */
+export async function discoverProviderModels(providerId: string): Promise<DiscoveredModels> {
+  try {
+    return await request<DiscoveredModels>(apiUrl('/api/admin/provider/discover-models'), {
+      method: 'POST',
+      body: JSON.stringify({ providerId }),
+    });
+  } catch (error) {
+    return {
+      all: [],
+      music: [],
+      filtered: 0,
+      source: 'erro',
+      ...(error ? {} : {}),
+    };
+  }
+}
+
 export async function testLlmProvider(providerId: string): Promise<TestResult> {
   try {
     return await request<TestResult>(apiUrl('/api/admin/provider/test'), {

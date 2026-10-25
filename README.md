@@ -69,6 +69,16 @@ O **editor multipista** (`#/editor/:id`) abre a faixa com os 5 stems separados e
 
 O transporte tem play/stop, posição, zoom e seleção de região. As edições são **não destrutivas**: ficam como operações no canal e podem ser desfeitas.
 
+### Harness de produção
+
+A página **Harness** (`#/harness`) conduz uma ideia até a faixa final em nove etapas: Ideia → Prompt → Letra → Plano → Arranjo → Render → Stems → Mix e Master → Export.
+
+Cada etapa é inspecionável e pode ser repetida antes de seguir. As etapas de texto usam o LLM configurado no painel (com geradores locais como reserva, para funcionar offline). Depois do render, o harness aplica o master, normaliza o pico para -1 dBFS e gera um **laudo de qualidade** com loudness, pico, dinâmica, largura estéreo e clipping.
+
+### Modelos de música descobertos automaticamente
+
+Ao conectar um provedor, o botão **Carregar modelos de música** consulta a lista do provedor e mantém **só os modelos capazes de gerar música**, descartando os de texto, visão e código. Para a MiniMax, por exemplo, o `/v1/models` devolve os modelos de texto, e o app separa isso do catálogo de música (`music-3.0`, `music-2.6`, `music-cover` e variantes).
+
 ### Recursos que vão além do original
 
 - **Stems exportáveis**: cada faixa sai separada em **bateria, baixo, pads, melodia e voz** (ZIP), prontas para a sua DAW.
@@ -144,7 +154,7 @@ Chaves são gravadas **apenas no servidor** (`server/data/config.json`) e nunca 
 | OpenRouter | `https://openrouter.ai/api/v1` | OpenAI-compatible |
 | Groq | `https://api.groq.com/openai/v1` | OpenAI-compatible |
 
-O campo de modelo é livre: basta digitar o identificador. Na MiniMax, os modelos em produção são `MiniMax-M3.2-Flash`, `MiniMax-M3`, `MiniMax-M2.1` e `MiniMax-M2`, e o custo por token é extremamente baixo, o que a torna uma boa escolha para o uso frequente dentro do app.
+O campo de modelo é livre: basta digitar o identificador. Na MiniMax, os modelos em produção são `MiniMax-M3.1-Flash`, `MiniMax-M3`, `MiniMax-M2.1` e `MiniMax-M2`, e o custo por token é extremamente baixo, o que a torna uma boa escolha para o uso frequente dentro do app.
 
 ### Runtimes locais de LLM (todos compatíveis)
 
@@ -195,6 +205,32 @@ O app do criador usa automaticamente o modo configurado; sem servidor no ar, cai
 | `/api/ftp/upload` | POST | envia um arquivo (base64) para o FTP |
 | `/api/lyrics` | POST | gera a letra com o LLM habilitado |
 | `/api/admin/activity` | GET | eventos registrados (via `config.activity`) |
+
+---
+
+## Contribuições
+
+**Contribuições são bem-vindas.** O projeto é livre (MIT) e foi construído para ser estendido.
+
+Bom ponto de partida:
+
+- **Novos motores de áudio**: `src/lib/audio/engine.ts` sintetiza as faixas, `src/lib/audio/edit.ts` cuida de corte, reverso, velocidade, fades e remaster. As operações são não destrutivas.
+- **Novos estilos e presets**: `src/lib/audio/presets.ts` mapeia palavras-chave (em português e inglês) para andamento, escala, progressão e timbre.
+- **Novos provedores de IA**: `server/models.mjs` classifica os modelos por capacidade musical; `src/lib/adminTypes.ts` tem o catálogo de presets de compatibilidade.
+- **Ajustes do harness**: `src/lib/harness.ts` define o pipeline em etapas e o laudo de qualidade.
+- **Portas de novos sistemas**: `electron-builder.yml` e `.github/workflows/release.yml` geram os instaladores.
+
+Como rodar para contribuir:
+
+```bash
+npm install
+npm run dev        # app em http://127.0.0.1:4321
+npm run server     # API de configuração em outra porta
+npm run typecheck
+npm run verify:desktop
+```
+
+Abra uma issue descrevendo a ideia antes de mexer em código grande, para a gente alinhar o caminho.
 
 ---
 

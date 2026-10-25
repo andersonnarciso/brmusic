@@ -30,7 +30,8 @@ export type EditOp =
   /** Rampa linear de ganho na saida (segundos). */
   | { type: 'fadeOut'; duration: number }
   /** Masterizacao offline (0 a 1). */
-  | { type: 'remaster'; intensity: number };
+  | { type: 'remaster'; intensity: number }
+  | { type: 'gain'; db: number };
 
 export interface EditResult {
   /** WAV PCM 16 bits stereo. */
@@ -460,11 +461,33 @@ async function applyOp(track: Track, op: EditOp, limit: number): Promise<Track> 
       return opFadeOut(track, op.duration);
     case 'remaster':
       return remaster(track, op.intensity);
+    case 'gain':
+      return applyGain(track, op.db);
     default: {
       const exhaustive: never = op;
       return exhaustive;
     }
   }
+}
+
+/**
+ * Ganho linear em decibels, aplicado aos dois canais.
+ */
+function applyGain(track: Track, db: number): Track {
+  const factor = Math.pow(10, db / 20);
+  const scale = (source: Float32Array<ArrayBuffer>) => {
+    const next = new Float32Array(new ArrayBuffer(source.length * 4));
+    for (let i = 0; i < source.length; i += 1) {
+      next[i] = Math.max(-1, Math.min(1, source[i] * factor));
+    }
+    return next;
+  };
+  return {
+    sampleRate: track.sampleRate,
+    length: track.length,
+    left: scale(track.left),
+    right: scale(track.right),
+  };
 }
 
 /**

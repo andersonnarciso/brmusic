@@ -38,6 +38,8 @@ export interface LlmProviderConfig {
   timeoutMs: number;
   jsonMode: boolean;
   enabled: boolean;
+  /** Modelos de música detectados automaticamente no provedor. */
+  musicModels?: string[];
   lastTest?: {
     ok: boolean;
     at: number;
@@ -235,7 +237,7 @@ export const PROVIDER_PRESETS: Array<{
     baseUrl: 'https://api.minimax.io/v1',
     endpoint: '/chat/completions',
     hint: 'Endpoint compatível com OpenAI: Authorization: Bearer <API_KEY>. O custo por token é extremamente baixo, o que compensa no uso frequente.',
-    models: ['MiniMax-M3.2-Flash', 'MiniMax-M3', 'MiniMax-M2.1', 'MiniMax-M2'],
+    models: ['MiniMax-M3.1-Flash', 'MiniMax-M3', 'MiniMax-M2.1', 'MiniMax-M2'],
   },
   {
     id: 'ollama',

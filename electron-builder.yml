@@ -37,10 +37,11 @@ linux:
   icon: icon.png
   # Exigido pelo alvo .deb (manutenor do pacote).
   maintainer: BR Music <contato@brmusic.app>
-  artifactName: BRMusic-${version}-${arch}.${ext}
+  artifactName: BRMusic-${version}-${arch}-linux.${ext}
   target:
     - AppImage
     - deb
+    - zip
   desktop:
     entry:
       # Exec não pode ser informado aqui: o electron-builder 26 recusa o campo e
@@ -53,10 +54,11 @@ linux:
 
 win:
   icon: icon.ico
-  artifactName: BRMusic-${version}-${arch}.${ext}
+  artifactName: BRMusic-${version}-${arch}-windows.${ext}
   target:
     - nsis
     - portable
+    - zip
 
 # Opções do instalador NSIS (seção de nível superior, como exige o schema).
 nsis:
@@ -76,8 +78,10 @@ mac:
   gatekeeperAssess: false
   entitlements: build/entitlements.mac.plist
   entitlementsInherit: build/entitlements.mac.inherit.plist
+  artifactName: BRMusic-${version}-${arch}-macos.${ext}
   target:
     - dmg
+    - zip
     - zip
 
 publish:

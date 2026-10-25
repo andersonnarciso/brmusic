@@ -26,11 +26,11 @@ jobs:
           - name: Linux
             os: ubuntu-latest
             platform: linux
-            targets: '--linux AppImage deb'
+            targets: '--linux AppImage deb zip'
           - name: Windows
             os: windows-latest
             platform: win
-            targets: '--win nsis portable'
+            targets: '--win nsis portable zip'
           - name: macOS
             os: macos-latest
             platform: mac
