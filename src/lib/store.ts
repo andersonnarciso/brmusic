@@ -29,12 +29,11 @@ import {
   saveSettings,
   saveSongs,
 } from './persist';
-import { renderSong, STEM_LABELS, type SongPlan, type StemName } from './audio/engine';
+import { renderSong, STEM_LABELS, type StemName } from './audio/engine';
 import { generateCover } from './cover';
 import { hashText, mulberry32For } from './rng';
 import { matchPreset } from './audio/presets';
-import { generateViaServer, loadAdminConfig } from './adminClient';
-import { uploadSongToFtp } from './export';
+import { runHarness, type QualityReport, type StageId, type StageStatus } from './harness';
 
 /* ------------------------------------------------------------------ */
 /* generic store                                                       */
@@ -77,6 +76,8 @@ export interface AppState {
   playlists: Playlist[];
   sidebarCollapsed: boolean;
   generating: boolean;
+  /** Etapa atual do harness, mostrada enquanto a faixa é montada. */
+  harnessStage: string | null;
   toast: string | null;
   credits: number;
 }
@@ -91,6 +92,7 @@ export const appStore = createStore<AppState>({
   playlists: loadPlaylists(),
   sidebarCollapsed: settings.sidebarCollapsed ?? false,
   generating: false,
+  harnessStage: null,
   toast: null,
   credits: 50,
 });
@@ -237,117 +239,67 @@ export async function createSong(): Promise<void> {
   }
   if (appStore.get().generating) return;
 
-  const seed = hashText(`${params.prompt}|${params.style}|${params.lyrics}|${Date.now()}`);
-  const id = `brm-${Date.now().toString(36)}-${(generationCounter += 1)}`;
-  const preset = matchPreset(`${params.prompt} ${params.style}`).preset;
-
-  const draft: Song = {
-    ...params,
-    id,
-    title: params.title.trim() || 'Nova música',
-    createdAt: Date.now(),
-    status: 'generating',
-    progress: 0,
-    duration: 0,
-    bpm: 0,
-    musicalKey: '',
-    tags: [],
-    liked: false,
-    disliked: false,
-    plays: 0,
-  };
-
-  appStore.set((s) => ({ ...s, generating: true, songs: [draft, ...s.songs] }));
-  saveSongs(appStore.get().songs);
+  appStore.set((s) => ({ ...s, generating: true, harnessStage: 'Preparando' }));
 
   try {
-    const cover = generateCover(seed, preset.palette);
-    const coverUrl = URL.createObjectURL(cover.blob);
-    await putAsset(assetKey.cover(id), cover.blob);
-    updateSong(id, { coverUrl });
-
-    // 1) tenta o servidor (MiniMax nativo, plano via LLM ou configuração do admin)
-    const server = await generateViaServer({
-      prompt: params.prompt,
-      lyrics: params.lyrics,
-      instrumental: params.instrumental,
+    const result = await runHarness({
+      idea: params.prompt,
       style: params.style,
+      instrumental: params.instrumental,
+      params: {
+        title: params.title,
+        weirdness: params.weirdness,
+        styleInfluence: params.styleInfluence,
+        variety: params.variety,
+        vocal: params.vocal,
+        model: params.model,
+      },
+      onStage: (id: StageId, status: StageStatus) => {
+        if (status === 'running') {
+          const label = STAGE_LABELS[id] ?? id;
+          appStore.set((s) => ({ ...s, harnessStage: label }));
+        }
+      },
     });
 
-    if (server?.source === 'minimax' && server.audio) {
-      const mime =
-        server.audioFormat === 'wav' ? 'audio/wav' : server.audioFormat === 'pcm' ? 'audio/L16' : 'audio/mpeg';
-      const blob = hexToBlob(server.audio, mime);
-      const audioUrl = URL.createObjectURL(blob);
-      await putAsset(assetKey.audio(id), blob);
-      const finished: Song = {
-        ...draft,
-        title: params.title.trim() || 'Nova música',
-        status: 'ready',
-        progress: 1,
-        duration: server.durationSec ?? 0,
-        bpm: 0,
-        musicalKey: '',
-        tags: ['MINIMAX'],
-        coverUrl,
-        audioUrl,
-      };
-      updateSong(id, finished);
-      appStore.set((s) => ({ ...s, generating: false, credits: Math.max(0, s.credits - 1) }));
-      showToast(`"${finished.title}" gerada pela MiniMax`);
-      playSong(id);
-      return;
-    }
-
-    // 2) motor local (com plano do LLM, quando houver)
-    const plan = server?.source === 'llm-plan' ? (server.plan as SongPlan) : undefined;
-    const result = await renderSong({ ...params, seed }, {
-      plan,
-      onProgress: (p) => updateSong(id, { progress: p }),
-    });
-
-    const audioUrl = URL.createObjectURL(result.wav);
-    await putAsset(assetKey.audio(id), result.wav);
-
-    const stemUrls: Record<string, string> = {};
-    for (const [name, blob] of Object.entries(result.stems)) {
-      await putAsset(assetKey.stem(id, name), blob);
-      stemUrls[name] = URL.createObjectURL(blob);
-    }
-
-    const finished: Song = {
-      ...draft,
-      title:
-        params.title.trim() ||
-        plan?.title ||
-        suggestTitle(params.prompt || params.style || 'Nova música', seed),
-      status: 'ready',
-      progress: 1,
+    const song = await addHarnessSong({
+      prompt: result.prompt,
+      lyrics: result.lyrics,
+      style: params.style,
+      plan: result.plan,
+      instrumental: params.instrumental,
+      wav: result.wav,
       duration: result.duration,
-      bpm: result.bpm,
-      musicalKey: result.musicalKey,
-      tags: result.tags,
-      coverUrl,
-      audioUrl,
-      peaks: result.peaks,
-      stemUrls,
-    };
-    updateSong(id, finished);
+      report: result.report,
+    });
 
-    appStore.set((s) => ({
-      ...s,
-      generating: false,
-      credits: Math.max(0, s.credits - 1),
-    }));
-    showToast(`"${finished.title}" pronta em ${result.bpm} BPM`);
-    playSong(id);
-    void autoUploadToFtp(finished);
+    appStore.set((s) => ({ ...s, generating: false, harnessStage: null }));
+    if (song) {
+      appStore.set((s) => ({ ...s, credits: Math.max(0, s.credits - 1) }));
+      playSong(song.id);
+      showToast(
+        result.report
+          ? `"${song.title}" pronta, ${result.report.lufs.toFixed(1)} LUFS`
+          : `"${song.title}" pronta`,
+      );
+    }
   } catch (error) {
-    updateSong(id, { status: 'failed', progress: 0, error: String(error) });
-    appStore.set((s) => ({ ...s, generating: false }));
+    appStore.set((s) => ({ ...s, generating: false, harnessStage: null }));
     showToast('Falha na geração, tente novamente');
   }
 }
+
+const STAGE_LABELS: Record<StageId, string> = {
+  idea: 'Preparando a ideia',
+  prompt: 'Montando o prompt',
+  lyrics: 'Escrevendo a letra',
+  plan: 'Definindo o plano',
+  arrangement: 'Montando o arranjo',
+  render: 'Sintetizando o áudio',
+  stems: 'Separando os stems',
+  master: 'Masterizando',
+  export: 'Finalizando',
+};
 
 /** Gera N variações da mesma descrição, cada uma com seed diferente. */
 export async function createVariations(count = 4): Promise<void> {
@@ -651,6 +603,7 @@ export async function addHarnessSong(input: {
   instrumental: boolean;
   wav: Blob;
   duration: number;
+  report?: QualityReport | null;
 }): Promise<Song | null> {
   const id = `brm-${Date.now().toString(36)}-${(generationCounter += 1)}`;
   const seed = hashText(`${input.prompt}|${input.lyrics}|${Date.now()}`);
@@ -683,6 +636,7 @@ export async function addHarnessSong(input: {
     liked: false,
     disliked: false,
     plays: 0,
+    quality: input.report ?? undefined,
     coverUrl,
     audioUrl: URL.createObjectURL(input.wav),
   };
@@ -743,25 +697,7 @@ export function deletePlaylist(playlistId: string): void {
 export const STEM_NAMES = Object.keys(STEM_LABELS) as StemName[];
 
 /** Envia para a hospedagem FTP quando o envio automatico esta ligado no painel. */
-async function autoUploadToFtp(song: Song): Promise<void> {
-  try {
-    const config = await loadAdminConfig();
-    if (!config.ftp?.enabled) return;
-    const result = await uploadSongToFtp(song);
-    if (result.ok) showToast(`Enviado para a hospedagem: ${result.message}`);
-  } catch {
-    /* envio automatico e opcional */
-  }
-}
 
-function hexToBlob(hex: string, mime: string): Blob {
-  const clean = hex.startsWith('0x') ? hex.slice(2) : hex;
-  const bytes = new Uint8Array(Math.floor(clean.length / 2));
-  for (let i = 0; i < bytes.length; i += 1) {
-    bytes[i] = Number.parseInt(clean.substr(i * 2, 2), 16);
-  }
-  return new Blob([bytes], { type: mime });
-}
 
 const TITLE_WORDS = [
   'Madrugada', 'Neon', 'Saudade', 'Chuva', 'Ritmo', 'Cidade', 'Maré', 'Fogo',

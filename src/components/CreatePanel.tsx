@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { createSong, setParams, showToast, useApp } from '../lib/store';
+import { createSong, navigate, setParams, showToast, useApp } from '../lib/store';
 import { Icon } from './Icons';
 import { Slider } from './Slider';
 import { varietyLabel, styleInfluenceLabel, weirdnessLabel } from '../lib/audio/theory';
@@ -21,6 +21,7 @@ const STYLE_CHIPS = [
 export function CreatePanel() {
   const params = useApp((s) => s.params);
   const generating = useApp((s) => s.generating);
+  const harnessStage = useApp((s) => s.harnessStage);
   const [mode, setMode] = useState<'songs' | 'speech'>('songs');
   const [advanced, setAdvanced] = useState(false);
   const [modelOpen, setModelOpen] = useState(false);
@@ -546,7 +547,7 @@ export function CreatePanel() {
           {generating ? (
             <>
               <span className="h-4 w-4 animate-spin rounded-full border-2 border-ink-950/30 border-t-ink-950" />
-              Gerando...
+              {harnessStage ?? 'Gerando'}
             </>
           ) : (
             <>
@@ -554,6 +555,13 @@ export function CreatePanel() {
               Criar música
             </>
           )}
+        </button>
+        <button
+          type="button"
+          onClick={() => navigate('/harness')}
+          className="mt-2 w-full text-center text-[11px] text-mute-500 transition hover:text-mute-300"
+        >
+          ver detalhes da geração
         </button>
       </div>
     </section>

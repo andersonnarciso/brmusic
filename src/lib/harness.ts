@@ -14,8 +14,8 @@ import { renderSong, type SongPlan } from './audio/engine';
 import { applyEdit } from './audio/edit';
 import { generateLyrics } from './lyrics';
 import { matchPreset, detectBpm } from './audio/presets';
-import { keyRoot, keyLabel } from './audio/theory';
 import type { Song } from './types';
+import { keyRoot, keyLabel } from './audio/theory';
 
 export type StageId =
   | 'idea'
@@ -209,15 +209,25 @@ export interface RunOptions {
   idea: string;
   style: string;
   instrumental: boolean;
+  /** Controles criativos da criação (weirdness, influência, variedade, título). */
+  params?: {
+    title?: string;
+    weirdness?: number;
+    styleInfluence?: number;
+    variety?: number;
+    vocal?: 'auto' | 'male' | 'female';
+    model?: string;
+  };
   onStage?: (id: StageId, status: StageStatus, detail?: string) => void;
-  onSong?: (song: Song) => void;
 }
 
 export interface RunResult {
   prompt: string;
   lyrics: string;
   plan: SongPlan;
-  song: Song | null;
+  /** Áudio masterizado, pronto para ser salvo na biblioteca. */
+  wav: Blob;
+  duration: number;
   report: QualityReport | null;
 }
 
@@ -226,7 +236,7 @@ export interface RunResult {
  * permite mostrar o progresso na interface.
  */
 export async function runHarness(options: RunOptions): Promise<RunResult> {
-  const { idea, style, instrumental, onStage, onSong } = options;
+  const { idea, style, instrumental, params, onStage } = options;
   const mark = (id: StageId, status: StageStatus, detail?: string) =>
     onStage?.(id, status, detail);
 
@@ -290,13 +300,13 @@ export async function runHarness(options: RunOptions): Promise<RunResult> {
       prompt,
       lyrics,
       style,
-      title: plan.title ?? '',
-      model: 'brm-v1',
+      title: params?.title ?? plan.title ?? '',
+      model: params?.model ?? 'brm-v1',
       instrumental,
-      vocal: 'auto',
-      weirdness: 50,
-      styleInfluence: 60,
-      variety: Math.min(4, Math.max(1, plan.sections?.length ? 1 : 1)),
+      vocal: params?.vocal ?? 'auto',
+      weirdness: params?.weirdness ?? 50,
+      styleInfluence: params?.styleInfluence ?? 60,
+      variety: params?.variety ?? 1,
     },
     { plan },
   );
@@ -339,21 +349,18 @@ export async function runHarness(options: RunOptions): Promise<RunResult> {
       : 'master aplicado',
   );
 
-  /* 9. export: cria a faixa na biblioteca */
+  /* 9. export: entrega os artefatos para quem chamou */
   mark('export', 'running');
-  const song = await createHarnessSong({
+  mark('export', 'done', `${(masterBuffer?.duration ?? result.duration).toFixed(1)}s masterizado`);
+
+  return {
     prompt,
     lyrics,
-    style,
     plan,
-    instrumental,
     wav: masterBlob,
     duration: masterBuffer?.duration ?? result.duration,
-  });
-  if (song) onSong?.(song);
-  mark('export', 'done', song ? song.title : 'sem faixa');
-
-  return { prompt, lyrics, plan, song, report };
+    report,
+  };
 }
 
 /** Cria a faixa no store a partir do resultado do harness. */
@@ -365,6 +372,7 @@ export async function createHarnessSong(input: {
   instrumental: boolean;
   wav: Blob;
   duration: number;
+  report?: QualityReport | null;
 }): Promise<Song | null> {
   // delega ao store para que a biblioteca, a capa e o áudio sejam gravados
   const { addHarnessSong } = await import('./store');

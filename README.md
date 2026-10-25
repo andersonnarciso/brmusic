@@ -73,9 +73,17 @@ O transporte tem play/stop, posição, zoom e seleção de região. As edições
 
 ### Harness de produção
 
-A página **Harness** (`#/harness`) conduz uma ideia até a faixa final em nove etapas: Ideia → Prompt → Letra → Plano → Arranjo → Render → Stems → Mix e Master → Export.
+O harness é a camada que conduz a geração **por trás do botão "Criar música"**. Nove etapas: Ideia → Prompt → Letra → Plano → Arranjo → Render → Stems → Mix e Master → Export.
 
-Cada etapa é inspecionável e pode ser repetida antes de seguir. As etapas de texto usam o LLM configurado no painel (com geradores locais como reserva, para funcionar offline). Depois do render, o harness aplica o master, normaliza o pico para -1 dBFS e gera um **laudo de qualidade** com loudness, pico, dinâmica, largura estéreo e clipping.
+As etapas de texto usam o LLM configurado no painel (com geradores locais como reserva, para funcionar offline). Depois do render, o harness aplica o master, normaliza o pico para -1 dBFS e gera um **laudo de qualidade** com loudness, pico, dinâmica, largura estéreo e clipping. A página `#/harness` existe como visão de inspeção (acesso pelo link "ver detalhes da geração" no painel de criação), mas o fluxo normal é só clicar em criar.
+
+Para agentes, o harness vira procedimento: veja a skill [`skills/music-harness/SKILL.md`](skills/music-harness/SKILL.md) e o CLI:
+
+```bash
+node scripts/harness-cli.mjs "sertanejo brasileiro com sanfona" --style "118 bpm" --out ./faixas
+```
+
+O CLI abre o app em um Chrome headless controlado por pipe, dispara a criação, espera o harness terminar e grava o WAV masterizado e o `relatorio.json` com o laudo.
 
 ### Modelos de música descobertos automaticamente
 
@@ -105,13 +113,13 @@ Ao conectar um provedor, o botão **Carregar modelos de música** consulta a lis
 cd brmusic
 npm install
 
-npm run dev        # dev server (http://127.0.0.1:4321)
+npm run dev        # dev server (http://127.0.0.1:4328)
 npm run build      # build de produção em dist/
 npm run server     # servidor com API de configuração + build estático
 npm run typecheck  # checagem de tipos
 ```
 
-O `npm run server` sobe em `http://127.0.0.1:4321` e serve o `dist/` (rode `npm run build` antes). Variáveis úteis:
+O `npm run server` sobe em `http://127.0.0.1:4328` e serve o `dist/` (rode `npm run build` antes). Variáveis úteis:
 
 ```bash
 PORT=4321
@@ -226,7 +234,7 @@ Como rodar para contribuir:
 
 ```bash
 npm install
-npm run dev        # app em http://127.0.0.1:4321
+npm run dev        # app em http://127.0.0.1:4329
 npm run server     # API de configuração em outra porta
 npm run typecheck
 npm run verify:desktop

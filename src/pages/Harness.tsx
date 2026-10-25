@@ -8,8 +8,7 @@ import {
   type StageStatus,
 } from '../lib/harness';
 import { Icon } from '../components/Icons';
-import { navigate, playSong, useApp } from '../lib/store';
-import type { Song } from '../lib/types';
+import { addHarnessSong, navigate, playSong, useApp } from '../lib/store';
 
 export function HarnessPage() {
   const songs = useApp((s) => s.songs);
@@ -31,7 +30,7 @@ export function HarnessPage() {
     setRunning(true);
     setState((s) => ({ ...s, stages: initialStages(), report: null, error: undefined }));
 
-    await runHarness({
+    const result = await runHarness({
       idea,
       style,
       instrumental,
@@ -43,10 +42,19 @@ export function HarnessPage() {
           ),
         }));
       },
-      onSong: (song: Song) => {
-        setState((s) => ({ ...s, song }));
-      },
     });
+
+    const song = await addHarnessSong({
+      prompt: result.prompt,
+      lyrics: result.lyrics,
+      style,
+      plan: result.plan,
+      instrumental,
+      wav: result.wav,
+      duration: result.duration,
+      report: result.report,
+    });
+    if (song) setState((s) => ({ ...s, song, report: result.report }));
 
     setRunning(false);
   };

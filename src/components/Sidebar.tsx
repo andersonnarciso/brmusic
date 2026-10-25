@@ -12,7 +12,6 @@ const MAIN_NAV: NavItem[] = [
   { label: 'Explorar', route: '/explore', icon: 'Compass' },
   { label: 'Criar', route: '/create', icon: 'Sparkles' },
   { label: 'Studio', route: '/studio', icon: 'Studio' },
-  { label: 'Harness', route: '/harness', icon: 'Sliders' },
   { label: 'Biblioteca', route: '/me', icon: 'Library' },
 ];
 

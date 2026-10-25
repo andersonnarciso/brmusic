@@ -51,6 +51,17 @@ export interface Song extends GenParams {
   persona?: string;
   /** Motivos de denúncia registrados localmente. */
   reports?: string[];
+  /** Laudo de qualidade da masterização. */
+  quality?: {
+    durationSec: number;
+    peakDb: number;
+    rmsDb: number;
+    lufs: number;
+    clippedSamples: number;
+    dynamicRangeDb: number;
+    stereoWidth: number;
+    verdict: string;
+  };
   liked: boolean;
   disliked: boolean;
   plays: number;

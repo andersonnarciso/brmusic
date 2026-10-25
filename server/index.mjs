@@ -26,7 +26,7 @@ const ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const DIST = join(ROOT, 'dist');
 const DATA_DIR = process.env.BRMUSIC_DATA_DIR ?? join(ROOT, 'server', 'data');
 const CONFIG_PATH = join(DATA_DIR, 'config.json');
-const PORT = Number(process.env.PORT ?? 4321);
+const PORT = Number(process.env.PORT ?? 4328);
 const ADMIN_TOKEN = process.env.BRMUSIC_ADMIN_TOKEN ?? '';
 
 const MIME = {

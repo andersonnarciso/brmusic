@@ -433,6 +433,15 @@ function SongRow({
               {tag}
             </span>
           ))}
+          {song.quality && (
+            <span
+              title={song.quality.verdict}
+              className="shrink-0 rounded bg-brand-500/10 px-1.5 py-0.5 text-[10px] font-medium
+                tabular-nums text-brand-400"
+            >
+              {song.quality.lufs.toFixed(1)} LUFS
+            </span>
+          )}
         </div>
         <p className="truncate text-xs text-mute-500">
           {song.status === 'generating'
