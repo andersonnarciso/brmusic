@@ -10,6 +10,7 @@ import { useSyncExternalStore } from 'react';
 import {
   DEFAULT_FILTERS,
   DEFAULT_PARAMS,
+  PERSONAS,
   type CreateFilters,
   type GenParams,
   type Playlist,
@@ -32,7 +33,8 @@ import { renderSong, STEM_LABELS, type SongPlan, type StemName } from './audio/e
 import { generateCover } from './cover';
 import { hashText, mulberry32For } from './rng';
 import { matchPreset } from './audio/presets';
-import { generateViaServer } from './adminClient';
+import { generateViaServer, loadAdminConfig } from './adminClient';
+import { uploadSongToFtp } from './export';
 
 /* ------------------------------------------------------------------ */
 /* generic store                                                       */
@@ -101,6 +103,7 @@ export const playerStore = createStore<PlayerState>({
   volume: settings.volume ?? 0.8,
   shuffle: false,
   repeat: 'off',
+  queue: [],
 });
 
 function useStoreValue<T, S>(store: Store<T>, selector: (state: T) => S): S {
@@ -338,10 +341,11 @@ export async function createSong(): Promise<void> {
     }));
     showToast(`"${finished.title}" pronta em ${result.bpm} BPM`);
     playSong(id);
+    void autoUploadToFtp(finished);
   } catch (error) {
     updateSong(id, { status: 'failed', progress: 0, error: String(error) });
     appStore.set((s) => ({ ...s, generating: false }));
-    showToast('Falha na geração — tente novamente');
+    showToast('Falha na geração, tente novamente');
   }
 }
 
@@ -471,6 +475,172 @@ async function createSongWithSeed(
 }
 
 /* ------------------------------------------------------------------ */
+/* ações de faixa: reutilizar, remixar,灵感, lixeira, fila              */
+/* ------------------------------------------------------------------ */
+
+/** Reaproveita o prompt e o estilo da faixa na criação. */
+export function reusePrompt(songId: string): void {
+  const song = appStore.get().songs.find((s) => s.id === songId);
+  if (!song) return;
+  appStore.set((s) => ({
+    ...s,
+    params: {
+      ...s.params,
+      prompt: song.prompt,
+      style: song.style,
+      lyrics: song.lyrics,
+      title: '',
+    },
+  }));
+  navigate('/create');
+  showToast(`Prompt de "${song.title}" carregado na criação`);
+}
+
+/** Usa a faixa como inspiração: junta o estilo dela ao prompt atual. */
+export function useAsInspiration(songId: string): void {
+  const song = appStore.get().songs.find((s) => s.id === songId);
+  if (!song) return;
+  appStore.set((s) => ({
+    ...s,
+    params: {
+      ...s.params,
+      prompt: s.params.prompt
+        ? `${s.params.prompt}, no estilo de ${song.title}`
+        : `no estilo de ${song.title}`,
+      style: s.params.style || song.style,
+    },
+  }));
+  navigate('/create');
+  showToast(`"${song.title}" adicionada como inspiração`);
+}
+
+/** Amostra a faixa como referência técnica (andamento e timbre). */
+export function sampleSong(songId: string): void {
+  const song = appStore.get().songs.find((s) => s.id === songId);
+  if (!song) return;
+  appStore.set((s) => ({
+    ...s,
+    params: {
+      ...s.params,
+      prompt: s.params.prompt || `amostra de ${song.title}`,
+      style: s.params.style || `referência: ${song.style || song.title}`,
+    },
+  }));
+  navigate('/create');
+  showToast(`Amostra de "${song.title}" carregada`);
+}
+
+/** Mashup: junta duas faixas em uma nova geração. */
+export async function mashupSongs(firstId: string, secondId: string): Promise<void> {
+  const a = appStore.get().songs.find((s) => s.id === firstId);
+  const b = appStore.get().songs.find((s) => s.id === secondId);
+  if (!a || !b || appStore.get().generating) return;
+
+  const params: GenParams = {
+    ...a,
+    prompt: `${a.prompt} + ${b.prompt}`,
+    style: [a.style, b.style].filter(Boolean).join(', '),
+    title: `${a.title} com ${b.title}`,
+  };
+  const seed = hashText(`${params.prompt}|${params.style}|mashup|${Date.now()}`);
+  appStore.set((s) => ({ ...s, generating: true }));
+  await createSongWithSeed(params, seed, 'mashup', a.id, true);
+  appStore.set((s) => ({ ...s, generating: false }));
+  showToast(`Mashup de "${a.title}" e "${b.title}" pronto`);
+}
+
+/** Regenera a capa da faixa com outra composição. */
+export function regenerateCover(songId: string): void {
+  const song = appStore.get().songs.find((s) => s.id === songId);
+  if (!song) return;
+  const seed = hashText(`${song.id}|${Date.now()}`);
+  const preset = matchPreset(`${song.prompt} ${song.style}`).preset;
+  const cover = generateCover(seed, preset.palette);
+  const url = URL.createObjectURL(cover.blob);
+  void putAsset(assetKey.cover(songId), cover.blob);
+  updateSong(songId, { coverUrl: url });
+  showToast('Nova capa gerada');
+}
+
+/** Envia a faixa para a lixeira (exclusão reversível). */
+export function trashSong(songId: string): void {
+  updateSong(songId, { trashed: true, trashedAt: Date.now() });
+  showToast('Música movida para a lixeira');
+}
+
+/** Restaura uma faixa da lixeira. */
+export function restoreSong(songId: string): void {
+  updateSong(songId, { trashed: false, trashedAt: undefined });
+  showToast('Música restaurada');
+}
+
+/** Exclusão definitiva. */
+export function deleteForever(songId: string): void {
+  removeSong(songId);
+  showToast('Música excluída definitivamente');
+}
+
+/** Registra uma denúncia local da faixa. */
+export function reportSong(songId: string, reason: string): void {
+  const song = appStore.get().songs.find((s) => s.id === songId);
+  if (!song) return;
+  const reports = [...(song.reports ?? []), reason];
+  updateSong(songId, { reports });
+  showToast('Denúncia registrada, obrigado pelo aviso');
+}
+
+/** Define a voz (persona) usada na próxima geração. */
+export function setPersona(personaId: string): void {
+  const persona = PERSONAS.find((p) => p.id === personaId);
+  if (!persona) return;
+  appStore.set((s) => ({
+    ...s,
+    params: {
+      ...s.params,
+      vocal: personaId === 'auto' ? 'auto' : personaId === 'feminina' ? 'female' : 'male',
+    },
+  }));
+  showToast(`Voz: ${persona.label}`);
+}
+
+/** Adiciona a faixa à fila de reprodução. */
+export function addToQueue(songId: string): void {
+  playerStore.set((p) => ({ ...p, queue: [...p.queue, songId] }));
+  showToast('Adicionada à fila');
+}
+
+/** Toca a faixa em seguida (próxima da fila). */
+export function playNext(songId: string): void {
+  playerStore.set((p) => ({
+    ...p,
+    queue: [songId, ...p.queue.filter((id) => id !== songId)],
+  }));
+  showToast('Será a próxima música');
+}
+
+export function clearQueue(): void {
+  playerStore.set((p) => ({ ...p, queue: [] }));
+}
+
+/**
+ * Rádio de músicas: encadeia variações contínuas a partir de uma faixa,
+ * como uma estação que nunca para.
+ */
+export async function startRadio(songId: string, count = 6): Promise<void> {
+  const seed0 = appStore.get().songs.find((s) => s.id === songId);
+  if (!seed0 || appStore.get().generating) return;
+  const params: GenParams = { ...seed0, title: '' };
+
+  for (let i = 0; i < count; i += 1) {
+    const seed = hashText(`${seed0.prompt}|${seed0.style}|radio|${Date.now()}|${i}`);
+    appStore.set((s) => ({ ...s, generating: true }));
+    await createSongWithSeed(params, seed, 'variation', seed0.id, i === 0);
+    appStore.set((s) => ({ ...s, generating: false }));
+  }
+  showToast(`Rádio iniciada com ${count} faixas`);
+}
+
+/* ------------------------------------------------------------------ */
 /* playlists                                                           */
 /* ------------------------------------------------------------------ */
 
@@ -517,6 +687,18 @@ export function deletePlaylist(playlistId: string): void {
 
 export const STEM_NAMES = Object.keys(STEM_LABELS) as StemName[];
 
+/** Envia para a hospedagem FTP quando o envio automatico esta ligado no painel. */
+async function autoUploadToFtp(song: Song): Promise<void> {
+  try {
+    const config = await loadAdminConfig();
+    if (!config.ftp?.enabled) return;
+    const result = await uploadSongToFtp(song);
+    if (result.ok) showToast(`Enviado para a hospedagem: ${result.message}`);
+  } catch {
+    /* envio automatico e opcional */
+  }
+}
+
 function hexToBlob(hex: string, mime: string): Blob {
   const clean = hex.startsWith('0x') ? hex.slice(2) : hex;
   const bytes = new Uint8Array(Math.floor(clean.length / 2));
@@ -536,7 +718,7 @@ function suggestTitle(prompt: string, seed: number): string {
   const word = TITLE_WORDS[Math.floor(rand() * TITLE_WORDS.length)];
   const clean = prompt.replace(/\s+/g, ' ').trim();
   const theme = clean.split(' ').slice(0, 3).join(' ');
-  return theme ? `${word} — ${theme}` : word;
+  return theme ? `${word}, ${theme}` : word;
 }
 
 /* ------------------------------------------------------------------ */

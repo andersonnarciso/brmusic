@@ -1,12 +1,14 @@
 import { useMemo, useState } from 'react';
 import {
   createPlaylist,
+  deleteForever,
   deletePlaylist,
   playSong,
+  restoreSong,
   setFilters,
   useApp,
 } from '../lib/store';
-import type { Playlist } from '../lib/types';
+import type { Playlist, Song } from '../lib/types';
 import { Icon } from '../components/Icons';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 
@@ -19,6 +21,7 @@ const TABS = [
   'Capas',
   'Hooks',
   'Histórico',
+  'Lixeira',
 ];
 
 export function Library() {
@@ -28,11 +31,14 @@ export function Library() {
   const [tab, setTab] = useState('Músicas');
   const [newPlaylistName, setNewPlaylistName] = useState('');
   const [playlistToDelete, setPlaylistToDelete] = useState<Playlist | null>(null);
+  const [songToDelete, setSongToDelete] = useState<Song | null>(null);
+
+  const trashed = useMemo(() => songs.filter((s) => s.trashed), [songs]);
 
   const visible = useMemo(() => {
     const q = filters.query.trim().toLowerCase();
     return songs
-      .filter((s) => s.status === 'ready')
+      .filter((s) => s.status === 'ready' && !s.trashed)
       .filter((s) => (filters.onlyLiked ? s.liked : true))
       .filter((s) =>
         q
@@ -86,7 +92,53 @@ export function Library() {
         ))}
       </nav>
 
-      {tab === 'Playlists' ? (
+      {tab === 'Lixeira' ? (
+        <div className="mt-6 space-y-2">
+          {trashed.length === 0 && (
+            <p className="py-10 text-center text-sm text-mute-500">
+              A lixeira está vazia. Músicas excluídas ficam aqui até serem apagadas.
+            </p>
+          )}
+          {trashed.map((song) => (
+            <div
+              key={song.id}
+              className="flex items-center gap-3 rounded-xl border border-ink-700 bg-ink-850 px-3 py-2"
+            >
+              {song.coverUrl ? (
+                <img src={song.coverUrl} alt="" className="h-10 w-10 rounded-lg object-cover" />
+              ) : (
+                <span className="grid h-10 w-10 place-items-center rounded-lg bg-ink-700 text-mute-500">
+                  <Icon.Note size={15} />
+                </span>
+              )}
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm text-mute-200">{song.title}</p>
+                <p className="truncate text-xs text-mute-500">
+                  Excluída em{' '}
+                  {song.trashedAt ? new Date(song.trashedAt).toLocaleString('pt-BR') : 'data desconhecida'}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => restoreSong(song.id)}
+                className="rounded-full border border-ink-600 px-3 py-1.5 text-xs text-mute-200
+                  transition hover:border-brand-500 hover:text-brand-400"
+              >
+                Restaurar
+              </button>
+              <button
+                type="button"
+                onClick={() => setSongToDelete(song)}
+                aria-label={`Excluir ${song.title} em definitivo`}
+                className="grid h-8 w-8 place-items-center rounded-lg text-mute-500 transition
+                  hover:text-brand-400"
+              >
+                <Icon.Trash size={15} />
+              </button>
+            </div>
+          ))}
+        </div>
+      ) : tab === 'Playlists' ? (
         <div className="mt-6">
           <div className="flex items-center gap-2">
             <input
@@ -228,12 +280,39 @@ export function Library() {
             ))}
             {visible.length === 0 && (
               <p className="py-10 text-center text-sm text-mute-500">
-                Nada por aqui ainda — crie sua primeira faixa.
+                Nada por aqui ainda, crie sua primeira faixa.
               </p>
             )}
           </div>
         </>
       )}
+
+      <ConfirmDialog
+        open={songToDelete !== null}
+        danger
+        title="Excluir em definitivo?"
+        description={
+          songToDelete
+            ? `"${songToDelete.title}" será apagada deste dispositivo, junto com o áudio, a capa e os stems. Não há como desfazer.`
+            : ''
+        }
+        details={
+          songToDelete
+            ? [
+                `Faixa: ${songToDelete.title}`,
+                `${songToDelete.bpm || 'sem BPM'} BPM${songToDelete.musicalKey ? ` · ${songToDelete.musicalKey}` : ''}`,
+                'Arquivos: mix WAV, capa e 5 stems',
+              ]
+            : []
+        }
+        confirmLabel="Excluir definitivamente"
+        cancelLabel="Manter na lixeira"
+        onCancel={() => setSongToDelete(null)}
+        onConfirm={() => {
+          if (songToDelete) deleteForever(songToDelete.id);
+          setSongToDelete(null);
+        }}
+      />
 
       <ConfirmDialog
         open={playlistToDelete !== null}

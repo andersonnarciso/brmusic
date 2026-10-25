@@ -12,11 +12,11 @@ export interface GenParams {
   model: string;
   instrumental: boolean;
   vocal: VocalGender;
-  /** 0..100 — how far from the expected result the generator may stray. */
+  /** 0..100, how far from the expected result the generator may stray. */
   weirdness: number;
-  /** 0..100 — how strongly the style prompt drives the arrangement. */
+  /** 0..100, how strongly the style prompt drives the arrangement. */
   styleInfluence: number;
-  /** 0..4 — how many distinct sections the track explores. */
+  /** 0..4, how many distinct sections the track explores. */
   variety: number;
   seed?: number;
 }
@@ -40,7 +40,17 @@ export interface Song extends GenParams {
   stemUrls?: Record<string, string>;
   /** Faixa de origem, quando esta música é variação/remix/extensão. */
   sourceId?: string;
-  relation?: 'variation' | 'remix' | 'extend';
+  relation?: 'variation' | 'remix' | 'extend' | 'mashup' | 'sample' | 'inspiration';
+  /** Enviada para a lixeira (exclusão reversível). */
+  trashed?: boolean;
+  /** Data da exclusão, quando está na lixeira. */
+  trashedAt?: number;
+  /** Áudio anexado pelo usuário (upload ou gravação). */
+  attachment?: { name: string; duration: number; bpm: number | null };
+  /** Voz/persona usada na geração. */
+  persona?: string;
+  /** Motivos de denúncia registrados localmente. */
+  reports?: string[];
   liked: boolean;
   disliked: boolean;
   plays: number;
@@ -81,7 +91,25 @@ export interface PlayerState {
   volume: number;
   shuffle: boolean;
   repeat: 'off' | 'all' | 'one';
+  /** Fila de reprodução (adicionar à fila). */
+  queue: string[];
 }
+
+/** Vozes disponíveis para a geração. */
+export interface Persona {
+  id: string;
+  label: string;
+  /** Multiplicador de formantes: menor = voz mais grave. */
+  formantShift: number;
+}
+
+export const PERSONAS: Persona[] = [
+  { id: 'auto', label: 'Voz automática', formantShift: 40 },
+  { id: 'feminina', label: 'Voz feminina', formantShift: 220 },
+  { id: 'masculina', label: 'Voz masculina', formantShift: -160 },
+  { id: 'soprano', label: 'Soprano', formantShift: 320 },
+  { id: 'baritono', label: 'Barítono', formantShift: -260 },
+];
 
 export const DEFAULT_PARAMS: GenParams = {
   prompt: '',

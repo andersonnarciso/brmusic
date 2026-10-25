@@ -19,6 +19,7 @@ import { Home } from './pages/Home';
 import { Library } from './pages/Library';
 import { Explore } from './pages/Explore';
 import { Studio } from './pages/Studio';
+import { EditorPage } from './pages/Editor';
 import {
   CreditsPage,
   LabsPage,
@@ -30,6 +31,9 @@ import {
 import { AdminApp } from './admin/AdminApp';
 
 function RouteView({ route }: { route: string }) {
+  if (route.startsWith('/editor/')) {
+    return <EditorPage songId={route.replace('/editor/', '')} />;
+  }
   switch (route) {
     case '/create':
       return (

@@ -31,7 +31,7 @@ export interface LlmProviderConfig {
   /** Endpoint relativo à baseUrl. */
   endpoint: string;
   model: string;
-  /** Chave da API — gravada só no servidor; nunca devolvida ao cliente. */
+  /** Chave da API, gravada só no servidor; nunca devolvida ao cliente. */
   apiKey: string;
   temperature: number;
   maxTokens: number;
@@ -109,6 +109,18 @@ export interface BrandConfig {
   currency: string;
 }
 
+export interface FtpConfig {
+  enabled: boolean;
+  host: string;
+  port: number;
+  user: string;
+  password: string;
+  remotePath: string;
+  secure: boolean;
+  passive: boolean;
+  timeoutMs: number;
+}
+
 export interface IntegrationsConfig {
   stripePublishableKey: string;
   stripeSecretKey: string;
@@ -160,6 +172,7 @@ export interface AdminConfig {
   musicProvider: MusicProviderConfig;
   generation: GenerationSettings;
   app: AppSettings;
+  ftp: FtpConfig;
   users: UserRow[];
   plans: PlanRow[];
   brand: BrandConfig;
@@ -379,6 +392,17 @@ export const DEFAULT_ADMIN_CONFIG: AdminConfig = {
     allowDownload: true,
     autoModeration: false,
     queueConcurrency: 2,
+  },
+  ftp: {
+    enabled: false,
+    host: '',
+    port: 21,
+    user: '',
+    password: '',
+    remotePath: '/public_html/musicas',
+    secure: false,
+    passive: true,
+    timeoutMs: 20000,
   },
   app: {
     exportStemsOnSave: false,

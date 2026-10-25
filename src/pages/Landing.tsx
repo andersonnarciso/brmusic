@@ -27,7 +27,7 @@ const FEATURES = [
   {
     tag: 'Novo',
     title: 'Stems exportáveis',
-    body: 'Separe a faixa em bateria, baixo, pads, melodia e voz — e leve para a sua DAW em ZIP.',
+    body: 'Separe a faixa em bateria, baixo, pads, melodia e voz, e leve para a sua DAW em ZIP.',
     cta: 'Ver recursos',
     action: '/create',
   },
@@ -41,7 +41,7 @@ const FEATURES = [
   {
     tag: 'Novo',
     title: '100% local e gratuito',
-    body: 'O motor roda no seu dispositivo. Sem conta, sem plano, sem servidor — e as faixas ficam offline.',
+    body: 'O motor roda no seu dispositivo. Sem conta, sem plano, sem servidor, e as faixas ficam offline.',
     cta: 'Baixar o app',
     action: '/create',
   },
@@ -56,7 +56,7 @@ const DOWNLOADS = [
 const FAQ = [
   [
     'Como eu faço uma música com o BR Music?',
-    'Descreva o que você quer — gênero, clima, tema ou a sua própria letra — e toque em Criar. A faixa completa (voz, letra e produção) é gerada em poucos segundos.',
+    'Descreva o que você quer: gênero, clima, tema ou a sua própria letra, e toque em Criar. A faixa completa (voz, letra e produção) é gerada em poucos segundos.',
   ],
   [
     'Preciso saber música para usar?',
@@ -68,7 +68,7 @@ const FAQ = [
   ],
   [
     'Posso usar as músicas comercialmente?',
-    'Sim. As faixas são geradas por você, no seu dispositivo, a partir do seu prompt — você pode usar em vídeo, podcast, anúncio ou publicar um álbum.',
+    'Sim. As faixas são geradas por você, no seu dispositivo, a partir do seu prompt, você pode usar em vídeo, podcast, anúncio ou publicar um álbum.',
   ],
   [
     'Posso usar outra IA no lugar do motor?',
@@ -130,7 +130,7 @@ export function Landing() {
           </h1>
           <p className="mx-auto mt-4 max-w-xl text-base text-mute-400">
             Grátis, sem conta e rodando no seu próprio dispositivo. Descreva a faixa, ajuste o
-            estilo e leve o mix — e os stems — para onde quiser.
+            estilo e leve o mix, e os stems, para onde quiser.
           </p>
 
           <div className="mx-auto mt-8 max-w-2xl rounded-2xl border border-ink-700 bg-ink-900/80 p-3 text-left shadow-2xl">
@@ -177,7 +177,7 @@ export function Landing() {
 
       <section className="px-5 pb-20">
         <div className="mx-auto max-w-6xl">
-          <h2 className="font-display text-2xl font-bold text-mute-100 sm:text-3xl">
+          <h2 className="text-center font-display text-2xl font-bold text-mute-100 sm:text-3xl">
             Tudo o que você precisa para fazer música do seu jeito
           </h2>
           <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -274,7 +274,7 @@ export function Landing() {
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 text-xs text-mute-500 sm:flex-row">
           <span className="flex items-center gap-2">
             <img src="/logo-mark.png" alt="" className="h-4 w-4" />
-            BR Music — gerador de música livre, local e open source.
+            BR Music, gerador de música livre, local e open source.
           </span>
           <span>Gerador procedural local · nenhuma faixa é pré-gravada</span>
         </div>

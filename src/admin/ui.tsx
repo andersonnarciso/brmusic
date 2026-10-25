@@ -1,4 +1,6 @@
 import type { ReactNode } from 'react';
+import { Children, isValidElement } from 'react';
+import { Select as StyledSelect, type SelectOption } from '../components/Select';
 
 export function Card({
   title,
@@ -59,11 +61,35 @@ export function TextArea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement
   return <textarea {...props} className={`${inputClass} resize-y ${props.className ?? ''}`} />;
 }
 
-export function Select(props: React.SelectHTMLAttributes<HTMLSelectElement>) {
+/**
+ * Select estilizado: mantém a API de <option> mas desenha o menu inteiro
+ * pelo app (o menu nativo do sistema abre com a cor do SO).
+ */
+export function Select(
+  props: React.SelectHTMLAttributes<HTMLSelectElement> & { children?: ReactNode },
+) {
+  const { children, className, ...rest } = props;
+  const options: SelectOption[] = [];
+  Children.forEach(children, (child) => {
+    if (!isValidElement(child)) return;
+    const element = child as React.ReactElement<{ value?: string; children?: ReactNode }>;
+    const value = element.props.value ?? String(element.props.children ?? '');
+    const label =
+      typeof element.props.children === 'string'
+        ? element.props.children
+        : String(element.props.children ?? value);
+    options.push({ value, label });
+  });
+
   return (
-    <select {...props} className={`${inputClass} bg-ink-850 ${props.className ?? ''}`}>
-      {props.children}
-    </select>
+    <StyledSelect
+      value={String(rest.value ?? options[0]?.value ?? '')}
+      options={options}
+      onChange={(value) => rest.onChange?.({ target: { value } } as never)}
+      className={className}
+      id={rest.id}
+      aria-label={rest['aria-label']}
+    />
   );
 }
 

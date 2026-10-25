@@ -280,7 +280,7 @@ function normalize(text: string): string {
 
 export interface PresetMatch {
   preset: StylePreset;
-  /** Number of matched keywords — used to blend presets. */
+  /** Number of matched keywords, used to blend presets. */
   hits: string[];
 }
 

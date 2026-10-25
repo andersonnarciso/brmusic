@@ -1,23 +1,29 @@
 import { useMemo, useState } from 'react';
 import {
+  addToQueue,
   createPlaylist,
   createVariations,
-  extendSong,
+  mashupSongs,
   navigate,
-  removeSong,
+  playNext,
+  regenerateCover,
   remixSong,
+  reusePrompt,
+  sampleSong,
   setFilters,
   shareSong,
+  startRadio,
+  trashSong,
   toggleDislike,
   toggleLike,
   togglePlaylistSong,
+  useAsInspiration,
   useApp,
   usePlayer,
 } from '../lib/store';
 import { playSong } from '../lib/store';
-import { exportMix, exportStems } from '../lib/export';
+import { exportMix, exportStems, uploadSongToFtp } from '../lib/export';
 import { Icon } from './Icons';
-import { ConfirmDialog } from './ConfirmDialog';
 import type { Song } from '../lib/types';
 
 function formatDuration(seconds: number): string {
@@ -55,7 +61,6 @@ export function SongList() {
   const playing = usePlayer((p) => p.playing);
   const [menuFor, setMenuFor] = useState<string | null>(null);
   const [newPlaylist, setNewPlaylist] = useState<string | null>(null);
-  const [pendingRemoval, setPendingRemoval] = useState<Song | null>(null);
 
   const visible = useMemo(() => {
     let list = songs.filter((s) => s.status !== 'failed');
@@ -285,7 +290,6 @@ export function SongList() {
                       playing={song.id === currentId && playing}
                       menuOpen={menuFor === song.id}
                       onToggleMenu={() => setMenuFor((v) => (v === song.id ? null : song.id))}
-                      onRequestRemove={(target) => setPendingRemoval(target)}
                     />
                   ))}
                 </div>
@@ -295,33 +299,7 @@ export function SongList() {
         )}
       </div>
 
-      <ConfirmDialog
-        open={pendingRemoval !== null}
-        danger
-        title="Excluir esta música?"
-        description={
-          pendingRemoval
-            ? `"${pendingRemoval.title}" será removida da biblioteca. O áudio, a capa e os stems serão apagados deste dispositivo. Não há como desfazer.`
-            : ''
-        }
-        details={
-          pendingRemoval
-            ? [
-                `Faixa: ${pendingRemoval.title}`,
-                `Duração: ${Math.floor(pendingRemoval.duration / 60)}:${String(Math.floor(pendingRemoval.duration % 60)).padStart(2, '0')}`,
-                `${pendingRemoval.bpm || '—'} BPM${pendingRemoval.musicalKey ? ` · ${pendingRemoval.musicalKey}` : ''}`,
-                'Arquivos: mix WAV, capa e 5 stems',
-              ]
-            : []
-        }
-        confirmLabel="Excluir"
-        cancelLabel="Manter"
-        onCancel={() => setPendingRemoval(null)}
-        onConfirm={() => {
-          if (pendingRemoval) removeSong(pendingRemoval.id);
-          setPendingRemoval(null);
-        }}
-      />
+      
     </section>
   );
 }
@@ -332,7 +310,72 @@ interface RowProps {
   playing: boolean;
   menuOpen: boolean;
   onToggleMenu: () => void;
-  onRequestRemove: (song: Song) => void;
+}
+
+interface MenuEntry {
+  icon: keyof typeof Icon;
+  label: string;
+  run: () => void;
+}
+
+function MenuItem({
+  icon,
+  label,
+  onClick,
+  submenu,
+}: {
+  icon: keyof typeof Icon;
+  label: string;
+  onClick?: () => void;
+  submenu?: MenuEntry[];
+}) {
+  const [open, setOpen] = useState(false);
+  const EntryIcon = Icon[icon];
+
+  return (
+    <div
+      className="relative"
+      onMouseEnter={() => submenu && setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+    >
+      <button
+        type="button"
+        onClick={onClick}
+        onMouseEnter={() => submenu && setOpen(true)}
+        className="flex w-full items-center justify-between gap-2 px-4 py-2 text-left text-mute-300
+          transition hover:bg-ink-700 hover:text-mute-100"
+      >
+        <span className="flex items-center gap-2">
+          <EntryIcon size={14} />
+          {label}
+        </span>
+        {submenu && <Icon.ChevronRight size={13} className="text-mute-500" />}
+      </button>
+
+      {submenu && open && (
+        <div
+          className="absolute right-full top-0 z-40 mr-1 w-56 overflow-hidden rounded-xl border
+            border-ink-600 bg-ink-800 py-1 shadow-2xl"
+        >
+          {submenu.map((entry) => {
+            const SubIcon = Icon[entry.icon];
+            return (
+              <button
+                key={entry.label}
+                type="button"
+                onClick={entry.run}
+                className="flex w-full items-center gap-2 px-4 py-2 text-left text-mute-300
+                  transition hover:bg-ink-700 hover:text-mute-100"
+              >
+                <SubIcon size={14} />
+                {entry.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
 }
 
 function SongRow({
@@ -341,7 +384,6 @@ function SongRow({
   playing,
   menuOpen,
   onToggleMenu,
-  onRequestRemove,
 }: RowProps) {
   const playlists = useApp((s) => s.playlists);
   return (
@@ -446,100 +488,99 @@ function SongRow({
           </button>
           {menuOpen && (
             <div
-              className="absolute right-0 z-30 mt-1 w-52 overflow-hidden rounded-xl border border-ink-600
-                bg-ink-800 py-1 text-sm shadow-xl"
+              className="absolute right-0 z-30 mt-1 w-60 overflow-visible rounded-xl border border-ink-600
+                bg-ink-800 py-1 text-sm shadow-2xl"
             >
-              <button
-                type="button"
-                onClick={() => {
-                  void exportMix(song);
-                  onToggleMenu();
-                }}
-                className="flex w-full items-center gap-2 px-4 py-2 text-left text-mute-300 transition
-                  hover:bg-ink-700 hover:text-mute-100"
-              >
-                <Icon.Download size={14} />
-                Exportar mix (WAV)
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  void exportStems(song);
-                  onToggleMenu();
-                }}
-                className="flex w-full items-center gap-2 px-4 py-2 text-left text-mute-300 transition
-                  hover:bg-ink-700 hover:text-mute-100"
-              >
-                <Icon.Studio size={14} />
-                Exportar stems (ZIP)
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  void createVariations(4);
-                  onToggleMenu();
-                }}
-                className="flex w-full items-center gap-2 px-4 py-2 text-left text-mute-300 transition
-                  hover:bg-ink-700 hover:text-mute-100"
-              >
-                <Icon.Sparkles size={14} />
-                Gerar 4 variações
-              </button>
-              <button
-                type="button"
+              <MenuItem
+                icon="Repeat"
+                label="Remix"
                 onClick={() => {
                   void remixSong(song.id);
                   onToggleMenu();
                 }}
-                className="flex w-full items-center gap-2 px-4 py-2 text-left text-mute-300 transition
-                  hover:bg-ink-700 hover:text-mute-100"
-              >
-                <Icon.Repeat size={14} />
-                Remix
-              </button>
-              <button
-                type="button"
+              />
+              <MenuItem
+                icon="Sliders"
+                label="Editar"
                 onClick={() => {
-                  void extendSong(song.id);
+                  navigate(`/editor/${song.id}`);
                   onToggleMenu();
                 }}
-                className="flex w-full items-center gap-2 px-4 py-2 text-left text-mute-300 transition
-                  hover:bg-ink-700 hover:text-mute-100"
-              >
-                <Icon.ChevronRight size={14} />
-                Estender
-              </button>
-              {playlists.length > 0 && (
-                <div className="border-t border-ink-700 pt-1">
-                  {playlists.slice(0, 4).map((playlist) => (
-                    <button
-                      key={playlist.id}
-                      type="button"
-                      onClick={() => {
-                        togglePlaylistSong(playlist.id, song.id);
-                        onToggleMenu();
-                      }}
-                      className="flex w-full items-center gap-2 px-4 py-2 text-left text-mute-300 transition
-                        hover:bg-ink-700 hover:text-mute-100"
-                    >
-                      <Icon.Library size={14} />
-                      {playlist.name}
-                    </button>
-                  ))}
-                </div>
-              )}
-              <button
-                type="button"
+                submenu={[
+                  { icon: 'Studio', label: 'Abrir no editor', run: () => navigate(`/editor/${song.id}`) },
+                  { icon: 'Image', label: 'Capa', run: () => regenerateCover(song.id) },
+                  { icon: 'Note', label: 'Reaproveitar prompt', run: () => reusePrompt(song.id) },
+                  { icon: 'Studio', label: 'Mashup', run: () => void mashupSongs(song.id, song.id) },
+                  { icon: 'Audio', label: 'Amostrar esta música', run: () => sampleSong(song.id) },
+                  { icon: 'Sparkles', label: 'Usar como inspiração', run: () => useAsInspiration(song.id) },
+                ]}
+              />
+              <MenuItem
+                icon="Share"
+                label="Compartilhar"
                 onClick={() => {
-                  onRequestRemove(song);
+                  void shareSong(song.id);
                   onToggleMenu();
                 }}
-                className="flex w-full items-center gap-2 border-t border-ink-700 px-4 py-2 text-left
-                  text-mute-300 transition hover:bg-ink-700 hover:text-brand-400"
-              >
-                <Icon.Trash size={14} />
-                Remover
-              </button>
+              />
+              <MenuItem
+                icon="Download"
+                label="Baixar"
+                submenu={[
+                  { icon: 'Download', label: 'Mix final (WAV)', run: () => void exportMix(song) },
+                  { icon: 'Studio', label: 'Stems (ZIP)', run: () => void exportStems(song) },
+                ]}
+              />
+              <MenuItem
+                icon="Sliders"
+                label="Gerenciar"
+                submenu={[
+                  ...playlists.slice(0, 3).map((playlist) => ({
+                    icon: 'Library' as const,
+                    label: `Playlist: ${playlist.name}`,
+                    run: () => togglePlaylistSong(playlist.id, song.id),
+                  })),
+                  { icon: 'Send', label: 'Enviar para o FTP', run: () => void uploadSongToFtp(song) },
+                ]}
+              />
+
+              <div className="my-1 h-px bg-ink-700" />
+
+              <MenuItem
+                icon="Play"
+                label="Adicionar à fila"
+                onClick={() => {
+                  addToQueue(song.id);
+                  onToggleMenu();
+                }}
+              />
+              <MenuItem
+                icon="Next"
+                label="Tocar em seguida"
+                onClick={() => {
+                  playNext(song.id);
+                  onToggleMenu();
+                }}
+              />
+              <MenuItem
+                icon="Note"
+                label="Rádio de músicas"
+                onClick={() => {
+                  void startRadio(song.id);
+                  onToggleMenu();
+                }}
+              />
+
+              <div className="my-1 h-px bg-ink-700" />
+
+              <MenuItem
+                icon="Trash"
+                label="Mover para a lixeira"
+                onClick={() => {
+                  trashSong(song.id);
+                  onToggleMenu();
+                }}
+              />
             </div>
           )}
         </div>

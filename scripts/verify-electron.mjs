@@ -18,11 +18,11 @@ const results = [];
 
 function record(ok, name, detail = '') {
   results.push({ ok, name, detail });
-  console.log(`${ok ? '✓' : '✗'} ${name}${detail ? ` — ${detail}` : ''}`);
+  console.log(`${ok ? '✓' : '✗'} ${name}${detail ? `: ${detail}` : ''}`);
 }
 
 function warn(name, detail = '') {
-  console.log(`! ${name}${detail ? ` — ${detail}` : ''}`);
+  console.log(`! ${name}${detail ? `: ${detail}` : ''}`);
 }
 
 function check(ok, name, detail = '') {
@@ -193,7 +193,7 @@ function matchesGlob(pattern, target) {
 /* Verificações                                                        */
 /* ------------------------------------------------------------------ */
 
-console.log('BR Music — verificação do empacotamento desktop\n');
+console.log('BR Music: verificação do empacotamento desktop\n');
 
 // 1. Arquivos obrigatórios
 const requiredFiles = [
@@ -279,7 +279,7 @@ if (builder) {
     check(Boolean(entry[key]), `linux.desktop.entry.${key} definido`, String(entry[key]));
   }
   check(entry.Terminal === false, 'linux.desktop.entry.Terminal: false', String(entry.Terminal));
-  // O electron-builder 26 recusa linux.desktop.entry.Exec — o Exec é gerado
+  // O electron-builder 26 recusa linux.desktop.entry.Exec, o Exec é gerado
   // a partir de linux.executableName.
   check(!('Exec' in entry), 'linux.desktop.entry.Exec não é informado (gerado automaticamente)');
 
@@ -361,7 +361,7 @@ if (!existsSync(distIndex)) {
   const missing = local.filter((u) => !existsSync(path.resolve(ROOT, 'dist', u.replace(/^\.\//, ''))));
   check(missing.length === 0, 'assets referenciados existem em dist/', missing.join(', '));
   if (urls.some((u) => u.startsWith('https://fonts.'))) {
-    warn('dist/index.html usa Google Fonts (http) — offline o app usa fontes de fallback');
+    warn('dist/index.html usa Google Fonts (http), offline o app usa fontes de fallback');
   }
 }
 
@@ -413,7 +413,7 @@ const pkgRaw = readText('package.json');
 if (pkgRaw) {
   const pkg = JSON.parse(pkgRaw);
   if (!pkg.main) {
-    warn('package.json sem "main" — o dono do package.json precisa adicionar "main": "electron/main.cjs"');
+    warn('package.json sem "main", o dono do package.json precisa adicionar "main": "electron/main.cjs"');
   } else {
     check(existsSync(path.join(ROOT, pkg.main)), `package.json.main existe (${pkg.main})`);
   }
@@ -427,7 +427,7 @@ const failed = results.filter((r) => !r.ok);
 console.log(`\n${results.length - failed.length}/${results.length} verificações OK`);
 if (failed.length > 0) {
   console.log('\nFALHAS:');
-  for (const item of failed) console.log(`  ✗ ${item.name}${item.detail ? ` — ${item.detail}` : ''}`);
+  for (const item of failed) console.log(`  ✗ ${item.name}${item.detail ? `: ${item.detail}` : ''}`);
   process.exit(1);
 }
-console.log('PASS — empacotamento desktop consistente.');
+console.log('PASS, empacotamento desktop consistente.');

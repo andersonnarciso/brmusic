@@ -42,7 +42,7 @@ export function Sidebar() {
           type="button"
           onClick={() => navigate('/discover')}
           className="flex items-center gap-2"
-          aria-label="BR Music — início"
+          aria-label="Ir para o início do BR Music"
         >
           <img src="/logo-mark.png" alt="" className="h-8 w-8 shrink-0" />
           {!collapsed && (

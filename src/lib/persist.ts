@@ -22,8 +22,8 @@ export function loadSongs(): Song[] {
     if (!raw) return [];
     const parsed = JSON.parse(raw) as Song[];
     if (!Array.isArray(parsed)) return [];
-    // stale blob URLs from a previous session are dropped on load
-    return parsed.map(({ audioUrl, coverUrl, ...rest }) => rest);
+    // URLs de blob da sessão anterior não sobrevivem ao reload: são recriadas
+    return parsed.map(({ audioUrl, coverUrl, stemUrls, ...rest }) => rest);
   } catch {
     return [];
   }
@@ -36,10 +36,10 @@ export function loadSongs(): Song[] {
  */
 export function saveSongs(songs: Song[]): void {
   try {
-    const serialisable = songs.map(({ audioUrl, coverUrl, ...rest }) => rest);
+    const serialisable = songs.map(({ audioUrl, coverUrl, stemUrls, ...rest }) => rest);
     localStorage.setItem(LIBRARY_KEY, JSON.stringify(serialisable));
   } catch {
-    /* quota exceeded — metadata is a convenience, not a requirement */
+    /* quota exceeded, metadata is a convenience, not a requirement */
   }
 }
 

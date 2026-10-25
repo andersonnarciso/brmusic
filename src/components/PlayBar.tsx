@@ -57,7 +57,7 @@ export function PlayBar() {
             {song?.title ?? 'Nada tocando'}
           </p>
           <p className="truncate text-xs text-mute-500">
-            {song ? `${song.bpm} BPM · ${song.musicalKey || '—'}` : 'Escolha uma música na biblioteca'}
+            {song ? `${song.bpm} BPM · ${song.musicalKey || 'sem tonalidade'}` : 'Escolha uma música na biblioteca'}
           </p>
         </div>
       </div>

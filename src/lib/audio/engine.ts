@@ -3,7 +3,7 @@
  *
  * The generator renders an actual stereo audio buffer in the browser with the
  * Web Audio API: drums, bass, pad, stabs, a formant-based vocal layer and a
- * generated convolution reverb. Nothing is pre-recorded — every track is
+ * generated convolution reverb. Nothing is pre-recorded, every track is
  * synthesised from the prompt, the style preset and the three creative
  * sliders (weirdness / style influence / variety).
  */
@@ -398,7 +398,7 @@ export interface RenderOptions {
 /**
  * Plano musical vindo do LLM configurado no painel administrativo.
  * Quando presente, ele sobrescreve BPM, tonalidade, progressão e a estrutura
- * de seções — o motor local passa a "executar" o arranjo escrito pelo modelo.
+ * de seções, o motor local passa a "executar" o arranjo escrito pelo modelo.
  */
 export interface SongPlan {
   title?: string;

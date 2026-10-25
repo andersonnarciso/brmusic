@@ -63,7 +63,7 @@ export function ProvidersSection({
       >
         <p className="text-xs text-mute-500">
           A chave fica gravada no servidor (<code>server/data/config.json</code>) e nunca é devolvida
-          ao navegador — o painel mostra apenas a máscara. Com o servidor offline, tudo é salvo no
+          ao navegador, o painel mostra apenas a máscara. Com o servidor offline, tudo é salvo no
           localStorage deste navegador.
         </p>
       </Card>
@@ -123,7 +123,7 @@ export function ProvidersSection({
 
 /**
  * Varre as portas locais e mostra quais runtimes de LLM estão rodando
- * na máquina — Ollama, LM Studio, llama.cpp, KoboldCpp, GPT4All, vLLM, Jan,
+ * na máquina: Ollama, LM Studio, llama.cpp, KoboldCpp, GPT4All, vLLM, Jan,
  * text-generation-webui e SGLang.
  */
 function LocalRuntimeScanner({ onUse }: { onUse: (runtime: LocalRuntime) => void }) {
@@ -362,7 +362,7 @@ function ProviderCard({
               : 'border-red-500/30 bg-red-500/10 text-red-300'
           }`}
         >
-          {result.ok ? 'Conexão OK' : 'Falhou'} · {result.latencyMs} ms — {result.message}
+          {result.ok ? 'Conexão OK' : 'Falhou'} · {result.latencyMs} ms: {result.message}
         </div>
       )}
 
@@ -594,7 +594,7 @@ function MusicProviderSection({ config, update }: { config: AdminConfig; update:
                 : 'border-red-500/30 bg-red-500/10 text-red-300'
             }`}
           >
-            {result.ok ? 'Teste OK' : 'Teste falhou'} — {result.message}
+            {result.ok ? 'Teste OK' : 'Teste falhou'}: {result.message}
           </div>
         )}
       </Card>

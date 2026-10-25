@@ -7,6 +7,7 @@
 
 import type { Song } from './types';
 import { STEM_LABELS, type StemName } from './audio/engine';
+import { uploadToFtp } from './adminClient';
 
 export interface DesktopBridge {
   /** Origem da API local (ex.: http://127.0.0.1:4399). Vazia na versão web. */
@@ -62,7 +63,7 @@ export interface ZipEntry {
   data: Uint8Array;
 }
 
-/** Monta um ZIP sem compressão (armazenamento) — suficiente para WAV/MP3. */
+/** Monta um ZIP sem compressão (armazenamento), suficiente para WAV/MP3. */
 export function createZip(entries: ZipEntry[]): Blob {
   const encoder = new TextEncoder();
   const localParts: Uint8Array[] = [];
@@ -215,7 +216,7 @@ export async function exportStems(song: Song): Promise<ExportResult> {
   }
 
   const readme = [
-    `BR Music — stems de "${song.title}"`,
+    `BR Music: stems de "${song.title}"`,
     `BPM: ${song.bpm} | Tonalidade: ${song.musicalKey} | Duração: ${Math.round(song.duration)}s`,
     '',
     'Arquivos:',
@@ -242,4 +243,50 @@ export async function exportStems(song: Song): Promise<ExportResult> {
 
   downloadBlob(zip, filename);
   return { ok: true, message: `${filename} baixado` };
+}
+
+
+/**
+ * Envia a faixa (mix + ZIP de stems) para a hospedagem FTP configurada no
+ * painel. Cada faixa vira uma pasta com o nome da música.
+ */
+export async function uploadSongToFtp(song: Song): Promise<ExportResult> {
+  if (!song.audioUrl) return { ok: false, message: 'Áudio ainda não disponível' };
+
+  const folder = safeName(song.title);
+  const mixBlob = await (await fetch(song.audioUrl)).blob();
+  const mix = await uploadToFtp({
+    filename: `${folder}.wav`,
+    contentBase64: await blobToBase64(mixBlob),
+    subdir: folder,
+  });
+  if (!mix.ok) return { ok: false, message: mix.error ?? 'Falha no envio do mix' };
+
+  let stemsNote = '';
+  if (song.stemUrls) {
+    const entries: ZipEntry[] = [];
+    const encoder = new TextEncoder();
+    for (const [name, url] of Object.entries(song.stemUrls)) {
+      const blob = await (await fetch(url)).blob();
+      entries.push({
+        name: `${STEM_LABELS[name as StemName] ?? name}.wav`,
+        data: new Uint8Array(await blob.arrayBuffer()),
+      });
+    }
+    entries.push({
+      name: 'LEIA-ME.txt',
+      data: encoder.encode(
+        `BR Music: stems de ${song.title}\n${song.bpm} BPM, ${song.musicalKey}\n`,
+      ),
+    });
+    const zip = createZip(entries);
+    const stems = await uploadToFtp({
+      filename: `${folder}-stems.zip`,
+      contentBase64: await blobToBase64(zip),
+      subdir: folder,
+    });
+    stemsNote = stems.ok ? ' e stems' : ' (stems falharam)';
+  }
+
+  return { ok: true, message: `Enviado para ${mix.path}${stemsNote}` };
 }

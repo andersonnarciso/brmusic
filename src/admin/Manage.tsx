@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { AdminConfig } from '../lib/adminTypes';
 import { isDesktop } from '../lib/export';
+import { testFtpConnection } from '../lib/adminClient';
 import { Badge, Button, Card, Field, Select, TextInput, Toggle } from './ui';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 
@@ -14,7 +15,7 @@ export function AppSection({ config, update }: { config: AdminConfig; update: Up
   const [info, setInfo] = useState<{ version: string; platform: string; electron: string } | null>(
     null,
   );
-  const [usage, setUsage] = useState<string>('—');
+  const [usage, setUsage] = useState<string>('a medir');
   const [confirmClear, setConfirmClear] = useState(false);
 
   useEffect(() => {
@@ -213,9 +214,9 @@ export function BrandSection({ config, update }: { config: AdminConfig; update: 
           </Field>
           <Field label="Moeda de referência">
             <Select value={config.brand.currency} onChange={(e) => patch({ currency: e.target.value })}>
-              <option value="BRL">BRL — R$</option>
-              <option value="USD">USD — $</option>
-              <option value="EUR">EUR — €</option>
+              <option value="BRL">BRL (R$)</option>
+              <option value="USD">USD (US$)</option>
+              <option value="EUR">EUR (€)</option>
             </Select>
           </Field>
         </div>
@@ -269,7 +270,9 @@ export function IntegrationsSection({ config, update }: { config: AdminConfig; u
         </div>
       </Card>
 
-      <Card title="Telemetria opcional" description="Tudo desligado por padrão — o app não coleta nada.">
+      <FtpCard config={config} update={update} />
+
+      <Card title="Telemetria opcional" description="Tudo desligado por padrão, o app não coleta nada.">
         <div className="grid gap-4 md:grid-cols-2">
           <Field label="ID de analytics">
             <TextInput
@@ -328,6 +331,130 @@ export function ActivitySection({ config }: { config: AdminConfig }) {
           <li className="py-6 text-center text-sm text-mute-500">Nenhum evento registrado.</li>
         )}
       </ul>
+    </Card>
+  );
+}
+
+
+/** Hospedagem tradicional via FTP: as músicas podem ser enviadas para a conta do usuário. */
+function FtpCard({ config, update }: { config: AdminConfig; update: Update }) {
+  const ftp = config.ftp;
+  const [testing, setTesting] = useState(false);
+  const [result, setResult] = useState<{
+    ok: boolean;
+    message?: string;
+    latencyMs?: number;
+    entries?: number;
+    sample?: string[];
+  } | null>(null);
+
+  const patch = (partial: Partial<typeof ftp>) =>
+    update((c) => ({ ...c, ftp: { ...c.ftp, ...partial } }));
+
+  const runTest = async () => {
+    setTesting(true);
+    setResult(await testFtpConnection());
+    setTesting(false);
+  };
+
+  return (
+    <Card
+      title="Hospedagem tradicional (FTP)"
+      description="Envie as músicas geradas direto para a sua conta de hospedagem (cPanel, Hostinger, Locaweb)."
+      actions={
+        <>
+          <Badge tone={ftp.enabled ? 'ok' : 'neutral'}>
+            {ftp.enabled ? 'ativo' : 'inativo'}
+          </Badge>
+          <Button onClick={() => void runTest()} disabled={testing}>
+            {testing ? 'Testando...' : 'Testar conexão'}
+          </Button>
+        </>
+      }
+    >
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <Field label="Host" hint="ftp.seudominio.com">
+          <TextInput
+            value={ftp.host}
+            onChange={(e) => patch({ host: e.target.value })}
+            placeholder="ftp.seudominio.com"
+          />
+        </Field>
+        <Field label="Porta">
+          <TextInput
+            type="number"
+            value={ftp.port}
+            onChange={(e) => patch({ port: Number(e.target.value) })}
+          />
+        </Field>
+        <Field label="Usuário">
+          <TextInput
+            value={ftp.user}
+            onChange={(e) => patch({ user: e.target.value })}
+            placeholder="usuario@seudominio.com"
+          />
+        </Field>
+        <Field label="Senha" hint="Gravada apenas no servidor.">
+          <TextInput
+            type="password"
+            value={ftp.password}
+            onChange={(e) => patch({ password: e.target.value })}
+            placeholder="senha do FTP"
+          />
+        </Field>
+        <Field label="Pasta remota" hint="Onde as músicas serão gravadas.">
+          <TextInput
+            value={ftp.remotePath}
+            onChange={(e) => patch({ remotePath: e.target.value })}
+            placeholder="/public_html/musicas"
+          />
+        </Field>
+        <Field label="Timeout (ms)">
+          <TextInput
+            type="number"
+            step={1000}
+            value={ftp.timeoutMs}
+            onChange={(e) => patch({ timeoutMs: Number(e.target.value) })}
+          />
+        </Field>
+      </div>
+
+      <div className="mt-4 grid gap-3 md:grid-cols-3">
+        <Toggle
+          label="Envio automático ao gerar"
+          hint="Cada faixa nova é enviada para o FTP assim que fica pronta."
+          checked={ftp.enabled}
+          onChange={(enabled) => patch({ enabled })}
+        />
+        <Toggle
+          label="Conexão segura (FTPS)"
+          hint="Usa TLS na porta 21. Desligado, a conexão é em texto simples."
+          checked={ftp.secure}
+          onChange={(secure) => patch({ secure })}
+        />
+        <Toggle
+          label="Modo passivo"
+          hint="Recomendado quando há firewall ou NAT no caminho."
+          checked={ftp.passive}
+          onChange={(passive) => patch({ passive })}
+        />
+      </div>
+
+      {result && (
+        <div
+          className={`mt-4 rounded-xl border px-4 py-3 text-sm ${
+            result.ok
+              ? 'border-brand-500/30 bg-brand-500/10 text-brand-400'
+              : 'border-red-500/30 bg-red-500/10 text-red-300'
+          }`}
+        >
+          {result.ok
+            ? `Conectado em ${result.latencyMs ?? 0} ms. ${result.entries ?? 0} item(ns) em ${ftp.remotePath}${
+                result.sample?.length ? `: ${result.sample.join(', ')}` : ''
+              }`
+            : `Falhou: ${result.message}`}
+        </div>
+      )}
     </Card>
   );
 }

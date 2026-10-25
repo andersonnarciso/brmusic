@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * BR Music — servidor da aplicação + API administrativa.
+ * BR Music: servidor da aplicação + API administrativa.
  *
  * Responsabilidades:
  *  1. Servir o build estático (dist/).
@@ -19,6 +19,7 @@ import { createServer } from 'node:http';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { extname, join, normalize, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { DEFAULT_FTP, testFtp, uploadToFtp } from './ftp.mjs';
 
 const ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const DIST = join(ROOT, 'dist');
@@ -119,6 +120,7 @@ const DEFAULT_CONFIG = {
     autoModeration: false,
     queueConcurrency: 2,
   },
+  ftp: { ...DEFAULT_FTP },
   app: {
     exportStemsOnSave: false,
     exportFormat: 'wav',
@@ -178,6 +180,7 @@ async function loadConfig() {
       musicProvider: { ...DEFAULT_CONFIG.musicProvider, ...(parsed.musicProvider ?? {}) },
       generation: { ...DEFAULT_CONFIG.generation, ...(parsed.generation ?? {}) },
       app: { ...DEFAULT_CONFIG.app, ...(parsed.app ?? {}) },
+      ftp: { ...DEFAULT_CONFIG.ftp, ...(parsed.ftp ?? {}) },
       brand: { ...DEFAULT_CONFIG.brand, ...(parsed.brand ?? {}) },
       integrations: { ...DEFAULT_CONFIG.integrations, ...(parsed.integrations ?? {}) },
       stats: { ...DEFAULT_CONFIG.stats, ...(parsed.stats ?? {}) },
@@ -421,7 +424,7 @@ ${lyrics ? `Use esta letra como base: ${lyrics}` : 'Escreva uma letra curta com 
 }
 
 /* ------------------------------------------------------------------ */
-/* MiniMax — modo nativo de geração de música                           */
+/* MiniMax: modo nativo de geração de música                              */
 /* ------------------------------------------------------------------ */
 
 function minimaxMusicRequest(music, body) {
@@ -484,7 +487,7 @@ async function generateWithMiniMax(music, body) {
 
 /**
  * Runtimes de LLM locais mais usados. Todos expõem uma API
- * OpenAI-compatible (exceto Ollama, que também tem /v1) — o BR Music
+ * OpenAI-compatible (exceto Ollama, que também tem /v1), o BR Music
  * conversa com qualquer um deles, desde que a porta e o caminho batam.
  */
 const LOCAL_RUNTIMES = [
@@ -552,6 +555,21 @@ async function handleAdminApi(req, res, pathname, body) {
     return;
   }
 
+  if (pathname === '/api/admin/ftp/test' && req.method === 'POST') {
+    try {
+      const result = await testFtp(config.ftp);
+      logActivity('config', 'Conexão FTP testada com sucesso');
+      await saveConfig(config);
+      sendJson(res, 200, result);
+    } catch (error) {
+      sendJson(res, 200, {
+        ok: false,
+        message: String(error?.message ?? error),
+      });
+    }
+    return;
+  }
+
   if (pathname === '/api/admin/provider/discover' && req.method === 'POST') {
     const found = (await Promise.all(LOCAL_RUNTIMES.map(probeRuntime))).filter(Boolean);
     logActivity('config', `Varredura de runtimes locais: ${found.length} encontrado(s)`);
@@ -594,7 +612,7 @@ async function handleAdminApi(req, res, pathname, body) {
         lastTest: { ok: false, at: Date.now(), latencyMs, message },
       };
       config.llmProviders = config.llmProviders.map((p) => (p.id === providerId ? updated : p));
-      logActivity('config', `Teste do provedor ${provider.label}: falhou — ${message}`);
+      logActivity('config', `Teste do provedor ${provider.label}: falhou, ${message}`);
       await saveConfig(config);
       sendJson(res, 200, { ok: false, latencyMs, message });
     }
@@ -756,6 +774,62 @@ const server = createServer(async (req, res) => {
     if (pathname.startsWith('/api/admin/')) {
       const body = req.method === 'GET' ? {} : await readBody(req);
       await handleAdminApi(req, res, pathname, body);
+      return;
+    }
+
+    if (pathname === '/api/ftp/upload' && req.method === 'POST') {
+      if (!isAdmin(req)) {
+        sendJson(res, 401, { error: 'Token de administrador inválido' });
+        return;
+      }
+      const { filename, contentBase64, subdir } = (await readBody(req)) ?? {};
+      if (!filename || !contentBase64) {
+        sendJson(res, 400, { error: 'filename e contentBase64 são obrigatórios' });
+        return;
+      }
+      try {
+        const result = await uploadToFtp(
+          config.ftp,
+          String(filename),
+          Buffer.from(String(contentBase64), 'base64'),
+          subdir ? String(subdir) : '',
+        );
+        logActivity('generation', `Arquivo enviado ao FTP: ${filename}`);
+        await saveConfig(config);
+        sendJson(res, 200, result);
+      } catch (error) {
+        sendJson(res, 502, { error: String(error?.message ?? error) });
+      }
+      return;
+    }
+
+    if (pathname === '/api/lyrics' && req.method === 'POST') {
+      const { prompt = '', style = '', language = 'pt' } = (await readBody(req)) ?? {};
+      const provider = config.llmProviders.find((p) => p.enabled);
+      if (!provider) {
+        sendJson(res, 400, {
+          error: 'Nenhum provedor de LLM está habilitado no painel de configuração.',
+        });
+        return;
+      }
+      try {
+        const system =
+          language === 'pt'
+            ? 'Você é um compositor profissional. Escreva apenas a letra da música, sem comentários, usando as tags [Intro], [Verse], [Pre-Chorus], [Chorus], [Bridge] e [Outro]. Mantenha as linhas curtas e rimadas.'
+            : 'You are a professional songwriter. Write only the lyrics, using [Intro], [Verse], [Pre-Chorus], [Chorus], [Bridge] and [Outro] tags.';
+        const user = `Escreva a letra de uma música sobre: "${prompt}".${
+          style ? ` Estilo musical: ${style}.` : ''
+        }`;
+        const { text } = await callLlm(provider, [
+          { role: 'system', content: system },
+          { role: 'user', content: user },
+        ]);
+        logActivity('generation', 'Letra gerada pelo LLM');
+        await saveConfig(config);
+        sendJson(res, 200, { lyrics: text.trim(), provider: provider.label });
+      } catch (error) {
+        sendJson(res, 502, { error: String(error?.message ?? error) });
+      }
       return;
     }
 

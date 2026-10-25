@@ -1,6 +1,6 @@
 # BR Music (`brmusic.com`)
 
-Gerador de músicas com IA **gratuito, local-first e open source**. Crie faixas completas — voz, letra, produção — a partir de uma descrição, com um **painel de configuração** para conectar as suas APIs de LLM e gerar as músicas de verdade.
+Gerador de músicas com IA **gratuito, local-first e open source**. Crie faixas completas (voz, letra, produção) a partir de uma descrição, com um **painel de configuração** para conectar as suas APIs de LLM e gerar as músicas de verdade.
 
 > MIT, sem conta, sem plano, sem servidor: a síntese roda no seu dispositivo.
 
@@ -21,18 +21,40 @@ Gerador de músicas com IA **gratuito, local-first e open source**. Crie faixas 
 | App desktop | `electron/` | Empacotado para **Linux, Windows e macOS** |
 | PWA | `public/sw.js` | Instalável e offline no navegador |
 
+### Modo avançado e editor profissional
+
+O painel de criação tem modo **Avançado** com seções recolhíveis (Letra, Estilos, Áudio), alternador **Automático / Escrever letra**, botão **Gerar letra** (usa o LLM configurado, com gerador local como reserva), interruptor **Instrumental**, upload de áudio, gravação pelo microfone (análise de duração e BPM) e controles criativos.
+
+O **editor multipista** (`#/editor/:id`) abre a faixa com os 5 stems separados e oferece:
+
+| Operação | O que faz |
+|---|---|
+| Cortar / Remover seção | recorta ou remove o trecho selecionado na régua |
+| Reverso | inverte o áudio do canal |
+| Velocidade | time-stretch preservando o pitch (WSOLA) |
+| Fade in / Fade out | rampas lineares de entrada e saída |
+| Remaster | compressor + air shelf + soft clip, sem clipar |
+| Substituir seção | regenera o trecho selecionado |
+| Get stems | exporta os 5 stems já editados em ZIP |
+| Mixer | volume, pan, mute e solo por canal, master com volume, remaster e limitador |
+
+O transporte tem play/stop, posição, zoom e seleção de região. As edições são **não destrutivas**: ficam como operações no canal e podem ser desfeitas.
+
 ### Recursos que vão além do original
 
-- **Stems exportáveis** — cada faixa sai separada em **bateria, baixo, pads, melodia e voz** (ZIP), prontas para a sua DAW.
-- **Forma de onda real** — o player desenha os picos do áudio sintetizado e aceita clique para buscar.
-- **Variações em lote** — gere 4 versões da mesma ideia de uma vez, com seeds diferentes.
-- **Remix e extensão** — remixe com outro estilo ou continue a faixa mantendo andamento e tonalidade.
-- **Playlists** — organize as faixas localmente.
-- **Paleta de comandos** — `⌘K` / `Ctrl+K` com busca e ações; atalhos: `⌘N` (criar), `Espaço` (play/pausa).
-- **Capas geradas** — arte de álbum procedural em canvas, a partir da paleta do estilo e do seed da faixa.
-- **Conecte qualquer IA** — presets OpenAI-compatible, Anthropic, Gemini, OpenRouter, Groq, Ollama, **MiniMax** e o **modo nativo da API de Música da MiniMax**.
+- **Stems exportáveis**: cada faixa sai separada em **bateria, baixo, pads, melodia e voz** (ZIP), prontas para a sua DAW.
+- **Forma de onda real**: o player desenha os picos do áudio sintetizado e aceita clique para buscar.
+- **Variações em lote**: gere 4 versões da mesma ideia de uma vez, com seeds diferentes.
+- **Remix e extensão**: remixe com outro estilo ou continue a faixa mantendo andamento e tonalidade.
+- **Playlists**: organize as faixas localmente.
+- **Paleta de comandos**: `⌘K` / `Ctrl+K` com busca e ações; atalhos: `⌘N` (criar), `Espaço` (play/pausa).
+- **Capas geradas**: arte de álbum procedural em canvas, a partir da paleta do estilo e do seed da faixa.
+- **Conecte qualquer IA**: presets OpenAI-compatible, Anthropic, Gemini, OpenRouter, Groq, **MiniMax** e o **modo nativo da API de Música da MiniMax**, além de 10 runtimes locais (Ollama, LM Studio, llama.cpp, vLLM, LocalAI, KoboldCpp, GPT4All, text-generation-webui, Jan, SGLang) com varredura automática de porta.
+- **Editor multipista** com mixer por canal, corte, reverso, velocidade com pitch preservado, fades, remaster e exportação dos stems editados.
+- **Hospedagem FTP**: envie as músicas geradas direto para a sua conta de hospedagem tradicional (cPanel, Hostinger, Locaweb), com teste de conexão e envio automático opcional.
+- **Lixeira**: exclusão reversível, com restauração ou apagar em definitivo (sempre com confirmação).
 
-**Nenhuma faixa é pré-gravada.** O motor (`src/lib/audio/engine.ts`) sintetiza a música no navegador com Web Audio: bateria, baixo, pad, acordes, lead, camada vocal por formantes, reverb e masterização — em WAV 44,1 kHz estéreo, com canais separados por stem.
+**Nenhuma faixa é pré-gravada.** O motor (`src/lib/audio/engine.ts`) sintetiza a música no navegador com Web Audio: bateria, baixo, pad, acordes, lead, camada vocal por formantes, reverb e masterização, em WAV 44,1 kHz estéreo, com canais separados por stem.
 
 ---
 
@@ -79,7 +101,7 @@ No app desktop, o `window.desktop` expõe diálogos de salvamento e gravação d
 
 Abra `#/admin` → **Provedores de IA**. Cada provedor tem: preset de compatibilidade, base URL, endpoint, modelo, **chave de API**, temperatura, tokens máx., timeout, modo JSON, ativar/desativar e **Testar conexão**.
 
-Chaves são gravadas **apenas no servidor** (`server/data/config.json`) e nunca voltam ao navegador — o painel mostra só a máscara. Sem servidor no ar, tudo é salvo no `localStorage` deste navegador.
+Chaves são gravadas **apenas no servidor** (`server/data/config.json`) e nunca voltam ao navegador, o painel mostra só a máscara. Sem servidor no ar, tudo é salvo no `localStorage` deste navegador.
 
 ### Presets disponíveis
 
@@ -87,7 +109,7 @@ Chaves são gravadas **apenas no servidor** (`server/data/config.json`) e nunca 
 |---|---|---|
 | **MiniMax** | `https://api.minimax.io/v1` | OpenAI-compatible (`/chat/completions`, `Bearer`) |
 | OpenAI | `https://api.openai.com/v1` | OpenAI-compatible |
-| Personalizado (OpenAI-compatible) | — | qualquer `/chat/completions` (Together, Groq, vLLM, LM Studio, OpenRouter…) |
+| Personalizado (OpenAI-compatible) | qualquer URL | qualquer `/chat/completions` (Together, Groq, vLLM, LM Studio, OpenRouter…) |
 | Anthropic | `https://api.anthropic.com/v1` | `/messages` com `x-api-key` |
 | Google Gemini | `https://generativelanguage.googleapis.com/v1beta` | `/models/{model}:generateContent` |
 | OpenRouter | `https://openrouter.ai/api/v1` | OpenAI-compatible |
@@ -97,7 +119,7 @@ Modelos MiniMax disponíveis no campo de modelo: `MiniMax-M3.1-Flash-Preview`, `
 
 ### Runtimes locais de LLM (todos compatíveis)
 
-O BR Music conversa com **qualquer** servidor OpenAI-compatible rodando na sua máquina — sem chave de API. Há preset pronto para cada um e uma **varredura automática** que encontra o que já está no ar:
+O BR Music conversa com **qualquer** servidor OpenAI-compatible rodando na sua máquina, sem chave de API. Há preset pronto para cada um e uma **varredura automática** que encontra o que já está no ar:
 
 | Runtime | Porta padrão | Observação |
 |---|---|---|
@@ -118,9 +140,9 @@ O botão **“Descobrir runtimes locais”** varre essas nove portas, mostra qua
 
 Em `#/admin` → **Geração de música**:
 
-1. **Motor local (procedural)** — padrão. Sem servidor, sem custo, funciona offline.
-2. **Plano via LLM** — o LLM habilitado escreve o *plano* musical (título, letra com `[Verse]/[Chorus]`, BPM, tonalidade, progressão, seções com energia) em JSON; o motor local executa esse arranjo.
-3. **Áudio externo (MiniMax nativo)** — `POST https://api.minimax.io/v1/music_generation`:
+1. **Motor local (procedural)**: padrão. Sem servidor, sem custo, funciona offline.
+2. **Plano via LLM**: o LLM habilitado escreve o *plano* musical (título, letra com `[Verse]/[Chorus]`, BPM, tonalidade, progressão, seções com energia) em JSON; o motor local executa esse arranjo.
+3. **Áudio externo (MiniMax nativo)**: `POST https://api.minimax.io/v1/music_generation`:
    - corpo: `model` (`music-3.0`, `music-2.6`, `music-3.0-free`, `music-cover`…), `prompt`, `lyrics`, `output_format` (`hex`/`url`), `audio_setting` (`sample_rate`, `bitrate`, `format`), `lyrics_optimizer`, `is_instrumental`
    - resposta: `data.audio` em hexadecimal + `base_resp.status_code` (1002 = rate limit, 1004 = autenticação, 1008 = saldo, 1026 = conteúdo bloqueado)
    - o botão **Testar** faz uma geração real curta para validar a chave
@@ -138,9 +160,12 @@ O app do criador usa automaticamente o modo configurado; sem servidor no ar, cai
 | `/api/admin/config` | GET / PUT | configuração completa (segredos mascarados na leitura) |
 | `/api/admin/provider/test` | POST | testa um provedor de LLM (`{providerId}`) |
 | `/api/admin/music/test` | POST | gera uma faixa real no provedor de áudio |
-| `/api/admin/users` · `/api/admin/plans` | GET / PUT | legados — o produto é free e local, sem contas |
+| `/api/admin/users` · `/api/admin/plans` | GET / PUT | legados, o produto é free e local, sem contas |
 | `/api/admin/stats` | GET | KPIs da plataforma |
-| `/api/admin/activity` | — | eventos registrados (via `config.activity`) |
+| `/api/admin/ftp/test` | POST | testa a conexão com a hospedagem FTP |
+| `/api/ftp/upload` | POST | envia um arquivo (base64) para o FTP |
+| `/api/lyrics` | POST | gera a letra com o LLM habilitado |
+| `/api/admin/activity` | GET | eventos registrados (via `config.activity`) |
 
 ---
 
@@ -171,7 +196,7 @@ brmusic/
 
 - **Roteamento por hash** (`#/create`) para funcionar em qualquer hospedagem estática sem rewrite.
 - **Dois stores independentes** (`appStore` e `playerStore`): o player atualiza 4×/s sem re-renderizar a árvore inteira.
-- **Metadados em localStorage, blobs em IndexedDB** — o áudio não estoura a cota de 5 MB e continua disponível após reload (URLs de blob são recriadas no boot).
+- **Metadados em localStorage, blobs em IndexedDB**: o áudio não estoura a cota de 5 MB e continua disponível após reload (URLs de blob são recriadas no boot).
 - **Tailwind v4** com tokens de tema em `src/styles.css`; build ≈ 27 KB de CSS e ≈ 80 KB de JS (gzip).
 
 ---

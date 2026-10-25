@@ -2,7 +2,7 @@
  * Cliente da API administrativa.
  *
  * talking to the BR Music server (`npm run server`). Quando o servidor não
- * está no ar, a configuração cai para o localStorage — o painel continua
+ * está no ar, a configuração cai para o localStorage, o painel continua
  * utilizável, mas as chaves de API ficam só no navegador.
  */
 
@@ -162,6 +162,46 @@ export async function testMusicProvider(): Promise<TestResult> {
       latencyMs: 0,
       message: String((error as Error)?.message ?? error),
     };
+  }
+}
+
+export interface FtpTestResult {
+  ok: boolean;
+  latencyMs?: number;
+  path?: string;
+  entries?: number;
+  sample?: string[];
+  message?: string;
+}
+
+export async function testFtpConnection(): Promise<FtpTestResult> {
+  try {
+    return await request<FtpTestResult>(apiUrl('/api/admin/ftp/test'), {
+      method: 'POST',
+      body: '{}',
+    });
+  } catch (error) {
+    return {
+      ok: false,
+      message: `Servidor indisponível (${String((error as Error)?.message ?? error)}).`,
+    };
+  }
+}
+
+/** Envia um arquivo binário para o FTP configurado no painel. */
+export async function uploadToFtp(payload: {
+  filename: string;
+  contentBase64: string;
+  subdir?: string;
+}): Promise<{ ok: boolean; path?: string; error?: string }> {
+  try {
+    const result = await request<{ ok: boolean; path?: string; error?: string }>(
+      apiUrl('/api/ftp/upload'),
+      { method: 'POST', body: JSON.stringify(payload) },
+    );
+    return result;
+  } catch (error) {
+    return { ok: false, error: String((error as Error)?.message ?? error) };
   }
 }
 

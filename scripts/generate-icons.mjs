@@ -2,7 +2,7 @@
 /**
  * Gera os ícones do app sem dependências externas:
  *   build/icon.png  (512x512, RGBA)
- *   build/icon.ico  (PNG 256x256 embutido — formato aceito pelo Windows Vista+)
+ *   build/icon.ico  (PNG 256x256 embutido, formato aceito pelo Windows Vista+)
  *
  * Uso: node scripts/generate-icons.mjs
  */

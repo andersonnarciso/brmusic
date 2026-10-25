@@ -198,7 +198,7 @@ function Overview({
 }) {
   const lastGeneration = stats?.lastGenerationAt
     ? new Date(stats.lastGenerationAt).toLocaleString('pt-BR')
-    : '—';
+    : 'sem dados';
 
   return (
     <div className="space-y-5">
@@ -220,7 +220,7 @@ function Overview({
         />
         <Stat
           label="Última geração"
-          value={stats?.lastGenerationAt ? new Date(stats.lastGenerationAt).toLocaleTimeString('pt-BR') : '—'}
+          value={stats?.lastGenerationAt ? new Date(stats.lastGenerationAt).toLocaleTimeString('pt-BR') : 'sem registro'}
           hint="tudo local, sem servidor externo"
         />
       </div>
@@ -254,7 +254,7 @@ function Overview({
             ))}
             {config.llmProviders.length === 0 && (
               <li className="py-3 text-sm text-mute-500">
-                Nenhum provedor cadastrado — vá em “Provedores de IA”.
+                Nenhum provedor cadastrado, vá em “Provedores de IA”.
               </li>
             )}
           </ul>

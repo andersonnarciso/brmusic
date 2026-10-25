@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "BR Music — gerador de músicas com IA, livre, local-first e open source",
+  "description": "BR Music, gerador de músicas com IA, livre, local-first e open source",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
@@ -15,6 +15,7 @@
     "verify:desktop": "node scripts/verify-electron.mjs"
   },
   "dependencies": {
+    "basic-ftp": "^6.2.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },

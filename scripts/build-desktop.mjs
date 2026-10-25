@@ -56,7 +56,7 @@ function run(command, args, label) {
 function localBin(name) {
   const bin = path.join(ROOT, 'node_modules', '.bin', name);
   if (!existsSync(bin)) {
-    console.error(`✗ binário "${name}" não encontrado em node_modules/.bin — rode npm install primeiro.`);
+    console.error(`✗ binário "${name}" não encontrado em node_modules/.bin, rode npm install primeiro.`);
     process.exit(1);
   }
   return bin;
@@ -75,7 +75,7 @@ run(localBin('electron-builder'), builderArgs, 'Build do desktop (electron-build
 
 console.log('\n▸ Artefatos gerados:');
 if (!existsSync(OUTPUT_DIR)) {
-  console.log('  (nenhum — a pasta release/ não foi criada)');
+  console.log('  (nenhum, a pasta release/ não foi criada)');
 } else {
   const files = [];
   const walk = (dir) => {

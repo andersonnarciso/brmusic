@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * BR Music — preload (ponte segura entre o renderer e o processo principal).
+ * BR Music: preload (ponte segura entre o renderer e o processo principal).
  *
  * Expõe apenas `window.desktop` com um punhado de ações explícitas.
  * Nenhuma API do Node é exposta diretamente na página: contextIsolation

@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * BR Music — processo principal do Electron (desktop).
+ * BR Music: processo principal do Electron (desktop).
  *
  * Responsabilidades:
  *   1. Subir o backend local (server/index.mjs) em uma porta livre do loopback.
@@ -39,7 +39,7 @@ let apiUrl = null;
 /* Backend local                                                       */
 /* ------------------------------------------------------------------ */
 
-/** Caminho real do backend — dentro do asar ele não pode ser executado. */
+/** Caminho real do backend, dentro do asar ele não pode ser executado. */
 function backendEntryPath() {
   const appPath = app.getAppPath();
   if (appPath.includes('app.asar')) {
@@ -195,7 +195,7 @@ function createWindow() {
 
 /**
  * Navega no renderer trocando o hash (a app usa hash router).
- * A navegação acontece por executeJavaScript — nunca via loadURL, que
+ * A navegação acontece por executeJavaScript, nunca via loadURL, que
  * recarregaria a página inteira e perderia o estado do app.
  */
 function navigateTo(route) {
@@ -280,7 +280,7 @@ function buildMenu() {
               type: 'info',
               title: 'Sobre o BR Music',
               message: 'BR Music',
-              detail: `Gerador de músicas com IA — versão ${app.getVersion()}.\nElectron ${process.versions.electron}.`,
+              detail: `Gerador de músicas com IA, versão ${app.getVersion()}.\nElectron ${process.versions.electron}.`,
               buttons: ['Fechar'],
             });
           },
