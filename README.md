@@ -1,10 +1,39 @@
-# BR Music (`brmusic.com`)
+<p align="center">
+  <img src="public/og-neon.jpg" alt="BR Music" width="720" />
+</p>
+
+<p align="center">
+  <a href="https://github.com/andersonnarciso/brmusic/releases/tag/v1.0.0"><img src="https://img.shields.io/badge/download-Linux%20%7C%20Windows%20%7C%20macOS-00c97b?style=flat-square" alt="Download" /></a>
+  <img src="https://img.shields.io/badge/licen%C3%A7a-MIT-00c97b?style=flat-square" alt="MIT" />
+  <img src="https://img.shields.io/badge/plataforma-Linux%20%7C%20Windows%20%7C%20macOS%20%7C%20Web-00c97b?style=flat-square" alt="Plataformas" />
+</p>
+
+# BR Music
 
 Gerador de músicas com IA **gratuito, local-first e open source**. Crie faixas completas (voz, letra, produção) a partir de uma descrição, com um **painel de configuração** para conectar as suas APIs de LLM e gerar as músicas de verdade.
 
 > MIT, sem conta, sem plano, sem servidor: a síntese roda no seu dispositivo.
 
 **Não existe plano, assinatura, conta nem servidor.** As músicas são sintetizadas no seu dispositivo e ficam offline, no seu navegador ou no app desktop.
+
+---
+
+## Capturas de tela
+
+<p align="center">
+  <img src="docs/02-landing.png" alt="Landing do BR Music" width="900" />
+</p>
+
+| | |
+|:--|:--|
+| <img src="docs/08-criar-avancado.png" alt="Modo avançado de criação" /> | <img src="docs/09-editor-multipista.png" alt="Editor multipista" /> |
+| **Criação avançada**: letra com gerador, estilos, áudio e controles criativos | **Editor multipista**: 5 stems, mixer por canal, corte, reverso, velocidade e remaster |
+| <img src="docs/01-criar.png" alt="Tela de criação" /> | <img src="docs/03-biblioteca.png" alt="Biblioteca" /> |
+| **Criação**: Simples e Avançado, com a faixa gerada na lista | **Biblioteca**: faixas, playlists, busca, filtros e lixeira |
+| <img src="docs/06-admin.png" alt="Painel de configuração" /> | <img src="docs/07-admin-provedores.png" alt="Provedores de IA" /> |
+| **Configuração**: visão geral com KPIs e saúde da plataforma | **Provedores de IA**: APIs OpenAI-compatible, MiniMax e runtimes locais |
+| <img src="docs/05-studio.png" alt="Studio" /> | <img src="docs/10-confirmacao-exclusao.png" alt="Confirmação de exclusão" /> |
+| **Studio**: faixas, timeline, transport e prompt na timeline | **Confirmação**: aviso explícito do que será apagado antes de excluir |
 
 ---
 
