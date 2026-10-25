@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import type { AdminConfig } from '../lib/adminTypes';
 import { isDesktop } from '../lib/export';
 import { Badge, Button, Card, Field, Select, TextInput, Toggle } from './ui';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 
 type Update = (updater: (current: AdminConfig) => AdminConfig) => void;
 
@@ -14,6 +15,7 @@ export function AppSection({ config, update }: { config: AdminConfig; update: Up
     null,
   );
   const [usage, setUsage] = useState<string>('—');
+  const [confirmClear, setConfirmClear] = useState(false);
 
   useEffect(() => {
     if (isDesktop()) {
@@ -118,19 +120,32 @@ export function AppSection({ config, update }: { config: AdminConfig; update: Up
 
       <Card title="Dados locais" description="Tudo fica neste dispositivo.">
         <div className="flex flex-wrap items-center gap-3">
-          <Button
-            variant="danger"
-            onClick={() => {
-              localStorage.clear();
-              indexedDB.deleteDatabase('brmusic');
-              window.location.reload();
-            }}
-          >
+          <Button variant="danger" onClick={() => setConfirmClear(true)}>
             Limpar biblioteca e cache
           </Button>
           <Badge tone="neutral">Ação local, sem upload</Badge>
         </div>
       </Card>
+
+      <ConfirmDialog
+        open={confirmClear}
+        danger
+        title="Apagar todos os dados locais?"
+        description="Todas as músicas, capas, stems, playlists e configurações salvas neste navegador serão apagados deste dispositivo. Não há como desfazer."
+        details={[
+          'Biblioteca de músicas e stems',
+          'Playlists criadas',
+          'Configuração de provedores de IA',
+        ]}
+        confirmLabel="Apagar tudo"
+        cancelLabel="Cancelar"
+        onCancel={() => setConfirmClear(false)}
+        onConfirm={() => {
+          localStorage.clear();
+          indexedDB.deleteDatabase('brmusic');
+          window.location.reload();
+        }}
+      />
     </div>
   );
 }

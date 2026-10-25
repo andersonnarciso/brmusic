@@ -6,7 +6,9 @@ import {
   setFilters,
   useApp,
 } from '../lib/store';
+import type { Playlist } from '../lib/types';
 import { Icon } from '../components/Icons';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 
 const TABS = [
   'Músicas',
@@ -25,6 +27,7 @@ export function Library() {
   const filters = useApp((s) => s.filters);
   const [tab, setTab] = useState('Músicas');
   const [newPlaylistName, setNewPlaylistName] = useState('');
+  const [playlistToDelete, setPlaylistToDelete] = useState<Playlist | null>(null);
 
   const visible = useMemo(() => {
     const q = filters.query.trim().toLowerCase();
@@ -120,7 +123,7 @@ export function Library() {
                   </div>
                   <button
                     type="button"
-                    onClick={() => deletePlaylist(playlist.id)}
+                    onClick={() => setPlaylistToDelete(playlist)}
                     aria-label={`Excluir ${playlist.name}`}
                     className="grid h-7 w-7 place-items-center rounded-lg text-mute-500 hover:text-brand-400"
                   >
@@ -231,6 +234,32 @@ export function Library() {
           </div>
         </>
       )}
+
+      <ConfirmDialog
+        open={playlistToDelete !== null}
+        danger
+        title="Excluir esta playlist?"
+        description={
+          playlistToDelete
+            ? `A playlist "${playlistToDelete.name}" será apagada. As músicas continuam na biblioteca.`
+            : ''
+        }
+        details={
+          playlistToDelete
+            ? [
+                `Playlist: ${playlistToDelete.name}`,
+                `${playlistToDelete.songIds.length} faixa(s)`,
+              ]
+            : []
+        }
+        confirmLabel="Excluir"
+        cancelLabel="Manter"
+        onCancel={() => setPlaylistToDelete(null)}
+        onConfirm={() => {
+          if (playlistToDelete) deletePlaylist(playlistToDelete.id);
+          setPlaylistToDelete(null);
+        }}
+      />
     </div>
   );
 }

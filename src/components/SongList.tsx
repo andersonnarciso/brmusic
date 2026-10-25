@@ -17,6 +17,7 @@ import {
 import { playSong } from '../lib/store';
 import { exportMix, exportStems } from '../lib/export';
 import { Icon } from './Icons';
+import { ConfirmDialog } from './ConfirmDialog';
 import type { Song } from '../lib/types';
 
 function formatDuration(seconds: number): string {
@@ -54,6 +55,7 @@ export function SongList() {
   const playing = usePlayer((p) => p.playing);
   const [menuFor, setMenuFor] = useState<string | null>(null);
   const [newPlaylist, setNewPlaylist] = useState<string | null>(null);
+  const [pendingRemoval, setPendingRemoval] = useState<Song | null>(null);
 
   const visible = useMemo(() => {
     let list = songs.filter((s) => s.status !== 'failed');
@@ -283,6 +285,7 @@ export function SongList() {
                       playing={song.id === currentId && playing}
                       menuOpen={menuFor === song.id}
                       onToggleMenu={() => setMenuFor((v) => (v === song.id ? null : song.id))}
+                      onRequestRemove={(target) => setPendingRemoval(target)}
                     />
                   ))}
                 </div>
@@ -291,6 +294,34 @@ export function SongList() {
           </div>
         )}
       </div>
+
+      <ConfirmDialog
+        open={pendingRemoval !== null}
+        danger
+        title="Excluir esta música?"
+        description={
+          pendingRemoval
+            ? `"${pendingRemoval.title}" será removida da biblioteca. O áudio, a capa e os stems serão apagados deste dispositivo. Não há como desfazer.`
+            : ''
+        }
+        details={
+          pendingRemoval
+            ? [
+                `Faixa: ${pendingRemoval.title}`,
+                `Duração: ${Math.floor(pendingRemoval.duration / 60)}:${String(Math.floor(pendingRemoval.duration % 60)).padStart(2, '0')}`,
+                `${pendingRemoval.bpm || '—'} BPM${pendingRemoval.musicalKey ? ` · ${pendingRemoval.musicalKey}` : ''}`,
+                'Arquivos: mix WAV, capa e 5 stems',
+              ]
+            : []
+        }
+        confirmLabel="Excluir"
+        cancelLabel="Manter"
+        onCancel={() => setPendingRemoval(null)}
+        onConfirm={() => {
+          if (pendingRemoval) removeSong(pendingRemoval.id);
+          setPendingRemoval(null);
+        }}
+      />
     </section>
   );
 }
@@ -301,9 +332,17 @@ interface RowProps {
   playing: boolean;
   menuOpen: boolean;
   onToggleMenu: () => void;
+  onRequestRemove: (song: Song) => void;
 }
 
-function SongRow({ song, active, playing, menuOpen, onToggleMenu }: RowProps) {
+function SongRow({
+  song,
+  active,
+  playing,
+  menuOpen,
+  onToggleMenu,
+  onRequestRemove,
+}: RowProps) {
   const playlists = useApp((s) => s.playlists);
   return (
     <div
@@ -492,7 +531,7 @@ function SongRow({ song, active, playing, menuOpen, onToggleMenu }: RowProps) {
               <button
                 type="button"
                 onClick={() => {
-                  removeSong(song.id);
+                  onRequestRemove(song);
                   onToggleMenu();
                 }}
                 className="flex w-full items-center gap-2 border-t border-ink-700 px-4 py-2 text-left
