@@ -1,0 +1,36 @@
+{
+  "name": "brmusic",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "BR Music — gerador de músicas com IA, livre, local-first e open source",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "server": "node server/index.mjs",
+    "typecheck": "tsc --noEmit",
+    "desktop": "node scripts/build-desktop.mjs",
+    "desktop:dir": "node scripts/build-desktop.mjs --dir",
+    "verify:desktop": "node scripts/verify-electron.mjs"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "electron": "^45.0.0",
+    "electron-builder": "^26.18.0",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.5"
+  },
+  "main": "electron/main.cjs",
+  "license": "MIT",
+  "author": "BR Music contributors",
+  "desktopName": "BR Music"
+}

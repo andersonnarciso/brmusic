@@ -1,0 +1,51 @@
+{
+  "name": "BR Music — Gerador de músicas com IA",
+  "short_name": "BR Music",
+  "description": "Crie músicas originais com IA. Grátis, local e offline.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#08090a",
+  "theme_color": "#00c97b",
+  "orientation": "any",
+  "lang": "pt-BR",
+  "categories": [
+    "music",
+    "productivity",
+    "entertainment"
+  ],
+  "icons": [
+    {
+      "src": "./favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Criar música",
+      "url": "./#/create"
+    },
+    {
+      "name": "Biblioteca",
+      "url": "./#/me"
+    },
+    {
+      "name": "Studio",
+      "url": "./#/studio"
+    }
+  ]
+}

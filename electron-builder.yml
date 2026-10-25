@@ -1,0 +1,84 @@
+# electron-builder — BR Music (desktop local-first)
+# Build: npm run build && npx electron-builder --config electron-builder.yml
+appId: com.brmusic.app
+productName: BR Music
+copyright: MIT
+artifactName: BRMusic-${version}-${arch}.${ext}
+asar: true
+npmRebuild: false
+# Garante o entry point do app empacotado mesmo se o package.json ainda não
+# declarar "main" (o dono do package.json deve adicionar "main": "electron/main.cjs").
+extraMetadata:
+  main: electron/main.cjs
+electronLanguages:
+  - pt-BR
+  - en-US
+
+directories:
+  output: release
+  buildResources: build
+
+# Somente o build do Vite, o processo Electron e o package.json entram no app.
+# src/, server/, docs/ e rea-analysis/ ficam de fora do pacote.
+files:
+  - dist/**/*
+  - electron/**/*
+  - server/**/*
+  - package.json
+# O backend local precisa sair do asar: ele é executado como processo Node.
+asarUnpack:
+  - server/**/*
+
+linux:
+  executableName: brmusic
+  category: AudioVideo
+  icon: icon.png
+  # Exigido pelo alvo .deb (manutenor do pacote).
+  maintainer: BR Music <contato@brmusic.app>
+  artifactName: BRMusic-${version}-${arch}.${ext}
+  target:
+    - AppImage
+    - deb
+  desktop:
+    entry:
+      # Exec não pode ser informado aqui: o electron-builder 26 recusa o campo e
+      # gera "Exec=brmusic %U" a partir de linux.executableName.
+      Name: BR Music
+      Comment: Gerador de músicas com IA — local e gratuito
+      Icon: brmusic
+      Categories: AudioVideo;Audio;Music;
+      Terminal: false
+
+win:
+  icon: icon.ico
+  artifactName: BRMusic-${version}-${arch}.${ext}
+  target:
+    - nsis
+    - portable
+
+# Opções do instalador NSIS (seção de nível superior, como exige o schema).
+nsis:
+  # Instalador assistido: permite escolher a pasta de instalação.
+  # (oneClick: true é incompatível com allowToChangeInstallationDirectory.)
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: BR Music
+
+mac:
+  icon: icon.png
+  category: public.app-category.music
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  entitlements: build/entitlements.mac.plist
+  entitlementsInherit: build/entitlements.mac.inherit.plist
+  target:
+    - dmg
+    - zip
+
+publish:
+  provider: github
+  owner: andersonnarciso
+  repo: brmusic

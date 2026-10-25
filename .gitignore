@@ -1,0 +1,18 @@
+node_modules/
+dist/
+release/
+server/data/
+*.log
+.DS_Store
+.playwright-mcp/
+
+# Evidência pesada do REA (mantida fora do repo; o relatório tem os Evidence IDs)
+rea-analysis/js-analysis.json
+rea-analysis/create-page-scripts.json
+rea-analysis/create-page.json
+rea-analysis/web-page.json
+rea-analysis/screenshot.json
+rea-analysis/bundle-js/
+rea-analysis/webscripts-export/
+rea-analysis/webscripts-export-v2/
+rea-analysis/crawl/
