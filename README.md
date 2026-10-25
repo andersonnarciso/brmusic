@@ -34,6 +34,8 @@ Gerador de músicas com IA **gratuito, local-first e open source**. Crie faixas 
 | **Configuração**: visão geral com KPIs e saúde da plataforma | **Provedores de IA**: APIs OpenAI-compatible e runtimes locais |
 | <img src="docs/05-studio.png" alt="Studio" /> | <img src="docs/10-confirmacao-exclusao.png" alt="Confirmação de exclusão" /> |
 | **Studio**: faixas, timeline, transport e prompt na timeline | **Confirmação**: aviso explícito do que será apagado antes de excluir |
+| <img src="docs/11-harness.png" alt="Harness de produção" /> | |
+| **Harness**: pipeline em 9 etapas, do prompt à faixa masterizada | |
 
 ---
 
