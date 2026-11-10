@@ -198,14 +198,32 @@ async function saveConfig(config) {
   await writeFile(CONFIG_PATH, JSON.stringify(config, null, 2), 'utf8');
 }
 
-/** Remove segredos da resposta enviada ao navegador. */
+/**
+ * Remove segredos da resposta enviada ao navegador.
+ *
+ * Junto da mascara vai o tamanho real da chave salva. Sem isso o painel
+ * mostrava 8 pontinhos e nao dava para saber se a chave gigante entrou
+ * inteira ou se foi truncada.
+ */
 function maskSecrets(config) {
   const mask = (value) => (value ? '••••••••' : '');
+  const size = (value) => (value ? value.length : 0);
   return {
     ...config,
-    llmProviders: config.llmProviders.map((p) => ({ ...p, apiKey: mask(p.apiKey) })),
-    musicProvider: { ...config.musicProvider, apiKey: mask(config.musicProvider.apiKey) },
-    integrations: { ...config.integrations, stripeSecretKey: mask(config.integrations.stripeSecretKey) },
+    llmProviders: config.llmProviders.map((p) => ({
+      ...p,
+      apiKey: mask(p.apiKey),
+      apiKeyLength: size(p.apiKey),
+    })),
+    musicProvider: {
+      ...config.musicProvider,
+      apiKey: mask(config.musicProvider.apiKey),
+      apiKeyLength: size(config.musicProvider.apiKey),
+    },
+    integrations: {
+      ...config.integrations,
+      stripeSecretKey: mask(config.integrations.stripeSecretKey),
+    },
   };
 }
 

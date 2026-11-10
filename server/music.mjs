@@ -87,6 +87,40 @@ export function describeMusicError(status, payload) {
 }
 
 /**
+ * Monta o campo "instructions" do MiniMax Music 3.
+ * O modelo espera uma descricao de producao: genero, andamento, timbres,
+ * vocal, arranjo e acabamento.
+ */
+function buildInstructions(body) {
+  const parts = [String(body.prompt ?? '').trim()];
+  if (body.style && !parts[0].includes(body.style)) parts.push(String(body.style).trim());
+  parts.push(
+    body.instrumental
+      ? 'instrumental, no vocals'
+      : 'with expressive lead vocals, clear lyric delivery',
+  );
+  parts.push('balanced mix, clean master, no clipping');
+  return parts.filter(Boolean).join(', ');
+}
+
+/**
+ * Le a duracao de um WAV (16 bits, PCM) direto do cabecalho, sem decodificar
+ * o audio inteiro.
+ */
+function wavDurationSec(buffer) {
+  if (buffer.length < 44) return null;
+  // bloco "fmt " do WAV: canal, taxa de amostragem e bits por amostra
+  const channels = buffer.readUInt16LE(22);
+  const sampleRate = buffer.readUInt32LE(24);
+  const bits = buffer.readUInt16LE(34);
+  if (!channels || !sampleRate) return null;
+  const bytesPerSample = bits / 8;
+  const bytesPerSecond = sampleRate * channels * bytesPerSample;
+  if (!bytesPerSecond) return null;
+  return Math.round((buffer.length - 44) / bytesPerSecond);
+}
+
+/**
  * Erro de provedor de audio, com o status HTTP e o codigo do provedor
  * anexados. O servidor usa esses dados para desligar um provedor morto
  * (por exemplo a API de Musica hospedada, respondendo 410) em vez de
@@ -118,12 +152,15 @@ export async function generateExternalAudio(music, body) {
   /* --- MiniMax Music 3 self-hosted (SGLang-Omni) --- */
   if (vendor === 'minimax-music3') {
     const url = `${base}${music.endpoint || '/v1/audio/speech'}`;
+    // O SGLang-Omni conta 25 quadros acusticos por segundo. O servidor aceita
+    // no maximo 9.000 quadros (6 minutos); o modelo cobre 5 minutos.
+    const targetSec = Math.min(300, Math.max(10, Number(music.durationSec) || 30));
     const payload = {
       model: music.model || 'MiniMaxAI/MiniMax-Music3',
       input: body.lyrics || body.prompt,
-      instructions: body.prompt,
+      instructions: buildInstructions(body),
       seed: body.seed ?? 7,
-      max_new_tokens: 750,
+      max_new_tokens: Math.min(7500, targetSec * 25),
       response_format: 'wav',
       stream: false,
     };
@@ -146,10 +183,13 @@ export async function generateExternalAudio(music, body) {
       throw musicError(describeMusicError(response.status, parsed), response.status, parsed?.base_resp?.status_code);
     }
     const buffer = Buffer.from(await response.arrayBuffer());
+    if (buffer.length < 1024) {
+      throw musicError('O servidor de musica devolveu um audio vazio.', 502, null);
+    }
     return {
       audioBase64: toBase64(buffer),
       audioFormat: 'wav',
-      durationSec: null,
+      durationSec: wavDurationSec(buffer),
       source: 'minimax-music3',
     };
   }

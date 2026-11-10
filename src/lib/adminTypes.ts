@@ -33,6 +33,11 @@ export interface LlmProviderConfig {
   model: string;
   /** Chave da API, gravada só no servidor; nunca devolvida ao cliente. */
   apiKey: string;
+  /**
+   * Tamanho da chave gravada no servidor. O painel mostra esse numero para
+   * deixar claro que a chave foi salva inteira, e nao truncada na mascara.
+   */
+  apiKeyLength?: number;
   temperature: number;
   maxTokens: number;
   timeoutMs: number;
@@ -61,6 +66,8 @@ export interface MusicProviderConfig {
   baseUrl: string;
   endpoint: string;
   apiKey: string;
+  /** Tamanho da chave gravada no servidor (0 quando nao ha chave). */
+  apiKeyLength?: number;
   model: string;
   enabled: boolean;
   lyricsOptimizer: boolean;
