@@ -109,6 +109,8 @@ Inglês é o idioma principal, português (pt-BR) é o secundário. A interface 
 
 O seletor fica no **rodapé da barra lateral** (botões `EN` / `PT`) e em **Mais** (`#/more`). A escolha fica no `localStorage` e vale para todas as telas, inclusive o painel de configurações.
 
+Este documento: [English (principal)](README.md) | **Português (pt-BR)**
+
 ---
 
 ## Rodando
@@ -309,3 +311,13 @@ brmusic/
 - Sem servidor no ar, o painel de configuração persiste no `localStorage` e o teste de conexão de API não consegue chamar o provedor real.
 - Os instaladores de Windows e macOS são compilados no CI (o macOS exige runner macOS); localmente, só o Linux é empacotável.
 - A síntese é procedural: não há modelo de áudio treinado por trás. Nada é pré-gravado.
+
+---
+
+## Créditos
+
+**Autor e copyright**: [Anderson Narciso](https://github.com/andersonnarciso) · [andersonnarciso.dev.br](http://www.andersonnarciso.dev.br)
+
+Distribuído sob a [Licença MIT](LICENSE). O projeto inteiro, código, arte e marca, é livre e local-first: sem conta, sem plano, sem servidor.
+
+**Idiomas**: [English (principal)](README.md) | **Português (pt-BR)**

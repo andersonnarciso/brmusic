@@ -58,6 +58,8 @@ English is the primary language, Portuguese (pt-BR) is the secondary one. The wh
 
 The switcher lives in the **sidebar footer** (the `EN` / `PT` buttons) and in **More** (`#/more`). The choice is stored in `localStorage` and applies to every screen, including the settings panel.
 
+This document: **English (primary)** | [Português (pt-BR)](README.pt-BR.md)
+
 ### Advanced mode and professional editing
 
 The creation panel has an **Advanced** mode with collapsible sections (Lyrics, Styles, Audio), an Automatic or Write lyrics toggle, a lyrics generator, an Instrumental switch, audio upload and microphone recording, plus the creative controls.
@@ -312,3 +314,13 @@ brmusic/
 - With no server running, the settings panel persists to `localStorage` and the API connection test cannot reach the real provider.
 - The Windows and macOS installers are compiled in CI (macOS needs a macOS runner); locally only Linux can be packaged.
 - Synthesis is procedural: there is no trained audio model behind it. Nothing is pre-recorded.
+
+---
+
+## Credits
+
+**Author and copyright**: [Anderson Narciso](https://github.com/andersonnarciso) · [andersonnarciso.dev.br](http://www.andersonnarciso.dev.br)
+
+Released under the [MIT License](LICENSE). The whole project, code, art and brand, is free and local-first: no account, no plan, no server.
+
+**Languages**: English (primary) | [Português (pt-BR)](README.pt-BR.md)

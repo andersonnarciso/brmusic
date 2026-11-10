@@ -179,6 +179,8 @@ const EN: Record<string, string> = {
   'Voltar': 'Back',
   'Estilos': 'Styles',
   'Beat, letra, ou os dois.': 'A beat, lyrics, or both.',
+  'Feito por': 'Made by',
+  'Licença MIT': 'MIT License',
 
   // menu da faixa
   'Remix': 'Remix',

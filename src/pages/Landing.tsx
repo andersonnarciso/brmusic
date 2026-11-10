@@ -288,6 +288,29 @@ export function Landing() {
           </span>
           <span>{t('Gerador procedural local · nenhuma faixa é pré-gravada')}</span>
         </div>
+        <div className="mx-auto mt-4 flex max-w-6xl flex-col items-center justify-between gap-2 text-[11px] text-mute-500 sm:flex-row">
+          <span>
+            {t('Feito por')}{' '}
+            <a
+              href="https://github.com/andersonnarciso"
+              target="_blank"
+              rel="noreferrer"
+              className="text-mute-300 transition hover:text-brand-400"
+            >
+              Anderson Narciso
+            </a>
+          </span>
+          <span>
+            <a
+              href="https://github.com/andersonnarciso/brmusic/blob/main/LICENSE"
+              target="_blank"
+              rel="noreferrer"
+              className="transition hover:text-brand-400"
+            >
+              {t('Licença MIT')}
+            </a>
+          </span>
+        </div>
       </footer>
     </div>
   );
