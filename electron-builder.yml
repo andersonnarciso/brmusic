@@ -30,6 +30,9 @@ files:
 # O backend local precisa sair do asar: ele é executado como processo Node.
 asarUnpack:
   - server/**/*
+  # o backend e executado de fora do asar, entao as dependencias dele
+  # precisam existir no disco ao lado
+  - node_modules/basic-ftp/**/*
 
 linux:
   executableName: brmusic

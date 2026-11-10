@@ -7,7 +7,6 @@
  * app desktop empacotado sem instalar nada.
  */
 
-import { Client } from 'basic-ftp';
 import { Readable } from 'node:stream';
 
 /**
@@ -60,6 +59,15 @@ function normalize(raw) {
 async function withClient(config, fn) {
   if (!config.host || !config.user) {
     throw new Error('Informe o host e o usuário do FTP.');
+  }
+
+  let Client;
+  try {
+    ({ Client } = await import('basic-ftp'));
+  } catch {
+    throw new Error(
+      'O pacote basic-ftp não está disponível nesta instalação. Reinstale o app ou use o modo local.',
+    );
   }
 
   const client = new Client();
