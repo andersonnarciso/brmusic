@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useApp } from '../lib/store';
 import { navigate } from '../lib/store';
 import { Icon } from '../components/Icons';
+import { useT } from '../lib/useT';
 import { EditorSession, type EditorTrack } from '../lib/editor';
 import { applyEdit, type EditOp } from '../lib/audio/edit';
 import { exportStems } from '../lib/export';
@@ -22,6 +23,7 @@ interface Snapshot {
 }
 
 export function EditorPage({ songId }: Props) {
+  const t = useT();
   const songs = useApp((s) => s.songs);
   const song = songs.find((s) => s.id === songId);
   // os stems chegam de forma assíncrona (IndexedDB): recarrega quando eles chegam
@@ -150,7 +152,7 @@ export function EditorPage({ songId }: Props) {
   if (!song) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
-        <p className="text-mute-400">Música não encontrada.</p>
+        <p className="text-mute-400">{t('Música não encontrada.')}</p>
         <button
           type="button"
           onClick={() => navigate('/me')}
@@ -168,7 +170,7 @@ export function EditorPage({ songId }: Props) {
         <button
           type="button"
           onClick={() => navigate('/me')}
-          aria-label="Voltar"
+          aria-label={t('Voltar')}
           className="grid h-8 w-8 place-items-center rounded-lg text-mute-400 hover:bg-ink-800 hover:text-mute-100"
         >
           <Icon.ChevronRight size={16} className="rotate-180" />
@@ -244,7 +246,7 @@ export function EditorPage({ songId }: Props) {
           <p className="mb-2 mt-5 text-[11px] uppercase tracking-wide text-mute-500">Master</p>
           <div className="space-y-3 rounded-xl border border-ink-700 bg-ink-850 p-3">
             <MixerFader
-              label="Volume"
+              label={t('Volume')}
               value={master.gain}
               onChange={(value) => {
                 const next = { ...master, gain: value };
@@ -297,7 +299,7 @@ export function EditorPage({ songId }: Props) {
             />
             <EditAction
               icon="X"
-              label="Remover seção"
+              label={t('Remover seção')}
               onClick={() => {
                 if (!selection) return showToast('Selecione um trecho na régua');
                 const track = tracks[0];
@@ -318,7 +320,7 @@ export function EditorPage({ songId }: Props) {
             />
             <EditAction
               icon="Sliders"
-              label="Velocidade"
+              label={t('Velocidade')}
               onClick={() => {
                 const track = tracks[0];
                 if (!track) return;

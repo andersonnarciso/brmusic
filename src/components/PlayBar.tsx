@@ -12,6 +12,7 @@ import {
 import { Icon } from './Icons';
 import { Waveform } from './Waveform';
 import { useEffect } from 'react';
+import { useT } from '../lib/useT';
 
 function formatTime(seconds: number): string {
   if (!Number.isFinite(seconds) || seconds < 0) return '0:00';
@@ -21,6 +22,7 @@ function formatTime(seconds: number): string {
 }
 
 export function PlayBar() {
+  const t = useT();
   const songId = usePlayer((p) => p.songId);
   const playing = usePlayer((p) => p.playing);
   const currentTime = usePlayer((p) => p.currentTime);
@@ -54,10 +56,10 @@ export function PlayBar() {
         )}
         <div className="min-w-0">
           <p className="truncate text-sm font-medium text-mute-100">
-            {song?.title ?? 'Nada tocando'}
+            {song?.title ?? t('Nada tocando')}
           </p>
           <p className="truncate text-xs text-mute-500">
-            {song ? `${song.bpm} BPM · ${song.musicalKey || 'sem tonalidade'}` : 'Escolha uma música na biblioteca'}
+            {song ? `${song.bpm} BPM · ${song.musicalKey || 'sem tonalidade'}` : t('Escolha uma música na biblioteca')}
           </p>
         </div>
       </div>
@@ -76,7 +78,7 @@ export function PlayBar() {
           <button
             type="button"
             onClick={handlePrev}
-            aria-label="Música anterior"
+            aria-label={t('Música anterior')}
             className="text-mute-300 transition hover:text-mute-100"
           >
             <Icon.Prev size={17} />
@@ -84,7 +86,7 @@ export function PlayBar() {
           <button
             type="button"
             onClick={togglePlay}
-            aria-label={playing ? 'Pausar' : 'Tocar'}
+            aria-label={playing ? t('Pausar') : t('Tocar')}
             className="grid h-10 w-10 place-items-center rounded-full bg-mute-100 text-ink-950
               transition hover:scale-105"
           >
@@ -93,7 +95,7 @@ export function PlayBar() {
           <button
             type="button"
             onClick={() => void handleNext()}
-            aria-label="Próxima música"
+            aria-label={t('Próxima música')}
             className="text-mute-300 transition hover:text-mute-100"
           >
             <Icon.Next size={17} />
@@ -101,7 +103,7 @@ export function PlayBar() {
           <button
             type="button"
             onClick={cycleRepeat}
-            aria-label="Repetir"
+            aria-label={t('Repetir')}
             aria-pressed={repeat !== 'off'}
             className={`relative transition ${
               repeat !== 'off' ? 'text-brand-400' : 'text-mute-400 hover:text-mute-100'
@@ -134,7 +136,7 @@ export function PlayBar() {
         <button
           type="button"
           onClick={() => setVolume(volume > 0 ? 0 : 0.8)}
-          aria-label={volume > 0 ? 'Silenciar' : 'Ativar som'}
+          aria-label={volume > 0 ? t('Silenciar') : t('Ativar som')}
           className="text-mute-400 transition hover:text-mute-100"
         >
           {volume > 0 ? <Icon.Volume size={17} /> : <Icon.VolumeOff size={17} />}
@@ -150,7 +152,7 @@ export function PlayBar() {
             max={1}
             step={0.01}
             value={volume}
-            aria-label="Volume"
+            aria-label={t('Volume')}
             onChange={(e) => setVolume(Number(e.target.value))}
             className="absolute inset-0 h-1.5 w-full cursor-pointer appearance-none bg-transparent
               [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:w-3

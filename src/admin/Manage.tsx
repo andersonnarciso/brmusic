@@ -4,10 +4,12 @@ import { isDesktop } from '../lib/export';
 import { testFtpConnection } from '../lib/adminClient';
 import { Badge, Button, Card, Field, Select, TextInput, Toggle } from './ui';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { useT } from '../lib/useT';
 
 type Update = (updater: (current: AdminConfig) => AdminConfig) => void;
 
 export function AppSection({ config, update }: { config: AdminConfig; update: Update }) {
+  const t = useT();
   const app = config.app;
   const patch = (partial: Partial<typeof app>) =>
     update((c) => ({ ...c, app: { ...c.app, ...partial } }));
@@ -32,36 +34,42 @@ export function AppSection({ config, update }: { config: AdminConfig; update: Up
 
   return (
     <div className="space-y-5">
-      <Card title="Comportamento do aplicativo" description="Como o app cria, toca e exporta.">
+      <Card
+        title={t('Comportamento do aplicativo')}
+        description={t('Como o app cria, toca e exporta.')}
+      >
         <div className="grid gap-3 md:grid-cols-2">
           <Toggle
-            label="Tocar automaticamente após gerar"
-            hint="Começa a reprodução assim que a faixa fica pronta."
+            label={t('Tocar automaticamente após gerar')}
+            hint={t('Começa a reprodução assim que a faixa fica pronta.')}
             checked={app.autoplayAfterGenerate}
             onChange={(autoplayAfterGenerate) => patch({ autoplayAfterGenerate })}
           />
           <Toggle
-            label="Mostrar forma de onda real"
-            hint="Desenha os picos do áudio sintetizado no player."
+            label={t('Mostrar forma de onda real')}
+            hint={t('Desenha os picos do áudio sintetizado no player.')}
             checked={app.showWaveform}
             onChange={(showWaveform) => patch({ showWaveform })}
           />
           <Toggle
-            label="Exportar stems junto do mix"
-            hint="Gera o ZIP de stems sempre que a faixa é salva."
+            label={t('Exportar stems junto do mix')}
+            hint={t('Gera o ZIP de stems sempre que a faixa é salva.')}
             checked={app.exportStemsOnSave}
             onChange={(exportStemsOnSave) => patch({ exportStemsOnSave })}
           />
           <Toggle
-            label="Baixar automaticamente ao gerar"
-            hint="Salva o WAV na pasta de downloads do sistema."
+            label={t('Baixar automaticamente ao gerar')}
+            hint={t('Salva o WAV na pasta de downloads do sistema.')}
             checked={false}
             onChange={() => undefined}
           />
         </div>
 
         <div className="mt-4 grid gap-4 md:grid-cols-3">
-          <Field label="Variações por lote" hint="Quantas versões geradas de uma vez.">
+          <Field
+            label={t('Variações por lote')}
+            hint={t('Quantas versões geradas de uma vez.')}
+          >
             <TextInput
               type="number"
               min={1}
@@ -70,7 +78,7 @@ export function AppSection({ config, update }: { config: AdminConfig; update: Up
               onChange={(e) => patch({ variationsPerBatch: Number(e.target.value) })}
             />
           </Field>
-          <Field label="Crossfade (ms)" hint="Transição entre faixas no player.">
+          <Field label={t('Crossfade (ms)')} hint={t('Transição entre faixas no player.')}>
             <TextInput
               type="number"
               min={0}
@@ -80,36 +88,42 @@ export function AppSection({ config, update }: { config: AdminConfig; update: Up
               onChange={(e) => patch({ crossfadeMs: Number(e.target.value) })}
             />
           </Field>
-          <Field label="Formato de exportação">
+          <Field label={t('Formato de exportação')}>
             <Select value={app.exportFormat} onChange={() => patch({ exportFormat: 'wav' })}>
               <option value="wav">WAV (16 bits, 44,1 kHz)</option>
             </Select>
           </Field>
           <Field
-            label="Pasta padrão de exportação"
-            hint="Usada pelo app desktop (Electron)."
+            label={t('Pasta padrão de exportação')}
+            hint={t('Usada pelo app desktop (Electron).')}
             className="md:col-span-3"
           >
             <TextInput
               value={app.defaultExportDir}
               onChange={(e) => patch({ defaultExportDir: e.target.value })}
-              placeholder={info ? 'ex.: /home/usuário/Música' : 'Definido pelo app desktop'}
+              placeholder={info ? t('ex.: /home/usuário/Música') : t('Definido pelo app desktop')}
             />
           </Field>
         </div>
       </Card>
 
-      <Card title="Diagnóstico" description="Ambiente em que o app está rodando.">
+      <Card
+        title={t('Diagnóstico')}
+        description={t('Ambiente em que o app está rodando.')}
+      >
         <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {[
-            ['Ambiente', isDesktop() ? 'Desktop (Electron)' : 'Navegador / PWA'],
-            ['Versão do app', info?.version ?? 'web'],
-            ['Plataforma', info?.platform ?? navigator.platform],
-            ['Runtime', info?.electron ?? `navegador ${navigator.userAgent.slice(0, 48)}…`],
-            ['Armazenamento usado', usage],
-            ['Motor', 'Procedural (Web Audio)'],
-            ['Amostragem', '44.1 kHz · estéreo'],
-            ['Stems', '5 trilhas por faixa'],
+            [t('Ambiente'), isDesktop() ? 'Desktop (Electron)' : t('Navegador / PWA')],
+            [t('Versão do app'), info?.version ?? 'web'],
+            [t('Plataforma'), info?.platform ?? navigator.platform],
+            [
+              t('Runtime'),
+              info?.electron ?? `${t('navegador')} ${navigator.userAgent.slice(0, 48)}…`,
+            ],
+            [t('Armazenamento usado'), usage === 'a medir' ? t('a medir') : usage],
+            [t('Motor'), 'Procedural (Web Audio)'],
+            [t('Amostragem'), t('44.1 kHz · estéreo')],
+            [t('Stems'), t('5 trilhas por faixa')],
           ].map(([label, value]) => (
             <div key={label} className="rounded-xl border border-ink-700 bg-ink-850 px-3 py-2">
               <dt className="text-[10px] uppercase tracking-wide text-mute-500">{label}</dt>
@@ -119,27 +133,29 @@ export function AppSection({ config, update }: { config: AdminConfig; update: Up
         </dl>
       </Card>
 
-      <Card title="Dados locais" description="Tudo fica neste dispositivo.">
+      <Card title={t('Dados locais')} description={t('Tudo fica neste dispositivo.')}>
         <div className="flex flex-wrap items-center gap-3">
           <Button variant="danger" onClick={() => setConfirmClear(true)}>
-            Limpar biblioteca e cache
+            {t('Limpar biblioteca e cache')}
           </Button>
-          <Badge tone="neutral">Ação local, sem upload</Badge>
+          <Badge tone="neutral">{t('Ação local, sem upload')}</Badge>
         </div>
       </Card>
 
       <ConfirmDialog
         open={confirmClear}
         danger
-        title="Apagar todos os dados locais?"
-        description="Todas as músicas, capas, stems, playlists e configurações salvas neste navegador serão apagados deste dispositivo. Não há como desfazer."
+        title={t('Apagar todos os dados locais?')}
+        description={t(
+          'Todas as músicas, capas, stems, playlists e configurações salvas neste navegador serão apagados deste dispositivo. Não há como desfazer.',
+        )}
         details={[
-          'Biblioteca de músicas e stems',
-          'Playlists criadas',
-          'Configuração de provedores de IA',
+          t('Biblioteca de músicas e stems'),
+          t('Playlists criadas'),
+          t('Configuração de provedores de IA'),
         ]}
-        confirmLabel="Apagar tudo"
-        cancelLabel="Cancelar"
+        confirmLabel={t('Apagar tudo')}
+        cancelLabel={t('Cancelar')}
         onCancel={() => setConfirmClear(false)}
         onConfirm={() => {
           localStorage.clear();
@@ -152,29 +168,33 @@ export function AppSection({ config, update }: { config: AdminConfig; update: Up
 }
 
 export function BrandSection({ config, update }: { config: AdminConfig; update: Update }) {
+  const t = useT();
   const patch = (partial: Partial<AdminConfig['brand']>) =>
     update((c) => ({ ...c, brand: { ...c.brand, ...partial } }));
 
   return (
     <div className="space-y-5">
-      <Card title="Identidade" description="Nome, marca e cores aplicadas na interface.">
+      <Card
+        title={t('Identidade')}
+        description={t('Nome, marca e cores aplicadas na interface.')}
+      >
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          <Field label="Nome do site">
+          <Field label={t('Nome do site')}>
             <TextInput value={config.brand.siteName} onChange={(e) => patch({ siteName: e.target.value })} />
           </Field>
-          <Field label="Texto do logo">
+          <Field label={t('Texto do logo')}>
             <TextInput value={config.brand.logoText} onChange={(e) => patch({ logoText: e.target.value })} />
           </Field>
-          <Field label="Domínio">
+          <Field label={t('Domínio')}>
             <TextInput value={config.brand.domain} onChange={(e) => patch({ domain: e.target.value })} />
           </Field>
-          <Field label="Cor primária">
+          <Field label={t('Cor primária')}>
             <div className="flex gap-2">
               <input
                 type="color"
                 value={config.brand.primaryColor}
                 onChange={(e) => patch({ primaryColor: e.target.value })}
-                aria-label="Cor primária"
+                aria-label={t('Cor primária')}
                 className="h-10 w-12 cursor-pointer rounded-lg border border-ink-700 bg-ink-850"
               />
               <TextInput
@@ -183,13 +203,13 @@ export function BrandSection({ config, update }: { config: AdminConfig; update: 
               />
             </div>
           </Field>
-          <Field label="Cor de destaque">
+          <Field label={t('Cor de destaque')}>
             <div className="flex gap-2">
               <input
                 type="color"
                 value={config.brand.accentColor}
                 onChange={(e) => patch({ accentColor: e.target.value })}
-                aria-label="Cor de destaque"
+                aria-label={t('Cor de destaque')}
                 className="h-10 w-12 cursor-pointer rounded-lg border border-ink-700 bg-ink-850"
               />
               <TextInput
@@ -198,21 +218,21 @@ export function BrandSection({ config, update }: { config: AdminConfig; update: 
               />
             </div>
           </Field>
-          <Field label="E-mail de suporte">
+          <Field label={t('E-mail de suporte')}>
             <TextInput
               value={config.brand.supportEmail}
               onChange={(e) => patch({ supportEmail: e.target.value })}
             />
           </Field>
-          <Field label="Idioma">
+          <Field label={t('Idioma')}>
             <Select value={config.brand.locale} onChange={(e) => patch({ locale: e.target.value })}>
-              <option value="pt-BR">Português (Brasil)</option>
-              <option value="pt-PT">Português (Portugal)</option>
+              <option value="pt-BR">{t('Português (Brasil)')}</option>
+              <option value="pt-PT">{t('Português (Portugal)')}</option>
               <option value="en-US">English (US)</option>
               <option value="es-ES">Español</option>
             </Select>
           </Field>
-          <Field label="Moeda de referência">
+          <Field label={t('Moeda de referência')}>
             <Select value={config.brand.currency} onChange={(e) => patch({ currency: e.target.value })}>
               <option value="BRL">BRL (R$)</option>
               <option value="USD">USD (US$)</option>
@@ -226,34 +246,35 @@ export function BrandSection({ config, update }: { config: AdminConfig; update: 
 }
 
 export function IntegrationsSection({ config, update }: { config: AdminConfig; update: Update }) {
+  const t = useT();
   const patch = (partial: Partial<AdminConfig['integrations']>) =>
     update((c) => ({ ...c, integrations: { ...c.integrations, ...partial } }));
 
   return (
     <div className="space-y-5">
       <Card
-        title="Armazenamento e CDN"
-        description="Onde os arquivos de áudio ficam guardados. Por padrão, tudo é local."
+        title={t('Armazenamento e CDN')}
+        description={t('Onde os arquivos de áudio ficam guardados. Por padrão, tudo é local.')}
       >
         <div className="grid gap-4 md:grid-cols-3">
-          <Field label="Provedor">
+          <Field label={t('Provedor')}>
             <Select
               value={config.integrations.storageProvider}
               onChange={(e) => patch({ storageProvider: e.target.value })}
             >
-              <option value="indexeddb">IndexedDB (local, sem servidor)</option>
+              <option value="indexeddb">{t('IndexedDB (local, sem servidor)')}</option>
               <option value="s3">Amazon S3</option>
               <option value="r2">Cloudflare R2</option>
               <option value="gcs">Google Cloud Storage</option>
             </Select>
           </Field>
-          <Field label="Bucket">
+          <Field label={t('Bucket')}>
             <TextInput
               value={config.integrations.storageBucket}
               onChange={(e) => patch({ storageBucket: e.target.value })}
             />
           </Field>
-          <Field label="URL do CDN">
+          <Field label={t('URL do CDN')}>
             <TextInput
               value={config.integrations.cdnUrl}
               onChange={(e) => patch({ cdnUrl: e.target.value })}
@@ -262,8 +283,10 @@ export function IntegrationsSection({ config, update }: { config: AdminConfig; u
         </div>
         <div className="mt-4">
           <Toggle
-            label="Manter arquivos locais por padrão"
-            hint="Quando ligado, o áudio fica no IndexedDB do navegador em vez de ir para o storage configurado."
+            label={t('Manter arquivos locais por padrão')}
+            hint={t(
+              'Quando ligado, o áudio fica no IndexedDB do navegador em vez de ir para o storage configurado.',
+            )}
             checked={config.integrations.storageProvider === 'indexeddb'}
             onChange={(checked) => patch({ storageProvider: checked ? 'indexeddb' : 's3' })}
           />
@@ -272,20 +295,23 @@ export function IntegrationsSection({ config, update }: { config: AdminConfig; u
 
       <FtpCard config={config} update={update} />
 
-      <Card title="Telemetria opcional" description="Tudo desligado por padrão, o app não coleta nada.">
+      <Card
+        title={t('Telemetria opcional')}
+        description={t('Tudo desligado por padrão, o app não coleta nada.')}
+      >
         <div className="grid gap-4 md:grid-cols-2">
-          <Field label="ID de analytics">
+          <Field label={t('ID de analytics')}>
             <TextInput
               value={config.integrations.analyticsId}
               onChange={(e) => patch({ analyticsId: e.target.value })}
-              placeholder="vazio = sem telemetria"
+              placeholder={t('vazio = sem telemetria')}
             />
           </Field>
-          <Field label="Cloudflare Turnstile (chave pública)">
+          <Field label={t('Cloudflare Turnstile (chave pública)')}>
             <TextInput
               value={config.integrations.cloudflareTurnstileKey}
               onChange={(e) => patch({ cloudflareTurnstileKey: e.target.value })}
-              placeholder="opcional"
+              placeholder={t('opcional')}
             />
           </Field>
         </div>
@@ -295,20 +321,21 @@ export function IntegrationsSection({ config, update }: { config: AdminConfig; u
 }
 
 export function ActivitySection({ config }: { config: AdminConfig }) {
+  const t = useT();
   const [filter, setFilter] = useState<string>('all');
 
   const events = config.activity.filter((e) => filter === 'all' || e.kind === filter);
 
   return (
     <Card
-      title="Log de atividade"
-      description="Eventos gerados pelo painel e pela API."
+      title={t('Log de atividade')}
+      description={t('Eventos gerados pelo painel e pela API.')}
       actions={
         <Select value={filter} onChange={(e) => setFilter(e.target.value)} className="w-40">
-          <option value="all">Todos</option>
-          <option value="generation">Geração</option>
-          <option value="config">Configuração</option>
-          <option value="user">Usuários</option>
+          <option value="all">{t('Todos')}</option>
+          <option value="generation">{t('Geração')}</option>
+          <option value="config">{t('Configuração')}</option>
+          <option value="user">{t('Usuários')}</option>
           <option value="billing">Billing</option>
         </Select>
       }
@@ -319,7 +346,7 @@ export function ActivitySection({ config }: { config: AdminConfig }) {
             <div>
               <p className="text-sm text-mute-200">{event.message}</p>
               <p className="text-[11px] text-mute-500">
-                {event.kind} · por {event.actor}
+                {event.kind} · {t('por')} {event.actor}
               </p>
             </div>
             <span className="shrink-0 text-xs text-mute-500">
@@ -328,7 +355,7 @@ export function ActivitySection({ config }: { config: AdminConfig }) {
           </li>
         ))}
         {events.length === 0 && (
-          <li className="py-6 text-center text-sm text-mute-500">Nenhum evento registrado.</li>
+          <li className="py-6 text-center text-sm text-mute-500">{t('Nenhum evento registrado.')}</li>
         )}
       </ul>
     </Card>
@@ -338,6 +365,7 @@ export function ActivitySection({ config }: { config: AdminConfig }) {
 
 /** Hospedagem tradicional via FTP: as músicas podem ser enviadas para a conta do usuário. */
 function FtpCard({ config, update }: { config: AdminConfig; update: Update }) {
+  const t = useT();
   const ftp = config.ftp;
   const [testing, setTesting] = useState(false);
   const [result, setResult] = useState<{
@@ -359,15 +387,17 @@ function FtpCard({ config, update }: { config: AdminConfig; update: Update }) {
 
   return (
     <Card
-      title="Hospedagem tradicional (FTP)"
-      description="Envie as músicas geradas direto para a sua conta de hospedagem (cPanel, Hostinger, Locaweb)."
+      title={t('Hospedagem tradicional (FTP)')}
+      description={t(
+        'Envie as músicas geradas direto para a sua conta de hospedagem (cPanel, Hostinger, Locaweb).',
+      )}
       actions={
         <>
           <Badge tone={ftp.enabled ? 'ok' : 'neutral'}>
-            {ftp.enabled ? 'ativo' : 'inativo'}
+            {ftp.enabled ? t('ativo') : t('inativo')}
           </Badge>
           <Button onClick={() => void runTest()} disabled={testing}>
-            {testing ? 'Testando...' : 'Testar conexão'}
+            {testing ? t('Testando...') : t('Testar conexão')}
           </Button>
         </>
       }
@@ -380,36 +410,36 @@ function FtpCard({ config, update }: { config: AdminConfig; update: Update }) {
             placeholder="ftp.seudominio.com"
           />
         </Field>
-        <Field label="Porta">
+        <Field label={t('Porta')}>
           <TextInput
             type="number"
             value={ftp.port}
             onChange={(e) => patch({ port: Number(e.target.value) })}
           />
         </Field>
-        <Field label="Usuário">
+        <Field label={t('Usuário')}>
           <TextInput
             value={ftp.user}
             onChange={(e) => patch({ user: e.target.value })}
             placeholder="usuario@seudominio.com"
           />
         </Field>
-        <Field label="Senha" hint="Gravada apenas no servidor.">
+        <Field label={t('Senha')} hint={t('Gravada apenas no servidor.')}>
           <TextInput
             type="password"
             value={ftp.password}
             onChange={(e) => patch({ password: e.target.value })}
-            placeholder="senha do FTP"
+            placeholder={t('senha do FTP')}
           />
         </Field>
-        <Field label="Pasta remota" hint="Onde as músicas serão gravadas.">
+        <Field label={t('Pasta remota')} hint={t('Onde as músicas serão gravadas.')}>
           <TextInput
             value={ftp.remotePath}
             onChange={(e) => patch({ remotePath: e.target.value })}
             placeholder="/public_html/musicas"
           />
         </Field>
-        <Field label="Timeout (ms)">
+        <Field label={t('Timeout (ms)')}>
           <TextInput
             type="number"
             step={1000}
@@ -421,20 +451,20 @@ function FtpCard({ config, update }: { config: AdminConfig; update: Update }) {
 
       <div className="mt-4 grid gap-3 md:grid-cols-3">
         <Toggle
-          label="Envio automático ao gerar"
-          hint="Cada faixa nova é enviada para o FTP assim que fica pronta."
+          label={t('Envio automático ao gerar')}
+          hint={t('Cada faixa nova é enviada para o FTP assim que fica pronta.')}
           checked={ftp.enabled}
           onChange={(enabled) => patch({ enabled })}
         />
         <Toggle
-          label="Conexão segura (FTPS)"
-          hint="Usa TLS na porta 21. Desligado, a conexão é em texto simples."
+          label={t('Conexão segura (FTPS)')}
+          hint={t('Usa TLS na porta 21. Desligado, a conexão é em texto simples.')}
           checked={ftp.secure}
           onChange={(secure) => patch({ secure })}
         />
         <Toggle
-          label="Modo passivo"
-          hint="Recomendado quando há firewall ou NAT no caminho."
+          label={t('Modo passivo')}
+          hint={t('Recomendado quando há firewall ou NAT no caminho.')}
           checked={ftp.passive}
           onChange={(passive) => patch({ passive })}
         />
@@ -449,10 +479,10 @@ function FtpCard({ config, update }: { config: AdminConfig; update: Update }) {
           }`}
         >
           {result.ok
-            ? `Conectado em ${result.latencyMs ?? 0} ms. ${result.entries ?? 0} item(ns) em ${ftp.remotePath}${
+            ? `${t('Conectado em')} ${result.latencyMs ?? 0} ms. ${result.entries ?? 0} ${t('item(ns) em')} ${ftp.remotePath}${
                 result.sample?.length ? `: ${result.sample.join(', ')}` : ''
               }`
-            : `Falhou: ${result.message}`}
+            : `${t('Falhou')}: ${result.message}`}
         </div>
       )}
     </Card>

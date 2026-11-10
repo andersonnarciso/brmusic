@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import { navigate, setParams, useApp } from '../lib/store';
 import { Icon } from '../components/Icons';
+import { useT } from '../lib/useT';
 
+// Os textos ficam em português no código e são traduzidos na renderização,
+// porque a tradução depende do idioma escolhido em tempo de execução.
 const HIGHLIGHTS = [
   {
     tag: 'Destaque',
@@ -27,6 +30,7 @@ const HIGHLIGHTS = [
 ];
 
 export function Home() {
+  const t = useT();
   const songs = useApp((s) => s.songs);
   const [prompt, setPrompt] = useState('');
   const recent = songs.filter((s) => s.status === 'ready').slice(0, 6);
@@ -40,8 +44,8 @@ export function Home() {
             className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-mute-500"
           />
           <input
-            placeholder="Buscar"
-            aria-label="Buscar no BR Music"
+            placeholder={t('Buscar')}
+            aria-label={t('Buscar no BR Music')}
             className="w-full rounded-full border border-ink-700 bg-ink-850 py-2 pl-9 pr-3 text-sm
               text-mute-100 placeholder:text-mute-500 focus:border-brand-600 focus:outline-none"
           />
@@ -50,15 +54,15 @@ export function Home() {
 
       <section className="px-5 pb-10 pt-6 text-center">
         <h1 className="font-display text-3xl font-extrabold tracking-tight text-mute-100 sm:text-4xl">
-          Faça qualquer música que você imaginar
+          {t('Faça qualquer música que você imaginar')}
         </h1>
 
         <div className="mx-auto mt-6 max-w-2xl rounded-2xl border border-ink-700 bg-ink-900/80 p-3 text-left">
           <textarea
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
-            placeholder="Descreva a música que você quer criar"
-            aria-label="Descreva a música que você quer criar"
+            placeholder={t('Descreva a música que você quer criar')}
+            aria-label={t('Descreva a música que você quer criar')}
             rows={2}
             className="w-full resize-none bg-transparent px-3 py-2 text-base text-mute-100
               placeholder:text-mute-500 focus:outline-none"
@@ -66,7 +70,7 @@ export function Home() {
           <div className="flex items-center justify-between px-1 pt-1">
             <button
               type="button"
-              aria-label="Adicionar mídia"
+              aria-label={t('Adicionar mídia')}
               className="grid h-10 w-10 place-items-center rounded-full border border-ink-600
                 text-mute-400 transition hover:text-mute-100"
             >
@@ -82,7 +86,7 @@ export function Home() {
                 text-ink-950 transition hover:bg-brand-400"
             >
               <Icon.Sparkles size={16} />
-              Criar
+              {t('Criar')}
             </button>
           </div>
         </div>
@@ -93,17 +97,17 @@ export function Home() {
           {HIGHLIGHTS.map((item) => (
             <article key={item.title} className="surface rounded-2xl p-6">
               <span className="rounded-full bg-brand-500/15 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-brand-400">
-                {item.tag}
+                {t(item.tag)}
               </span>
-              <h2 className="mt-3 text-xl font-semibold text-mute-100">{item.title}</h2>
-              <p className="mt-2 text-sm leading-relaxed text-mute-400">{item.body}</p>
+              <h2 className="mt-3 text-xl font-semibold text-mute-100">{t(item.title)}</h2>
+              <p className="mt-2 text-sm leading-relaxed text-mute-400">{t(item.body)}</p>
               <button
                 type="button"
                 onClick={() => navigate(item.route)}
                 className="mt-4 rounded-full border border-ink-600 px-4 py-1.5 text-sm text-mute-100
                   transition hover:border-brand-500 hover:text-brand-400"
               >
-                {item.cta}
+                {t(item.cta)}
               </button>
             </article>
           ))}
@@ -114,14 +118,14 @@ export function Home() {
         <section className="px-5 pb-16">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-mute-500">
-              Suas criações recentes
+              {t('Suas criações recentes')}
             </h2>
             <button
               type="button"
               onClick={() => navigate('/me')}
               className="text-sm text-mute-400 transition hover:text-mute-100"
             >
-              Ver biblioteca →
+              {t('Ver biblioteca →')}
             </button>
           </div>
           <div className="mt-3 grid gap-3 sm:grid-cols-3 lg:grid-cols-6">

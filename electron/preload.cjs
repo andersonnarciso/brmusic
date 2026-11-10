@@ -74,8 +74,16 @@ const desktop = {
   },
 
   /**
+   * Troca o idioma do menu nativo do app.
+   * @param {'en' | 'pt'} language
+   * @returns {Promise<'en' | 'pt'>}
+   */
+  setLanguage: (language) =>
+    ipcRenderer.invoke('menu:language', language === 'pt' ? 'pt' : 'en'),
+
+  /**
    * Informações do app em execução.
-   * @returns {Promise<{ version: string, platform: string, arch: string, electron: string, node: string, isPackaged: boolean }>}
+   * @returns {Promise<{ version: string, platform: string, arch: string, electron: string, node: string, isPackaged: boolean, language: string }>}
    */
   getInfo: () => ipcRenderer.invoke('app:info'),
 

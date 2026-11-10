@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Icon } from './Icons';
+import { useT } from '../lib/useT';
 
 export interface Command {
   id: string;
@@ -17,6 +18,7 @@ interface CommandPaletteProps {
 }
 
 export function CommandPalette({ open, commands, onClose }: CommandPaletteProps) {
+  const t = useT();
   const [query, setQuery] = useState('');
   const [index, setIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -71,8 +73,8 @@ export function CommandPalette({ open, commands, onClose }: CommandPaletteProps)
             ref={inputRef}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Buscar comando…"
-            aria-label="Buscar comando"
+            placeholder={t('Buscar comando…')}
+            aria-label={t('Buscar comando')}
             className="h-12 flex-1 bg-transparent text-sm text-mute-100 placeholder:text-mute-500 focus:outline-none"
             onKeyDown={(e) => {
               if (e.key === 'ArrowDown') {
@@ -118,7 +120,7 @@ export function CommandPalette({ open, commands, onClose }: CommandPaletteProps)
             </li>
           ))}
           {results.length === 0 && (
-            <li className="px-3 py-6 text-center text-sm text-mute-500">Nenhum comando encontrado.</li>
+            <li className="px-3 py-6 text-center text-sm text-mute-500">{t('Nenhum comando encontrado.')}</li>
           )}
         </ul>
       </div>

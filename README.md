@@ -3,283 +3,312 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/andersonnarciso/brmusic/releases/tag/v1.0.0"><img src="https://img.shields.io/badge/download-Linux%20%7C%20Windows%20%7C%20macOS-00c97b?style=flat-square" alt="Download" /></a>
+  <a href="https://github.com/andersonnarciso/brmusic/releases/tag/v1.0.3"><img src="https://img.shields.io/badge/download-Linux%20%7C%20Windows%20%7C%20macOS-00c97b?style=flat-square" alt="Download" /></a>
   <img src="https://img.shields.io/badge/licen%C3%A7a-MIT-00c97b?style=flat-square" alt="MIT" />
-  <img src="https://img.shields.io/badge/plataforma-Linux%20%7C%20Windows%20%7C%20macOS%20%7C%20Web-00c97b?style=flat-square" alt="Plataformas" />
+  <img src="https://img.shields.io/badge/plataforma-Linux%20%7C%20Windows%20%7C%20macOS%20%7C%20Web-00c97b?style=flat-square" alt="Platforms" />
 </p>
 
 # BR Music
 
-Gerador de músicas com IA **gratuito, local-first e open source**. Crie faixas completas (voz, letra, produção) a partir de uma descrição, com um **painel de configuração** para conectar as suas APIs de LLM e gerar as músicas de verdade.
+**Languages: English (primary) | [Português (pt-BR)](README.pt-BR.md)**
 
-> MIT, sem conta, sem plano, sem servidor: a síntese roda no seu dispositivo.
+A free, local-first, open source AI music generator. Create full songs (vocals, lyrics, production) from a short description, with a settings panel to connect your own LLM APIs and produce the audio.
 
-**Não existe plano, assinatura, conta nem servidor.** As músicas são sintetizadas no seu dispositivo e ficam offline, no seu navegador ou no app desktop.
+> MIT licensed, no account, no plan, no server. Synthesis runs on your device.
 
 ---
 
-## Capturas de tela
+## Screenshots
 
 <p align="center">
-  <img src="docs/02-landing.png" alt="Landing do BR Music" width="900" />
+  <img src="docs/02-landing.png" alt="BR Music landing page" width="900" />
 </p>
 
 | | |
 |:--|:--|
-| <img src="docs/08-criar-avancado.png" alt="Modo avançado de criação" /> | <img src="docs/09-editor-multipista.png" alt="Editor multipista" /> |
-| **Criação avançada**: letra com gerador, estilos, áudio e controles criativos | **Editor multipista**: 5 stems, mixer por canal, corte, reverso, velocidade e remaster |
-| <img src="docs/01-criar.png" alt="Tela de criação" /> | <img src="docs/03-biblioteca.png" alt="Biblioteca" /> |
-| **Criação**: Simples e Avançado, com a faixa gerada na lista | **Biblioteca**: faixas, playlists, busca, filtros e lixeira |
-| <img src="docs/06-admin.png" alt="Painel de configuração" /> | <img src="docs/07-admin-provedores.png" alt="Provedores de IA" /> |
-| **Configuração**: visão geral com KPIs e saúde da plataforma | **Provedores de IA**: APIs OpenAI-compatible e runtimes locais |
-| <img src="docs/05-studio.png" alt="Studio" /> | <img src="docs/10-confirmacao-exclusao.png" alt="Confirmação de exclusão" /> |
-| **Studio**: faixas, timeline, transport e prompt na timeline | **Confirmação**: aviso explícito do que será apagado antes de excluir |
-| <img src="docs/11-harness.png" alt="Harness de produção" /> | |
-| **Harness**: pipeline em 9 etapas, do prompt à faixa masterizada | |
+| <img src="docs/08-criar-avancado.png" alt="Advanced creation mode" /> | <img src="docs/09-editor-multipista.png" alt="Multitrack editor" /> |
+| **Advanced creation**: lyrics with generator, styles, audio and creative controls | **Multitrack editor**: 5 stems, per channel mixer, trim, reverse, speed and remaster |
+| <img src="docs/01-criar.png" alt="Creation screen" /> | <img src="docs/03-biblioteca.png" alt="Library" /> |
+| **Creation**: Simple and Advanced modes, with the generated track in the list | **Library**: tracks, playlists, search, filters and trash |
+| <img src="docs/06-admin.png" alt="Settings panel" /> | <img src="docs/07-admin-provedores.png" alt="AI providers" /> |
+| **Settings**: overview with KPIs and platform health | **AI providers**: OpenAI-compatible APIs and local runtimes |
+| <img src="docs/05-studio.png" alt="Studio" /> | <img src="docs/10-confirmacao-exclusao.png" alt="Delete confirmation" /> |
+| **Studio**: tracks, timeline, transport and prompt on the timeline | **Confirmation**: explicit warning about what will be deleted |
+| <img src="docs/11-harness.png" alt="Production harness" /> | |
+| **Harness**: 9 stage pipeline, from prompt to mastered track | |
 
 ---
 
-## O que existe aqui
+## What is in here
 
-| Parte | Onde | O que faz |
+| Part | Where | What it does |
 |---|---|---|
-| Site público | `/` | Landing de marketing: hero com gerador, cards de produto, downloads e FAQ |
-| App do criador | `#/create` | Criação de música (3 colunas), abas Músicas/Fala, Simples/Avançado, sliders criativos, player |
-| Biblioteca | `#/me` | Faixas, playlists, busca, filtros, ordenação, lista/grade |
-| Explorar | `#/explore` | Descoberta por estilo e ocasião |
-| Studio | `#/studio` | DAW simplificado: faixas, timeline, transport, prompt na timeline |
-| **Configurações** | `#/admin` | Provedores de IA, modo de geração, preferências do app, marca, integrações, diagnóstico |
-| App desktop | `electron/` | Empacotado para **Linux, Windows e macOS** |
-| PWA | `public/sw.js` | Instalável e offline no navegador |
+| Public site | `/` | Marketing landing: hero with the generator, feature cards, downloads and FAQ |
+| Creator app | `#/create` | Music creation (3 columns), Songs and Speech tabs, Simple and Advanced modes, creative sliders, player |
+| Library | `#/me` | Tracks, playlists, search, filters, sorting, list and grid views |
+| Explore | `#/explore` | Discovery by style and occasion |
+| Studio | `#/studio` | Simplified DAW: tracks, timeline, transport, prompt on the timeline |
+| **Settings** | `#/admin` | AI providers, generation mode, app preferences, branding, integrations, diagnostics |
+| Desktop app | `electron/` | Packaged for **Linux, Windows and macOS** |
+| PWA | `public/sw.js` | Installable and usable offline in the browser |
 
-### Modo avançado e editor profissional
+### Languages
 
-O painel de criação tem modo **Avançado** com seções recolhíveis (Letra, Estilos, Áudio), alternador **Automático / Escrever letra**, botão **Gerar letra** (usa o LLM configurado, com gerador local como reserva), interruptor **Instrumental**, upload de áudio, gravação pelo microfone (análise de duração e BPM) e controles criativos.
+English is the primary language, Portuguese (pt-BR) is the secondary one. The whole interface switches at runtime, including the native menu of the desktop app on Linux, Windows and macOS.
 
-O **editor multipista** (`#/editor/:id`) abre a faixa com os 5 stems separados e oferece:
+The switcher lives in the **sidebar footer** (the `EN` / `PT` buttons) and in **More** (`#/more`). The choice is stored in `localStorage` and applies to every screen, including the settings panel.
 
-| Operação | O que faz |
+### Advanced mode and professional editing
+
+The creation panel has an **Advanced** mode with collapsible sections (Lyrics, Styles, Audio), an Automatic or Write lyrics toggle, a lyrics generator, an Instrumental switch, audio upload and microphone recording, plus the creative controls.
+
+The **multitrack editor** (`#/editor/:id`) opens the track with the 5 stems separated and offers:
+
+| Operation | What it does |
 |---|---|
-| Cortar / Remover seção | recorta ou remove o trecho selecionado na régua |
-| Reverso | inverte o áudio do canal |
-| Velocidade | time-stretch preservando o pitch (WSOLA) |
-| Fade in / Fade out | rampas lineares de entrada e saída |
-| Remaster | compressor + air shelf + soft clip, sem clipar |
-| Substituir seção | regenera o trecho selecionado |
-| Get stems | exporta os 5 stems já editados em ZIP |
-| Mixer | volume, pan, mute e solo por canal, master com volume, remaster e limitador |
+| Trim / Remove section | cuts or removes the region selected on the ruler |
+| Reverse | inverts the channel audio |
+| Speed | time stretch preserving pitch (WSOLA) |
+| Fade in / Fade out | linear entry and exit ramps |
+| Remaster | compressor plus air shelf plus soft clip, without clipping |
+| Replace section | regenerates the selected region |
+| Get stems | exports the 5 edited stems as a ZIP |
+| Mixer | volume, pan, mute and solo per channel, master with volume, remaster and limiter |
 
-O transporte tem play/stop, posição, zoom e seleção de região. As edições são **não destrutivas**: ficam como operações no canal e podem ser desfeitas.
+### Production harness
 
-### Harness de produção
+The harness is the layer that drives generation **behind the Create button**. Nine stages: Idea, Prompt, Lyrics, Plan, Arrangement, Render, Stems, Mix and Master, Export.
 
-O harness é a camada que conduz a geração **por trás do botão "Criar música"**. Nove etapas: Ideia → Prompt → Letra → Plano → Arranjo → Render → Stems → Mix e Master → Export.
+Text stages use the LLM configured in the settings panel (with local generators as a fallback, so it works offline). After rendering, the harness applies the master, normalizes the peak to -1 dBFS and produces a **quality report** with loudness, peak, dynamics, stereo width and clipping. The `#/harness` page exists as an inspection view (reachable through the "ver detalhes da geração" link in the creation panel), but the normal flow is a single click.
 
-As etapas de texto usam o LLM configurado no painel (com geradores locais como reserva, para funcionar offline). Depois do render, o harness aplica o master, normaliza o pico para -1 dBFS e gera um **laudo de qualidade** com loudness, pico, dinâmica, largura estéreo e clipping. A página `#/harness` existe como visão de inspeção (acesso pelo link "ver detalhes da geração" no painel de criação), mas o fluxo normal é só clicar em criar.
-
-Para agentes, o harness vira procedimento: veja a skill [`skills/music-harness/SKILL.md`](skills/music-harness/SKILL.md) e o CLI:
+For agents, the harness becomes a procedure: see [`skills/music-harness/SKILL.md`](skills/music-harness/SKILL.md) and the CLI:
 
 ```bash
 node scripts/harness-cli.mjs "sertanejo brasileiro com sanfona" --style "118 bpm" --out ./faixas
 ```
 
-O CLI abre o app em um Chrome headless controlado por pipe, dispara a criação, espera o harness terminar e grava o WAV masterizado e o `relatorio.json` com o laudo.
+The CLI opens the app in a headless Chrome controlled over a CDP pipe, triggers the creation, waits for the harness to finish and writes the mastered WAV plus a `relatorio.json` with the quality report.
 
-### Modelos de música descobertos automaticamente
+### Automatically discovered music models
 
-Ao conectar um provedor, o botão **Carregar modelos de música** consulta a lista do provedor e mantém **só os modelos capazes de gerar música**, descartando os de texto, visão e código. Para a MiniMax, por exemplo, o `/v1/models` devolve os modelos de texto, e o app separa isso do catálogo de música (`music-3.0`, `music-2.6`, `music-cover` e variantes).
+When you connect a provider, the **Load music models** button queries the provider and keeps **only the models able to generate music**, discarding text, vision and code models. For MiniMax, for example, `/v1/models` returns text models, so the app separates those from the music catalogue (`music-3.0`, `music-2.6`, `music-cover` and variants).
 
-### Recursos que vão além do original
+### Features that go beyond the usual
 
-- **Stems exportáveis**: cada faixa sai separada em **bateria, baixo, pads, melodia e voz** (ZIP), prontas para a sua DAW.
-- **Forma de onda real**: o player desenha os picos do áudio sintetizado e aceita clique para buscar.
-- **Variações em lote**: gere 4 versões da mesma ideia de uma vez, com seeds diferentes.
-- **Remix e extensão**: remixe com outro estilo ou continue a faixa mantendo andamento e tonalidade.
-- **Playlists**: organize as faixas localmente.
-- **Paleta de comandos**: `⌘K` / `Ctrl+K` com busca e ações; atalhos: `⌘N` (criar), `Espaço` (play/pausa).
-- **Capas geradas**: arte de álbum procedural em canvas, a partir da paleta do estilo e do seed da faixa.
-- **Conecte qualquer IA**: presets OpenAI-compatible, Anthropic, Gemini, OpenRouter, Groq, MiniMax e o modo nativo da API de Música da MiniMax, além de 10 runtimes locais (Ollama, LM Studio, llama.cpp, vLLM, LocalAI, KoboldCpp, GPT4All, text-generation-webui, Jan, SGLang) com varredura automática de porta.
-- **Editor multipista** com mixer por canal, corte, reverso, velocidade com pitch preservado, fades, remaster e exportação dos stems editados.
-- **Hospedagem FTP**: envie as músicas geradas direto para a sua conta de hospedagem tradicional (cPanel, Hostinger, Locaweb), com teste de conexão e envio automático opcional.
-- **Lixeira**: exclusão reversível, com restauração ou apagar em definitivo (sempre com confirmação).
+- **Exportable stems**: every track comes apart into drums, bass, pads, melody and vocals (ZIP), ready for your DAW.
+- **Real waveform**: the player draws the actual peaks of the synthesized audio and accepts a click to seek.
+- **Batch variations**: generate 4 versions of the same idea at once, with different seeds.
+- **Remix and extend**: remix with another style or continue the track keeping tempo and key.
+- **Playlists**: organize tracks locally.
+- **Command palette**: `⌘K` / `Ctrl+K` with search and actions; shortcuts: `⌘N` (create), `Space` (play/pause).
+- **Generated covers**: procedural album art in canvas, from the style palette and the track seed.
+- **Connect any AI**: OpenAI-compatible, Anthropic, Gemini, OpenRouter, Groq and MiniMax presets, plus 10 local runtimes (Ollama, LM Studio, llama.cpp, vLLM, LocalAI, KoboldCpp, GPT4All, text-generation-webui, Jan, SGLang) with automatic port scanning. The audio provider can be the hosted MiniMax Music API, the self-hosted MiniMax Music 3 or your own endpoint.
+- **Multitrack editor** with per channel mixer, trim, reverse, pitch preserving speed, fades, remaster and export of the edited stems.
+- **FTP hosting**: send generated music straight to your traditional hosting account (cPanel, Hostinger, Locaweb), with connection test and optional automatic upload.
+- **Trash**: reversible deletion, with restore or permanent delete (always with confirmation).
 
-**Nenhuma faixa é pré-gravada.** O motor (`src/lib/audio/engine.ts`) sintetiza a música no navegador com Web Audio: bateria, baixo, pad, acordes, lead, camada vocal por formantes, reverb e masterização, em WAV 44,1 kHz estéreo, com canais separados por stem.
+**No track is pre-recorded.** The engine (`src/lib/audio/engine.ts`) synthesizes the music in the browser with Web Audio: drums, bass, pad, chords, lead, a formant based vocal layer, reverb and mastering, in 44.1 kHz stereo WAV, with separated channels per stem.
 
 ---
 
-## Rodando
+## Running it
 
 ```bash
 cd brmusic
 npm install
 
-npm run dev        # dev server (http://127.0.0.1:4328)
-npm run build      # build de produção em dist/
-npm run server     # servidor com API de configuração + build estático
-npm run typecheck  # checagem de tipos
+npm run dev        # dev server (http://127.0.0.1:4329)
+npm run build      # production build into dist/
+npm run server     # server with the settings API and the static build
+npm run typecheck  # type checking
+node scripts/check-i18n.mjs   # checks that every interface string has a translation
 ```
 
-O `npm run server` sobe em `http://127.0.0.1:4328` e serve o `dist/` (rode `npm run build` antes). Variáveis úteis:
+`npm run server` listens on `http://127.0.0.1:4328` and serves `dist/` (run `npm run build` first). Useful environment variables:
 
 ```bash
-PORT=4321
-BRMUSIC_ADMIN_TOKEN=seu-token     # exige header x-admin-token nas rotas /api/admin/*
-BRMUSIC_DATA_DIR=/caminho/dados   # onde o config.json é gravado
+PORT=4328
+BRMUSIC_ADMIN_TOKEN=your-token     # requires the x-admin-token header on /api/admin/*
+BRMUSIC_DATA_DIR=/path/to/data     # where config.json is written
 ```
 
-### App desktop (Electron)
+### Desktop app (Electron)
 
 ```bash
 npm install --save-dev electron electron-builder
-npm run build                 # build do front
-npm run desktop:dir           # build não empacotado, para testar
-npm run desktop               # instaladores (AppImage/deb, nsis, dmg)
+npm run build                 # frontend build
+npm run desktop:dir           # unpacked build, for testing
+npm run desktop               # installers (AppImage/deb, nsis, dmg)
 ```
 
-Os instaladores para os três sistemas são gerados pelo GitHub Actions (`.github/workflows/release.yml`): tag `v*` dispara builds em Linux, Windows e macOS e publica a release com os arquivos anexados.
+The installers for the three systems are produced by GitHub Actions (`.github/workflows/release.yml`): a `v*` tag triggers builds on Linux, Windows and macOS and publishes the release with the files attached.
 
-No app desktop, o `window.desktop` expõe diálogos de salvamento e gravação direta em disco: o mix e o ZIP de stems são gravados onde você escolher, em vez de baixar.
+In the desktop app, `window.desktop` exposes save dialogs and direct disk writes: the mix and the stems ZIP are written where you choose, instead of being downloaded.
 
 ### PWA
 
-`npm run build` gera um app instalável (manifest + service worker): offline, sem loja de aplicativos.
+`npm run build` produces an installable app (manifest plus service worker): offline, with no app store.
 
 ---
 
-## Conectando suas APIs de IA (painel de configuração)
+## Connecting your AI APIs (settings panel)
 
-Abra `#/admin` → **Provedores de IA**. Cada provedor tem: preset de compatibilidade, base URL, endpoint, modelo, **chave de API**, temperatura, tokens máx., timeout, modo JSON, ativar/desativar e **Testar conexão**.
+Open `#/admin` and go to **AI providers**. Each provider has: compatibility preset, base URL, endpoint, model, **API key**, temperature, max tokens, timeout, JSON mode, enable/disable and a **Test connection** button.
 
-Chaves são gravadas **apenas no servidor** (`server/data/config.json`) e nunca voltam ao navegador, o painel mostra só a máscara. Sem servidor no ar, tudo é salvo no `localStorage` deste navegador.
+Keys are written **on the server only** (`server/data/config.json`) and never come back to the browser, the panel shows only the mask. With no server running, everything is stored in this browser `localStorage`.
 
-### Presets disponíveis
+### Available presets
 
-| Preset | Base URL | Formato |
+| Preset | Base URL | Format |
 |---|---|---|
-| MiniMax | `https://api.minimax.io/v1` | OpenAI-compatible (`/chat/completions`, `Bearer`), custo de uso extremamente baixo |
+| MiniMax | `https://api.minimax.io/v1` | OpenAI-compatible (`/chat/completions`, `Bearer`), extremely low cost per token |
 | OpenAI | `https://api.openai.com/v1` | OpenAI-compatible |
-| Personalizado (OpenAI-compatible) | qualquer URL | qualquer `/chat/completions` (Together, Groq, vLLM, LM Studio, OpenRouter…) |
-| Anthropic | `https://api.anthropic.com/v1` | `/messages` com `x-api-key` |
+| Custom (OpenAI-compatible) | any URL | any `/chat/completions` (Together, Groq, vLLM, LM Studio, OpenRouter…) |
+| Anthropic | `https://api.anthropic.com/v1` | `/messages` with `x-api-key` |
 | Google Gemini | `https://generativelanguage.googleapis.com/v1beta` | `/models/{model}:generateContent` |
 | OpenRouter | `https://openrouter.ai/api/v1` | OpenAI-compatible |
 | Groq | `https://api.groq.com/openai/v1` | OpenAI-compatible |
 
-O campo de modelo é livre: basta digitar o identificador. Na MiniMax, os modelos em produção são `MiniMax-M3.1-Flash`, `MiniMax-M3`, `MiniMax-M2.1` e `MiniMax-M2`, e o custo por token é extremamente baixo, o que a torna uma boa escolha para o uso frequente dentro do app.
+The model field is free form: just type the identifier. For MiniMax the models in production are `MiniMax-M3.1-Flash`, `MiniMax-M3`, `MiniMax-M2.1` and `MiniMax-M2`, and the cost per token is extremely low, which makes it a good choice for frequent use inside the app.
 
-### Runtimes locais de LLM (todos compatíveis)
+### Local LLM runtimes (all supported)
 
-O BR Music conversa com **qualquer** servidor OpenAI-compatible rodando na sua máquina, sem chave de API. Há preset pronto para cada um e uma **varredura automática** que encontra o que já está no ar:
+BR Music talks to **any** OpenAI-compatible server running on your machine, with no API key. There is a preset for each one and an **automatic scan** that finds what is already up:
 
-| Runtime | Porta padrão | Observação |
+| Runtime | Default port | Note |
 |---|---|---|
-| Ollama | 11434 | preset próprio (`/api/chat`); também serve `/v1` |
+| Ollama | 11434 | dedicated preset (`/api/chat`); also serves `/v1` |
 | LM Studio | 1234 | OpenAI-compatible |
 | llama.cpp (`llama-server`) | 8080 | OpenAI-compatible |
 | vLLM | 8000 | OpenAI-compatible |
-| LocalAI | 8080 | Ollama + GPT4All + llama.cpp |
-| KoboldCpp | 5001 | com a flag `--api` |
-| GPT4All | 4891 | servidor embutido |
-| text-generation-webui | 5000 | com a flag `--api` |
-| Jan | 1337 | servidor local do Jan |
-| SGLang / MiniMax M2 local | 30000 | formato OpenAI |
+| LocalAI | 8080 | Ollama plus GPT4All plus llama.cpp |
+| KoboldCpp | 5001 | with the `--api` flag |
+| GPT4All | 4891 | built-in server |
+| text-generation-webui | 5000 | with the `--api` flag |
+| Jan | 1337 | Jan local server |
+| SGLang / local MiniMax M2 | 30000 | OpenAI format |
 
-O botão **“Descobrir runtimes locais”** varre essas nove portas, mostra quais responderam com quais modelos e cadastra o provedor pronto para uso. O mesmo vale para qualquer servidor fora da lista: use o preset “Personalizado (OpenAI-compatible)” com a base URL e o endpoint.
+The **Load local runtimes** button scans those nine ports, shows which answered and with which models, and registers the provider ready to use. The same applies to any server outside the list: use the "Custom (OpenAI-compatible)" preset with the base URL and endpoint.
 
-### Três modos de geração de música
+### Three music generation modes
 
-Em `#/admin` → **Geração de música**:
+In `#/admin` go to **Music generation**:
 
-1. **Motor local (procedural)**: padrão. Sem servidor, sem custo, funciona offline.
-2. **Plano via LLM**: o LLM habilitado escreve o *plano* musical (título, letra com `[Verse]/[Chorus]`, BPM, tonalidade, progressão, seções com energia) em JSON; o motor local executa esse arranjo.
-3. **Áudio externo (MiniMax nativo)**: `POST https://api.minimax.io/v1/music_generation`:
-   - corpo: `model` (`music-3.0`, `music-2.6`, `music-3.0-free`, `music-cover`…), `prompt`, `lyrics`, `output_format` (`hex`/`url`), `audio_setting` (`sample_rate`, `bitrate`, `format`), `lyrics_optimizer`, `is_instrumental`
-   - resposta: `data.audio` em hexadecimal + `base_resp.status_code` (1002 = rate limit, 1004 = autenticação, 1008 = saldo, 1026 = conteúdo bloqueado)
-   - o botão **Testar** faz uma geração real curta para validar a chave
+1. **Local engine (procedural)**: the default. No server, no cost, works offline.
+2. **Plan via LLM**: the enabled LLM writes the musical *plan* (title, lyrics with `[Verse]/[Chorus]`, BPM, key, progression, sections with energy) as JSON; the local engine performs that arrangement.
+3. **External audio**: an HTTP provider generates the final audio. Pick the provider in **Audio provider**:
+   - **MiniMax Music (hosted, legacy)**: `POST https://api.minimax.io/v1/music_generation`, body with `model` (`music-3.0`, `music-2.6`, `music-cover`…), `prompt`, `lyrics`, `output_format` (`hex`/`url`), `audio_setting` (`sample_rate`, `bitrate`, `format`), `lyrics_optimizer`, `is_instrumental`; the response carries `data.audio` in hexadecimal plus `base_resp.status_code` (1002 = rate limit, 1004 = authentication, 1008 = balance, 1026 = blocked content).
+   - **MiniMax Music 3 (self-hosted)**: `POST http://127.0.0.1:8000/v1/audio/speech`, body with `model` (`MiniMaxAI/MiniMax-Music3`), `input` (the lyrics), `instructions` (the style), `seed`, `max_new_tokens` and `response_format: "wav"`; the response is a WAV file. This is the [open source MiniMax Music 3](https://huggingface.co/MiniMaxAI/MiniMax-Music3) served by SGLang-Omni on an NVIDIA GPU. Output is capped at roughly 30 seconds.
+   - **Your own endpoint**: any HTTP service that answers with audio bytes (WAV/MP3) or JSON with the audio in base64.
 
-O app do criador usa automaticamente o modo configurado; sem servidor no ar, cai para o motor local.
+The **Test** button runs a short real generation to validate the key and the endpoint.
+
+The creator app uses the configured mode automatically. When the external provider fails, the app **falls back to the local engine** and tells you why, so a track is never lost to a provider error.
+
+### Status of the hosted MiniMax Music API
+
+> **The hosted MiniMax Music API was discontinued for new accounts on 20/08/2026.**
+> A request from a new account answers `HTTP 410` with `base_resp.status_code: 2153` ("This Music API is no longer available to new users").
+
+Existing paying accounts keep working. For a new account, use one of these instead:
+
+| Option | What you need |
+|---|---|
+| **Local engine** (default) | nothing, it ships with the app and always works offline |
+| **MiniMax Music 3 self-hosted** | a machine with an NVIDIA GPU running [MiniMax Music 3](https://huggingface.co/MiniMaxAI/MiniMax-Music3) over SGLang-Omni, reachable over HTTP |
+| **MiniMax Audio** | a MiniMax account with the Audio product enabled (the successor endpoint of the Music API) |
+| **Your own endpoint** | any HTTP service that returns audio |
+
+When the hosted API answers 410, the app disables that provider on its own and explains why, instead of retrying a dead endpoint on every track.
 
 ---
 
-## API do servidor
+## Server API
 
-| Rota | Método | Descrição |
+| Route | Method | Description |
 |---|---|---|
-| `/api/health` | GET | modo de geração, provedor e LLMs habilitados |
-| `/api/generate` | POST | `{prompt, lyrics, instrumental, style}` → `{source: "local" \| "llm-plan" \| "minimax", …}` |
-| `/api/admin/config` | GET / PUT | configuração completa (segredos mascarados na leitura) |
-| `/api/admin/provider/test` | POST | testa um provedor de LLM (`{providerId}`) |
-| `/api/admin/music/test` | POST | gera uma faixa real no provedor de áudio |
-| `/api/admin/users` · `/api/admin/plans` | GET / PUT | legados, o produto é free e local, sem contas |
-| `/api/admin/stats` | GET | KPIs da plataforma |
-| `/api/admin/ftp/test` | POST | testa a conexão com a hospedagem FTP |
-| `/api/ftp/upload` | POST | envia um arquivo (base64) para o FTP |
-| `/api/lyrics` | POST | gera a letra com o LLM habilitado |
-| `/api/admin/activity` | GET | eventos registrados (via `config.activity`) |
+| `/api/health` | GET | generation mode, provider and enabled LLMs |
+| `/api/generate` | POST | `{prompt, lyrics, instrumental, style}` returns the musical *plan* (`{source: "local" \| "llm-plan", …}`) |
+| `/api/generate/audio` | POST | `{prompt, lyrics, instrumental}` returns the final audio from the external provider as `{source, audioBase64, audioFormat, durationSec}`. When no external provider is enabled it answers `{source: "local", audioBase64: null}` and the local engine takes over |
+| `/api/admin/config` | GET / PUT | full configuration (secrets masked on read) |
+| `/api/admin/provider/test` | POST | tests an LLM provider (`{providerId}`) |
+| `/api/admin/provider/discover-models` | POST | lists the provider models and keeps only the music capable ones |
+| `/api/admin/music/test` | POST | generates a real track on the audio provider |
+| `/api/admin/music/presets` | GET | the audio provider presets (base URL, endpoint and models) |
+| `/api/admin/ftp/test` | POST | tests the connection with the FTP host |
+| `/api/ftp/upload` | POST | uploads a file (base64) to the FTP host |
+| `/api/lyrics` | POST | writes the lyrics with the enabled LLM |
+| `/api/admin/stats` | GET | platform KPIs |
+| `/api/admin/activity` | GET | recorded events (through `config.activity`) |
 
 ---
 
-## Contribuições
+## Contributing
 
-**Contribuições são bem-vindas.** O projeto é livre (MIT) e foi construído para ser estendido.
+**Contributions are welcome.** The project is free (MIT) and was built to be extended.
 
-Bom ponto de partida:
+Good starting points:
 
-- **Novos motores de áudio**: `src/lib/audio/engine.ts` sintetiza as faixas, `src/lib/audio/edit.ts` cuida de corte, reverso, velocidade, fades e remaster. As operações são não destrutivas.
-- **Novos estilos e presets**: `src/lib/audio/presets.ts` mapeia palavras-chave (em português e inglês) para andamento, escala, progressão e timbre.
-- **Novos provedores de IA**: `server/models.mjs` classifica os modelos por capacidade musical; `src/lib/adminTypes.ts` tem o catálogo de presets de compatibilidade.
-- **Ajustes do harness**: `src/lib/harness.ts` define o pipeline em etapas e o laudo de qualidade.
-- **Portas de novos sistemas**: `electron-builder.yml` e `.github/workflows/release.yml` geram os instaladores.
+- **New audio engines**: `src/lib/audio/engine.ts` synthesizes the tracks, `src/lib/audio/edit.ts` handles trim, reverse, speed, fades and remaster. Operations are non destructive.
+- **New styles and presets**: `src/lib/audio/presets.ts` maps keywords (in Portuguese and English) to tempo, scale, progression and timbre.
+- **New AI providers**: `server/models.mjs` classifies models by music capability; `src/lib/adminTypes.ts` holds the compatibility preset catalogue.
+- **Harness tweaks**: `src/lib/harness.ts` defines the staged pipeline and the quality report.
+- **New platform ports**: `electron-builder.yml` and `.github/workflows/release.yml` produce the installers.
 
-Como rodar para contribuir:
+How to run it for contribution:
 
 ```bash
 npm install
-npm run dev        # app em http://127.0.0.1:4329
-npm run server     # API de configuração em outra porta
+npm run dev        # app on http://127.0.0.1:4329
+npm run server     # settings API on another port
 npm run typecheck
 npm run verify:desktop
 ```
 
-Abra uma issue descrevendo a ideia antes de mexer em código grande, para a gente alinhar o caminho.
+Open an issue describing the idea before touching large amounts of code, so we can align on the path.
 
 ---
 
-## Estrutura
+## Structure
 
 ```
 brmusic/
 ├── src/
 │   ├── lib/
-│   │   ├── audio/{engine,theory,presets}.ts   # síntese, escalas, estilos
-│   │   ├── store.ts                           # estado + player + persistência
-│   │   ├── persist.ts                         # localStorage + IndexedDB
-│   │   ├── export.ts                          # WAV/ZIP, download ou gravação no desktop
-│   │   ├── adminClient.ts                     # client da API de configuração
-│   │   └── adminTypes.ts                      # tipos da configuração
-│   ├── components/                            # Sidebar, PlayBar, CreatePanel, SongList, Waveform, CommandPalette, Slider, Icons
-│   ├── pages/                                 # Landing, Home, Library, Explore, Studio, Simple
-│   ├── admin/                                 # AdminApp, Providers, Manage, ui
-│   └── App.tsx                                # roteador por hash + atalhos
-├── electron/                                  # app desktop (main, preload)
-├── server/index.mjs                           # API de configuração + proxy + estáticos
-├── public/                                    # manifest PWA, service worker, ícones
-├── rea-analysis/                              # evidência bruta do REA
-└── REA-RELATORIO.md                           # relatório do reverse engineering
+│   │   ├── audio/{engine,theory,presets}.ts   # synthesis, scales, styles
+│   │   ├── audio/{edit,analyze}.ts             # trim, reverse, speed, fades, remaster, BPM detection
+│   │   ├── harness.ts                           # production pipeline and quality report
+│   │   ├── store.ts                             # state, player and persistence
+│   │   ├── persist.ts                           # localStorage plus IndexedDB
+│   │   ├── export.ts                            # WAV/ZIP, download or desktop write
+│   │   ├── adminClient.ts                       # settings API client
+│   │   └── adminTypes.ts                        # configuration types
+│   ├── components/                              # Sidebar, PlayBar, CreatePanel, SongList, Waveform, CommandPalette, Slider, Icons
+│   ├── pages/                                   # Landing, Home, Library, Explore, Studio, Harness, Simple
+│   ├── admin/                                   # AdminApp, Providers, Manage, ui
+│   └── App.tsx                                  # hash router and shortcuts
+├── electron/                                    # desktop app (main, preload)
+├── server/                                      # settings API, proxy, static files, FTP
+├── skills/music-harness/                        # agent skill for the harness
+├── scripts/                                     # desktop build, icons, harness CLI
+├── public/                                      # PWA manifest, service worker, icons
+└── docs/                                        # screenshots
 ```
 
-### Decisões técnicas
+### Technical decisions
 
-- **Roteamento por hash** (`#/create`) para funcionar em qualquer hospedagem estática sem rewrite.
-- **Dois stores independentes** (`appStore` e `playerStore`): o player atualiza 4×/s sem re-renderizar a árvore inteira.
-- **Metadados em localStorage, blobs em IndexedDB**: o áudio não estoura a cota de 5 MB e continua disponível após reload (URLs de blob são recriadas no boot).
-- **Tailwind v4** com tokens de tema em `src/styles.css`; build ≈ 27 KB de CSS e ≈ 80 KB de JS (gzip).
+- **Hash routing** (`#/create`) so it works on any static host without rewrite rules.
+- **Two independent stores** (`appStore` and `playerStore`): the player updates 4×/s without re-rendering the whole tree.
+- **Metadata in localStorage, blobs in IndexedDB**: audio does not hit the 5 MB quota and survives a reload (blob URLs are recreated on boot).
+- **Assets imported through the bundler**: logo and media URLs are hashed and relative, so they work over http, under a subpath and under `file://` in the desktop app.
+- **Tailwind v4** with theme tokens in `src/styles.css`; build is about 27 KB of CSS and 80 KB of JS (gzip).
 
 ---
 
-## Limites conhecidos
+## Known limits
 
-- Upload de áudio/voz/imagem (remix por arquivo), hooks, álbuns e "Cover Art" são telas/abas, sem backend correspondente. Stems, playlists, variações, remix e extensão **funcionam**.
-- A "voz" do motor procedural é uma camada sintética por formantes, não vocals cantados de verdade.
-- Sem servidor no ar, o painel de configuração persiste no `localStorage` e o teste de conexão de API não consegue chamar o provedor real.
-- Os instaladores de Windows e macOS são compilados no CI (o macOS exige runner macOS); localmente, só o Linux é empacotável.
-- A síntese é procedural: não há modelo de áudio treinado por trás. Nada é pré-gravado.
+- Audio, voice and image upload (file based remix), hooks, albums and "Cover Art" are screens or tabs without a matching backend. Stems, playlists, variations, remix and extend **work**.
+- The "voice" of the procedural engine is a synthetic formant layer, not really sung vocals.
+- With no server running, the settings panel persists to `localStorage` and the API connection test cannot reach the real provider.
+- The Windows and macOS installers are compiled in CI (macOS needs a macOS runner); locally only Linux can be packaged.
+- Synthesis is procedural: there is no trained audio model behind it. Nothing is pre-recorded.

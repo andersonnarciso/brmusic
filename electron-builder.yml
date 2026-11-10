@@ -24,6 +24,10 @@ files:
   - dist/**/*
   - electron/**/*
   - server/**/*
+  # A configuração local nunca entra no pacote: ela carrega chaves de API e
+  # credenciais de FTP do computador de desenvolvimento.
+  - "!server/data/**"
+  - "!server/**/data/**"
   # basic-ftp não tem dependências runtime, então só ele é suficiente
   - node_modules/basic-ftp/**/*
   - package.json

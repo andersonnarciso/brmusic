@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { Icon } from './Icons';
+import { useT } from '../lib/useT';
 
 export interface SelectOption {
   value: string;
@@ -31,6 +32,7 @@ export function Select({
   id,
   ...aria
 }: SelectProps) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -145,7 +147,7 @@ export function Select({
             );
           })}
           {options.length === 0 && (
-            <li className="px-3 py-3 text-center text-sm text-mute-500">Nenhuma opção</li>
+            <li className="px-3 py-3 text-center text-sm text-mute-500">{t('Nenhuma opção')}</li>
           )}
         </ul>
       )}

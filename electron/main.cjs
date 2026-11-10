@@ -221,72 +221,135 @@ function navigateTo(route) {
 }
 
 /* ------------------------------------------------------------------ */
-/* Menu nativo (PT-BR)                                                 */
+/* Menu nativo (bilingue)                                             */
 /* ------------------------------------------------------------------ */
 
+/**
+ * Rotulos do menu nativo em ingles (principal) e portugues (secundario).
+ * O renderer avisa o processo principal quando o idioma muda e o menu e
+ * reconstruido na hora.
+ */
+const MENU_LABELS = {
+  en: {
+    track: 'Track',
+    newTrack: 'New track',
+    currentTrack: 'Current track',
+    discover: 'Discover',
+    explore: 'Explore',
+    quit: 'Quit BR Music',
+    create: 'Create',
+    createTrack: 'Create track',
+    notifications: 'Notifications',
+    labs: 'Labs',
+    library: 'Library',
+    myTracks: 'My tracks',
+    playlists: 'Playlists',
+    downloadApp: 'Download the app',
+    studio: 'Studio',
+    settings: 'Settings',
+    connectApi: 'Connect an API',
+    help: 'Help',
+    about: 'About BR Music',
+    aboutDetail: 'AI music generator, version {version}.',
+    close: 'Close',
+    openDataFolder: 'Open data folder',
+  },
+  pt: {
+    track: 'Faixa',
+    newTrack: 'Nova Faixa',
+    currentTrack: 'Faixa Atual',
+    discover: 'Descobrir',
+    explore: 'Explorar',
+    quit: 'Sair do BR Music',
+    create: 'Criar',
+    createTrack: 'Criar Faixa',
+    notifications: 'Notificações',
+    labs: 'Labs',
+    library: 'Biblioteca',
+    myTracks: 'Minhas Faixas',
+    playlists: 'Playlists',
+    downloadApp: 'Baixar o App',
+    studio: 'Studio',
+    settings: 'Configurações',
+    connectApi: 'Conectar uma API',
+    help: 'Ajuda',
+    about: 'Sobre o BR Music',
+    aboutDetail: 'Gerador de músicas com IA, versão {version}.',
+    close: 'Fechar',
+    openDataFolder: 'Abrir Pasta de Dados',
+  },
+};
+
+let currentLanguage = 'en';
+
+function labels() {
+  return MENU_LABELS[currentLanguage] || MENU_LABELS.en;
+}
+
 function buildMenu() {
+  const l = labels();
   /** @type {import('electron').MenuItemConstructorOptions[]} */
   const template = [
     {
-      label: 'Faixa',
+      label: l.track,
       submenu: [
-        { label: 'Nova Faixa', accelerator: 'CmdOrCtrl+N', click: () => navigateTo('/create') },
-        { label: 'Faixa Atual', click: () => navigateTo('/studio') },
+        { label: l.newTrack, accelerator: 'CmdOrCtrl+N', click: () => navigateTo('/create') },
+        { label: l.currentTrack, click: () => navigateTo('/studio') },
         { type: 'separator' },
-        { label: 'Descobrir', click: () => navigateTo('/discover') },
-        { label: 'Explorar', click: () => navigateTo('/explore') },
+        { label: l.discover, click: () => navigateTo('/discover') },
+        { label: l.explore, click: () => navigateTo('/explore') },
         { type: 'separator' },
-        { role: 'quit', label: 'Sair do BR Music' },
+        { role: 'quit', label: l.quit },
       ],
     },
     {
-      label: 'Criar',
+      label: l.create,
       submenu: [
-        { label: 'Criar Faixa', accelerator: 'CmdOrCtrl+Shift+N', click: () => navigateTo('/create') },
-        { label: 'Notificações', click: () => navigateTo('/notifications') },
-        { label: 'Labs', click: () => navigateTo('/labs') },
+        { label: l.createTrack, accelerator: 'CmdOrCtrl+Shift+N', click: () => navigateTo('/create') },
+        { label: l.notifications, click: () => navigateTo('/notifications') },
+        { label: l.labs, click: () => navigateTo('/labs') },
       ],
     },
     {
-      label: 'Biblioteca',
+      label: l.library,
       submenu: [
-        { label: 'Minhas Faixas', accelerator: 'CmdOrCtrl+L', click: () => navigateTo('/me') },
-        { label: 'Playlists', click: () => navigateTo('/me') },
-        { label: 'Baixar o App', click: () => navigateTo('/downloads') },
+        { label: l.myTracks, accelerator: 'CmdOrCtrl+L', click: () => navigateTo('/me') },
+        { label: l.playlists, click: () => navigateTo('/me') },
+        { label: l.downloadApp, click: () => navigateTo('/downloads') },
       ],
     },
     {
-      label: 'Studio',
+      label: l.studio,
       submenu: [
-        { label: 'Studio', accelerator: 'CmdOrCtrl+Shift+S', click: () => navigateTo('/studio') },
-        { label: 'Descobrir', click: () => navigateTo('/discover') },
-        { label: 'Explorar', click: () => navigateTo('/explore') },
+        { label: l.studio, accelerator: 'CmdOrCtrl+Shift+S', click: () => navigateTo('/studio') },
+        { label: l.discover, click: () => navigateTo('/discover') },
+        { label: l.explore, click: () => navigateTo('/explore') },
       ],
     },
     {
-      label: 'Configurações',
+      label: l.settings,
       submenu: [
-        { label: 'Configurações', accelerator: 'CmdOrCtrl+,', click: () => navigateTo('/more') },
-        { label: 'Conectar uma API', click: () => navigateTo('/admin') },
+        { label: l.settings, accelerator: 'CmdOrCtrl+,', click: () => navigateTo('/more') },
+        { label: l.connectApi, click: () => navigateTo('/admin') },
       ],
     },
     {
-      label: 'Ajuda',
+      label: l.help,
       submenu: [
         {
-          label: 'Sobre o BR Music',
+          label: l.about,
           click: () => {
             void dialog.showMessageBox({
               type: 'info',
-              title: 'Sobre o BR Music',
+              title: l.about,
               message: 'BR Music',
-              detail: `Gerador de músicas com IA, versão ${app.getVersion()}.\nElectron ${process.versions.electron}.`,
-              buttons: ['Fechar'],
+              detail: `${l.aboutDetail.replace('{version}', app.getVersion())}\nElectron ${process.versions.electron}.`,
+              buttons: [l.close],
             });
           },
         },
         {
-          label: 'Abrir Pasta de Dados',
+          label: l.openDataFolder,
           click: () => {
             void shell.openPath(app.getPath('userData'));
           },
@@ -300,18 +363,26 @@ function buildMenu() {
     template.unshift({
       label: APP_NAME,
       submenu: [
-        { role: 'about', label: `Sobre o ${APP_NAME}` },
+        { role: 'about', label: l.about },
         { type: 'separator' },
-        { role: 'hide', label: 'Ocultar BR Music' },
-        { role: 'hideOthers', label: 'Ocultar Outros' },
-        { role: 'unhide', label: 'Mostrar Todos' },
+        { role: 'hide', label: currentLanguage === 'en' ? 'Hide BR Music' : 'Ocultar BR Music' },
+        { role: 'hideOthers', label: currentLanguage === 'en' ? 'Hide Others' : 'Ocultar Outros' },
+        { role: 'unhide', label: currentLanguage === 'en' ? 'Show All' : 'Mostrar Todos' },
         { type: 'separator' },
-        { role: 'quit', label: 'Sair do BR Music' },
+        { role: 'quit', label: l.quit },
       ],
     });
   }
 
   return Menu.buildFromTemplate(template);
+}
+
+/** Troca o idioma do menu nativo e o reconstrói na hora. */
+function setMenuLanguage(language) {
+  if (language !== 'en' && language !== 'pt') return;
+  if (language === currentLanguage) return;
+  currentLanguage = language;
+  Menu.setApplicationMenu(buildMenu());
 }
 
 /* ------------------------------------------------------------------ */
@@ -330,7 +401,13 @@ function registerIpcHandlers() {
     electron: process.versions.electron,
     node: process.versions.node,
     isPackaged: app.isPackaged,
+    language: currentLanguage,
   }));
+
+  ipcMain.handle('menu:language', (_event, language) => {
+    setMenuLanguage(language);
+    return currentLanguage;
+  });
 
   ipcMain.handle('dialog:saveAudio', async (event, options) => {
     const opts = options && typeof options === 'object' ? options : {};

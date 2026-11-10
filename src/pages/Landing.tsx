@@ -1,9 +1,13 @@
 import { useState } from 'react';
 import { navigate, setParams } from '../lib/store';
 import { Icon } from '../components/Icons';
+import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import logoMark from '../assets/logo-mark.png';
 import logoWordmark from '../assets/logo-wordmark.png';
+import { useT } from '../lib/useT';
 
+// Os textos ficam em português no código e são traduzidos na renderização,
+// porque a tradução depende do idioma escolhido em tempo de execução.
 const FEATURES = [
   {
     tag: 'Destaque',
@@ -79,6 +83,7 @@ const FAQ = [
 ];
 
 export function Landing() {
+  const t = useT();
   const [prompt, setPrompt] = useState('');
 
   const start = (route: string, text?: string) => {
@@ -99,19 +104,22 @@ export function Landing() {
             <img src={logoWordmark} alt="BR Music" className="h-6 w-auto" />
           </button>
           <nav className="flex items-center gap-2">
+            <div className="mr-1 rounded-full border border-ink-700 px-2 py-1">
+              <LanguageSwitcher compact />
+            </div>
             <button
               type="button"
               onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
               className="hidden rounded-full px-4 py-2 text-sm text-mute-300 transition hover:text-mute-100 sm:block"
             >
-              Código aberto
+              {t('Código aberto')}
             </button>
             <button
               type="button"
               onClick={() => start('/create')}
               className="rounded-full bg-mute-100 px-4 py-2 text-sm font-semibold text-ink-950 transition hover:bg-brand-400"
             >
-              Abrir app
+              {t('Abrir app')}
             </button>
           </nav>
         </div>
@@ -128,19 +136,19 @@ export function Landing() {
         />
         <div className="relative mx-auto max-w-3xl text-center">
           <h1 className="font-display text-4xl font-extrabold leading-[1.05] tracking-tight text-mute-100 sm:text-6xl">
-            Faça qualquer música que você <span className="brand-text">imaginar</span>
+            {t('Faça qualquer música que você ')}
+            <span className="brand-text">{t('imaginar')}</span>
           </h1>
           <p className="mx-auto mt-4 max-w-xl text-base text-mute-400">
-            Grátis, sem conta e rodando no seu próprio dispositivo. Descreva a faixa, ajuste o
-            estilo e leve o mix, e os stems, para onde quiser.
+            {t('Grátis, sem conta e rodando no seu próprio dispositivo. Descreva a faixa, ajuste o estilo e leve o mix, e os stems, para onde quiser.')}
           </p>
 
           <div className="mx-auto mt-8 max-w-2xl rounded-2xl border border-ink-700 bg-ink-900/80 p-3 text-left shadow-2xl">
             <textarea
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              placeholder="Descreva a música que você quer criar"
-              aria-label="Descreva a música que você quer criar"
+              placeholder={t('Descreva a música que você quer criar')}
+              aria-label={t('Descreva a música que você quer criar')}
               rows={3}
               className="w-full resize-none bg-transparent px-3 py-2 text-base text-mute-100
                 placeholder:text-mute-500 focus:outline-none"
@@ -148,7 +156,7 @@ export function Landing() {
             <div className="flex items-center justify-between gap-3 px-2 pt-1">
               <button
                 type="button"
-                aria-label="Adicionar mídia"
+                aria-label={t('Adicionar mídia')}
                 className="grid h-10 w-10 place-items-center rounded-full border border-ink-600
                   text-mute-400 transition hover:text-mute-100"
               >
@@ -161,7 +169,7 @@ export function Landing() {
                   text-ink-950 transition hover:bg-brand-400"
               >
                 <Icon.Sparkles size={16} />
-                Criar
+                {t('Criar')}
               </button>
             </div>
           </div>
@@ -180,7 +188,7 @@ export function Landing() {
       <section className="px-5 pb-20">
         <div className="mx-auto max-w-6xl">
           <h2 className="text-center font-display text-2xl font-bold text-mute-100 sm:text-3xl">
-            Tudo o que você precisa para fazer música do seu jeito
+            {t('Tudo o que você precisa para fazer música do seu jeito')}
           </h2>
           <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {FEATURES.map((feature) => (
@@ -189,17 +197,17 @@ export function Landing() {
                 className="surface flex flex-col gap-3 rounded-2xl p-5 transition hover:border-ink-600"
               >
                 <span className="w-fit rounded-full bg-brand-500/15 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-brand-400">
-                  {feature.tag}
+                  {t(feature.tag)}
                 </span>
-                <h3 className="text-lg font-semibold text-mute-100">{feature.title}</h3>
-                <p className="flex-1 text-sm leading-relaxed text-mute-400">{feature.body}</p>
+                <h3 className="text-lg font-semibold text-mute-100">{t(feature.title)}</h3>
+                <p className="flex-1 text-sm leading-relaxed text-mute-400">{t(feature.body)}</p>
                 <button
                   type="button"
                   onClick={() => start(feature.action)}
                   className="w-fit rounded-full border border-ink-600 px-4 py-1.5 text-sm text-mute-100
                     transition hover:border-brand-500 hover:text-brand-400"
                 >
-                  {feature.cta}
+                  {t(feature.cta)}
                 </button>
               </article>
             ))}
@@ -210,16 +218,16 @@ export function Landing() {
       <section className="border-y border-ink-800 bg-ink-900/40 px-5 py-16">
         <div className="mx-auto max-w-3xl text-center">
           <h2 className="font-display text-3xl font-bold text-mute-100">
-            Baixe, instale e use offline
+            {t('Baixe, instale e use offline')}
           </h2>
           <p className="mt-3 text-mute-400">
-            Sem conta, sem plano, sem servidor. O app inteiro roda no seu computador.
+            {t('Sem conta, sem plano, sem servidor. O app inteiro roda no seu computador.')}
           </p>
           <div className="mt-8 grid gap-4 text-left md:grid-cols-3">
             {DOWNLOADS.map((item) => (
               <div key={item.os} className="surface rounded-2xl p-5">
                 <p className="text-sm font-semibold text-mute-100">{item.os}</p>
-                <p className="mt-0.5 text-xs text-mute-500">{item.detail}</p>
+                <p className="mt-0.5 text-xs text-mute-500">{t(item.detail)}</p>
                 <code className="mt-3 block overflow-x-auto rounded-lg bg-ink-950 px-3 py-2 text-[11px] text-mute-400">
                   {item.command}
                 </code>
@@ -232,7 +240,7 @@ export function Landing() {
               onClick={() => start('/create')}
               className="rounded-full brand-gradient px-6 py-3 text-sm font-semibold text-ink-950"
             >
-              Usar a versão web
+              {t('Usar a versão web')}
             </button>
             <a
               href="https://github.com/andersonnarciso/brmusic/releases"
@@ -241,11 +249,11 @@ export function Landing() {
               className="rounded-full border border-ink-600 px-6 py-3 text-sm text-mute-200 transition
                 hover:border-brand-500 hover:text-brand-400"
             >
-              Baixar no GitHub
+              {t('Baixar no GitHub')}
             </a>
           </div>
           <p className="mt-4 text-xs text-mute-500">
-            Linux, Windows e macOS · versões estáticas para os três sistemas
+            {t('Linux, Windows e macOS · versões estáticas para os três sistemas')}
           </p>
         </div>
       </section>
@@ -253,19 +261,19 @@ export function Landing() {
       <section className="px-5 py-16">
         <div className="mx-auto max-w-3xl">
           <h2 className="font-display text-2xl font-bold text-mute-100 sm:text-3xl">
-            Perguntas frequentes
+            {t('Perguntas frequentes')}
           </h2>
           <div className="mt-6 divide-y divide-ink-800 border-y border-ink-800">
             {FAQ.map(([question, answer]) => (
               <details key={question} className="group py-4">
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-base font-medium text-mute-100">
-                  {question}
+                  {t(question)}
                   <Icon.ChevronDown
                     size={16}
                     className="shrink-0 text-mute-500 transition group-open:rotate-180"
                   />
                 </summary>
-                <p className="mt-3 text-sm leading-relaxed text-mute-400">{answer}</p>
+                <p className="mt-3 text-sm leading-relaxed text-mute-400">{t(answer)}</p>
               </details>
             ))}
           </div>
@@ -276,9 +284,9 @@ export function Landing() {
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 text-xs text-mute-500 sm:flex-row">
           <span className="flex items-center gap-2">
             <img src={logoMark} alt="" className="h-4 w-4" />
-            BR Music, gerador de música livre, local e open source.
+            {t('BR Music, gerador de música livre, local e open source.')}
           </span>
-          <span>Gerador procedural local · nenhuma faixa é pré-gravada</span>
+          <span>{t('Gerador procedural local · nenhuma faixa é pré-gravada')}</span>
         </div>
       </footer>
     </div>

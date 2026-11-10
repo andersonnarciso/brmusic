@@ -7,21 +7,9 @@
  */
 
 import { DEFAULT_ADMIN_CONFIG, type AdminConfig, type AdminStats } from './adminTypes';
+import { apiUrl } from './api';
 
 const STORAGE_KEY = 'brmusic.admin.config.v1';
-
-/**
- * Origem da API. Na versão web é relativo (mesma origem); no app desktop
- * (Electron sob file://) é a URL http:// do backend local.
- */
-function apiBase(): string {
-  if (typeof window === 'undefined') return '';
-  return window.desktop?.apiUrl ?? '';
-}
-
-function apiUrl(path: string): string {
-  return `${apiBase()}${path}`;
-}
 
 export interface AdminServerInfo {
   ok: boolean;

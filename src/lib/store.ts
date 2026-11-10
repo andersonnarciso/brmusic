@@ -34,6 +34,7 @@ import { generateCover } from './cover';
 import { hashText, mulberry32For } from './rng';
 import { matchPreset } from './audio/presets';
 import { runHarness, type QualityReport, type StageId, type StageStatus } from './harness';
+import { readLanguage, writeLanguage, interpolate, translate, type Language } from './i18n';
 
 /* ------------------------------------------------------------------ */
 /* generic store                                                       */
@@ -78,6 +79,8 @@ export interface AppState {
   generating: boolean;
   /** Etapa atual do harness, mostrada enquanto a faixa é montada. */
   harnessStage: string | null;
+  /** Idioma da interface. English e o principal, pt-BR o secundario. */
+  language: Language;
   toast: string | null;
   credits: number;
 }
@@ -93,6 +96,7 @@ export const appStore = createStore<AppState>({
   sidebarCollapsed: settings.sidebarCollapsed ?? false,
   generating: false,
   harnessStage: null,
+  language: readLanguage(),
   toast: null,
   credits: 50,
 });
@@ -130,8 +134,22 @@ export function usePlayer<S>(selector: (state: PlayerState) => S): S {
 
 let toastTimer: number | undefined;
 
+/** Troca o idioma da interface e persiste a preferencia. */
+export function setLanguage(language: Language): void {
+  writeLanguage(language);
+  appStore.set((s) => ({ ...s, language }));
+  document.documentElement.lang = language === 'en' ? 'en' : 'pt-BR';
+  document.title =
+    language === 'en'
+      ? 'BR Music, AI music generator'
+      : 'BR Music, gerador de músicas com IA';
+  // No app desktop o menu nativo acompanha o idioma escolhido aqui.
+  void window.desktop?.setLanguage?.(language);
+}
+
 export function showToast(message: string): void {
-  appStore.set((s) => ({ ...s, toast: message }));
+  // A mensagem chega em português e sai traduzida no idioma escolhido.
+  appStore.set((s) => ({ ...s, toast: translate(message, s.language) }));
   window.clearTimeout(toastTimer);
   toastTimer = window.setTimeout(() => {
     appStore.set((s) => ({ ...s, toast: null }));
@@ -277,16 +295,34 @@ export async function createSong(): Promise<void> {
     if (song) {
       appStore.set((s) => ({ ...s, credits: Math.max(0, s.credits - 1) }));
       playSong(song.id);
-      showToast(
-        result.report
-          ? `"${song.title}" pronta, ${result.report.lufs.toFixed(1)} LUFS`
-          : `"${song.title}" pronta`,
-      );
+      const ready = result.report
+        ? '"{title}" pronta, {lufs} LUFS'
+        : '"{title}" pronta';
+      const params = {
+        title: song.title,
+        lufs: result.report ? result.report.lufs.toFixed(1) : '',
+      };
+      showToastWith(ready, params);
+      if (result.externalWarning) {
+        showToastWith(
+          'provedor externo indisponível, usamos o motor local ({motivo})',
+          { motivo: result.externalWarning },
+        );
+      }
     }
   } catch (error) {
     appStore.set((s) => ({ ...s, generating: false, harnessStage: null }));
     showToast('Falha na geração, tente novamente');
   }
+}
+
+/**
+ * Toast com parametros: o texto base e traduzido e os {placeholders} sao
+ * preenchidos depois, para nao depender do idioma no momento da montagem.
+ */
+export function showToastWith(text: string, params: Record<string, string | number>): void {
+  const language = appStore.get().language;
+  showToast(interpolate(translate(text, language), params));
 }
 
 const STAGE_LABELS: Record<StageId, string> = {
@@ -320,7 +356,7 @@ export async function createVariations(count = 4): Promise<void> {
   }
 
   appStore.set((s) => ({ ...s, generating: false }));
-  showToast(`${count} variações geradas`);
+  showToastWith('{count} variações geradas', { count });
 }
 
 /** Remixa uma faixa existente mudando o estilo pedido. */
@@ -445,7 +481,7 @@ export function reusePrompt(songId: string): void {
     },
   }));
   navigate('/create');
-  showToast(`Prompt de "${song.title}" carregado na criação`);
+  showToastWith('Prompt de "{title}" carregado na criação', { title: song.title });
 }
 
 /** Usa a faixa como inspiração: junta o estilo dela ao prompt atual. */
@@ -463,7 +499,7 @@ export function useAsInspiration(songId: string): void {
     },
   }));
   navigate('/create');
-  showToast(`"${song.title}" adicionada como inspiração`);
+  showToastWith('"{title}" adicionada como inspiração', { title: song.title });
 }
 
 /** Amostra a faixa como referência técnica (andamento e timbre). */
@@ -479,7 +515,7 @@ export function sampleSong(songId: string): void {
     },
   }));
   navigate('/create');
-  showToast(`Amostra de "${song.title}" carregada`);
+  showToastWith('Amostra de "{title}" carregada', { title: song.title });
 }
 
 /** Mashup: junta duas faixas em uma nova geração. */
@@ -498,7 +534,7 @@ export async function mashupSongs(firstId: string, secondId: string): Promise<vo
   appStore.set((s) => ({ ...s, generating: true }));
   await createSongWithSeed(params, seed, 'mashup', a.id, true);
   appStore.set((s) => ({ ...s, generating: false }));
-  showToast(`Mashup de "${a.title}" e "${b.title}" pronto`);
+  showToastWith('Mashup de "{a}" e "{b}" pronto', { a: a.title, b: b.title });
 }
 
 /** Regenera a capa da faixa com outra composição. */
@@ -552,7 +588,7 @@ export function setPersona(personaId: string): void {
       vocal: personaId === 'auto' ? 'auto' : personaId === 'feminina' ? 'female' : 'male',
     },
   }));
-  showToast(`Voz: ${persona.label}`);
+  showToastWith('Voz: {voice}', { voice: persona.label });
 }
 
 /** Adiciona a faixa à fila de reprodução. */
@@ -589,7 +625,7 @@ export async function startRadio(songId: string, count = 6): Promise<void> {
     await createSongWithSeed(params, seed, 'variation', seed0.id, i === 0);
     appStore.set((s) => ({ ...s, generating: false }));
   }
-  showToast(`Rádio iniciada com ${count} faixas`);
+  showToastWith('Rádio iniciada com {count} faixas', { count });
 }
 
 /**
@@ -665,7 +701,7 @@ export function createPlaylist(name: string): Playlist {
     savePlaylists(playlists);
     return { ...s, playlists };
   });
-  showToast(`Playlist "${playlist.name}" criada`);
+  showToastWith('Playlist "{name}" criada', { name: playlist.name });
   return playlist;
 }
 

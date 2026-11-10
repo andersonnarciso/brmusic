@@ -14,6 +14,7 @@ import { renderSong, type SongPlan } from './audio/engine';
 import { applyEdit } from './audio/edit';
 import { generateLyrics } from './lyrics';
 import { matchPreset, detectBpm } from './audio/presets';
+import { apiFetch } from './api';
 import type { Song } from './types';
 import { keyRoot, keyLabel } from './audio/theory';
 
@@ -142,7 +143,11 @@ export function buildArrangement(plan: SongPlan) {
 /* ------------------------------------------------------------------ */
 
 /** Métricas de mixagem a partir do buffer final. */
-export function analyzeQuality(buffer: AudioBuffer): QualityReport {
+export function analyzeQuality(
+  buffer: AudioBuffer,
+  translate?: (text: string) => string,
+): QualityReport {
+  const tr = translate ?? ((text: string) => text);
   const left = buffer.getChannelData(0);
   const right = buffer.numberOfChannels > 1 ? buffer.getChannelData(1) : left;
 
@@ -180,11 +185,11 @@ export function analyzeQuality(buffer: AudioBuffer): QualityReport {
   const stereoWidth = Math.min(1, Math.sqrt(sumDiff / samples) / (Math.abs(mid) + Math.abs(side) + 1e-6));
 
   const problems: string[] = [];
-  if (peakDb > -0.5) problems.push('o pico está alto demais');
-  if (clipped > samples * 0.001) problems.push('há amostras estourando');
-  if (lufs < -22) problems.push('o loudness está baixo');
-  if (dynamicRangeDb < 6) problems.push('a dinâmica está comprimida demais');
-  if (stereoWidth < 0.05) problems.push('a mixagem está quase mono');
+  if (peakDb > -0.5) problems.push(tr('o pico está alto demais'));
+  if (clipped > samples * 0.001) problems.push(tr('há amostras estourando'));
+  if (lufs < -22) problems.push(tr('o loudness está baixo'));
+  if (dynamicRangeDb < 6) problems.push(tr('a dinâmica está comprimida demais'));
+  if (stereoWidth < 0.05) problems.push(tr('a mixagem está quase mono'));
 
   return {
     durationSec: buffer.duration,
@@ -196,8 +201,8 @@ export function analyzeQuality(buffer: AudioBuffer): QualityReport {
     stereoWidth,
     verdict:
       problems.length === 0
-        ? 'Mixagem saudável, pronta para publicar'
-        : `Revisar: ${problems.join(', ')}`,
+        ? tr('Mixagem saudável, pronta para publicar')
+        : `${tr('Revisar')}: ${problems.join(', ')}`,
   };
 }
 
@@ -209,6 +214,12 @@ export interface RunOptions {
   idea: string;
   style: string;
   instrumental: boolean;
+  /**
+   * Tradutor opcional dos detalhes textuais de cada etapa. Quem chama passa a
+   * função `t` do componente, porque a tradução depende do idioma escolhido
+   * em tempo de execução e este módulo não pode usar hooks.
+   */
+  translate?: (text: string) => string;
   /** Controles criativos da criação (weirdness, influência, variedade, título). */
   params?: {
     title?: string;
@@ -229,6 +240,81 @@ export interface RunResult {
   wav: Blob;
   duration: number;
   report: QualityReport | null;
+  /** De onde veio o áudio final: motor local ou provedor externo. */
+  source: 'local' | 'external';
+  /** Aviso do provedor externo quando ele falhou e o motor local assumiu. */
+  externalWarning?: string;
+}
+
+/** Converte base64 em Blob de áudio. */
+function base64ToBlob(base64: string, format: string): Blob {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+  const mime = format === 'mp3' ? 'audio/mpeg' : format === 'wav' ? 'audio/wav' : 'audio/wav';
+  return new Blob([bytes], { type: mime });
+}
+
+interface ExternalAudio {
+  ok: boolean;
+  blob: Blob | null;
+  duration: number;
+  source: string;
+  error?: string;
+}
+
+/**
+ * Pede o áudio final ao provedor externo configurado no painel.
+ * Quando o provedor está desligado, a rota devolve 200 sem áudio e o
+ * motor local assume sem alarde.
+ */
+async function requestExternalAudio(body: {
+  prompt: string;
+  lyrics: string;
+  instrumental: boolean;
+}): Promise<ExternalAudio> {
+  try {
+    const response = await apiFetch('/api/generate/audio', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+    const payload = (await response.json().catch(() => null)) as {
+      audioBase64?: string;
+      audioFormat?: string;
+      durationSec?: number;
+      source?: string;
+      error?: string;
+    } | null;
+
+    if (!response.ok) {
+      return {
+        ok: false,
+        blob: null,
+        duration: 0,
+        source: 'external',
+        error: payload?.error ?? `O provedor de áudio respondeu HTTP ${response.status}.`,
+      };
+    }
+
+    if (payload?.audioBase64) {
+      return {
+        ok: true,
+        blob: base64ToBlob(payload.audioBase64, payload.audioFormat ?? 'wav'),
+        duration: payload.durationSec ?? 0,
+        source: payload.source ?? 'external',
+      };
+    }
+
+    return { ok: false, blob: null, duration: 0, source: 'local' };
+  } catch (error) {
+    return {
+      ok: false,
+      blob: null,
+      duration: 0,
+      source: 'external',
+      error: `Servidor local indisponível: ${String((error as Error)?.message ?? error)}`,
+    };
+  }
 }
 
 /**
@@ -237,6 +323,7 @@ export interface RunResult {
  */
 export async function runHarness(options: RunOptions): Promise<RunResult> {
   const { idea, style, instrumental, params, onStage } = options;
+  const tr = options.translate ?? ((text: string) => text);
   const mark = (id: StageId, status: StageStatus, detail?: string) =>
     onStage?.(id, status, detail);
 
@@ -259,16 +346,15 @@ export async function runHarness(options: RunOptions): Promise<RunResult> {
   mark(
     'lyrics',
     'done',
-    lyrics ? `${lyrics.split('\n').length} linhas` : 'instrumental, sem letra',
+    lyrics ? `${lyrics.split('\n').length} ${tr('linhas')}` : tr('instrumental, sem letra'),
   );
 
   /* 4. plano */
   mark('plan', 'running');
   let plan: SongPlan;
   try {
-    const response = await fetch('/api/generate', {
+    const response = await apiFetch('/api/generate', {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ prompt, lyrics, instrumental }),
     });
     const data = response.ok ? ((await response.json()) as { plan?: SongPlan }) : {};
@@ -279,7 +365,7 @@ export async function runHarness(options: RunOptions): Promise<RunResult> {
   mark(
     'plan',
     'done',
-    `${plan.bpm} BPM, ${plan.key}, ${plan.sections?.length ?? 0} seções`,
+    `${plan.bpm} BPM, ${plan.key}, ${plan.sections?.length ?? 0} ${tr('seções')}`,
   );
 
   /* 5. arranjo */
@@ -288,41 +374,70 @@ export async function runHarness(options: RunOptions): Promise<RunResult> {
   mark(
     'arrangement',
     'done',
-    `${arrangement.instrumentation.length} camadas, ${
+    `${arrangement.instrumentation.length} ${tr('camadas')}, ${
       arrangement.sections.filter((s) => s.energy > 0.85).length
-    } trechos em pico`,
+    } ${tr('trechos em pico')}`,
   );
 
   /* 6. render + 7. stems */
   mark('render', 'running');
-  const result = await renderSong(
-    {
-      prompt,
-      lyrics,
-      style,
-      title: params?.title ?? plan.title ?? '',
-      model: params?.model ?? 'brm-v1',
-      instrumental,
-      vocal: params?.vocal ?? 'auto',
-      weirdness: params?.weirdness ?? 50,
-      styleInfluence: params?.styleInfluence ?? 60,
-      variety: params?.variety ?? 1,
-    },
-    { plan },
-  );
-  mark('render', 'done', `${result.duration.toFixed(1)}s, ${result.bpm} BPM`);
+  const external = await requestExternalAudio({ prompt, lyrics, instrumental });
 
-  const stems = Object.keys(result.stems).length;
-  mark('stems', 'done', `${stems} trilhas separadas`);
+  let wav: Blob;
+  let duration: number;
+  let stemCount: number;
+  let source: 'local' | 'external';
+
+  if (external.ok && external.blob) {
+    wav = external.blob;
+    duration = external.duration;
+    stemCount = 1;
+    source = 'external';
+    mark('render', 'done', `${tr('provedor externo')} · ${duration.toFixed(1)}s`);
+  } else {
+    const result = await renderSong(
+      {
+        prompt,
+        lyrics,
+        style,
+        title: params?.title ?? plan.title ?? '',
+        model: params?.model ?? 'brm-v1',
+        instrumental,
+        vocal: params?.vocal ?? 'auto',
+        weirdness: params?.weirdness ?? 50,
+        styleInfluence: params?.styleInfluence ?? 60,
+        variety: params?.variety ?? 1,
+      },
+      { plan },
+    );
+    wav = result.wav;
+    duration = result.duration;
+    stemCount = Object.keys(result.stems).length;
+    source = 'local';
+    mark('render', 'done', `${result.duration.toFixed(1)}s, ${result.bpm} BPM`);
+  }
+
+  mark(
+    'stems',
+    'done',
+    source === 'external'
+      ? tr('áudio único do provedor externo')
+      : `${stemCount} ${tr('trilhas separadas')}`,
+  );
 
   /* 8. master: aplica remaster e mede */
   mark('master', 'running');
-  let masterBlob = result.wav;
+  let masterBlob = wav;
   let masterBuffer: AudioBuffer | null = null;
   try {
     const ctx = new OfflineAudioContext(2, 44100, 44100);
-    const mastered = await applyEdit(result.wav, [{ type: 'remaster', intensity: 0.45 }]);
-    let buffer = await ctx.decodeAudioData(await mastered.wav.arrayBuffer());
+    // O audio externo ja vem masterizado pelo provedor: ali so normalizamos o
+    // pico. O motor local recebe o remaster completo.
+    const processed =
+      source === 'external'
+        ? { wav }
+        : await applyEdit(wav, [{ type: 'remaster', intensity: 0.45 }]);
+    let buffer = await ctx.decodeAudioData(await processed.wav.arrayBuffer());
 
     // normaliza o pico para -1 dBFS, alvo seguro para publicação
     let peak = 0;
@@ -330,36 +445,38 @@ export async function runHarness(options: RunOptions): Promise<RunResult> {
     for (let i = 0; i < left.length; i += 4) peak = Math.max(peak, Math.abs(left[i]));
     const peakDb = 20 * Math.log10(peak || 1e-6);
     if (peakDb > -1) {
-      const trimmed = await applyEdit(mastered.wav, [{ type: 'gain', db: -1 - peakDb }]);
+      const trimmed = await applyEdit(processed.wav, [{ type: 'gain', db: -1 - peakDb }]);
       masterBlob = trimmed.wav;
       buffer = await ctx.decodeAudioData(await trimmed.wav.arrayBuffer());
     } else {
-      masterBlob = mastered.wav;
+      masterBlob = processed.wav;
     }
     masterBuffer = buffer;
   } catch {
     masterBuffer = null;
   }
-  const report = masterBuffer ? analyzeQuality(masterBuffer) : null;
+  const report = masterBuffer ? analyzeQuality(masterBuffer, tr) : null;
   mark(
     'master',
     'done',
     report
-      ? `${report.lufs.toFixed(1)} LUFS, pico ${report.peakDb.toFixed(1)} dB`
-      : 'master aplicado',
+      ? `${report.lufs.toFixed(1)} LUFS, ${tr('pico')} ${report.peakDb.toFixed(1)} dB`
+      : tr('master aplicado'),
   );
 
   /* 9. export: entrega os artefatos para quem chamou */
   mark('export', 'running');
-  mark('export', 'done', `${(masterBuffer?.duration ?? result.duration).toFixed(1)}s masterizado`);
+  mark('export', 'done', `${(masterBuffer?.duration ?? duration).toFixed(1)}s ${tr('masterizado')}`);
 
   return {
     prompt,
     lyrics,
     plan,
     wav: masterBlob,
-    duration: masterBuffer?.duration ?? result.duration,
+    duration: masterBuffer?.duration ?? duration,
     report,
+    source,
+    externalWarning: source === 'local' && external.error ? external.error : undefined,
   };
 }
 

@@ -2,6 +2,8 @@ import { Icon } from './Icons';
 import { navigate, toggleSidebar, useApp } from '../lib/store';
 import logoMark from '../assets/logo-mark.png';
 import logoWordmark from '../assets/logo-wordmark.png';
+import { useT } from '../lib/useT';
+import { LanguageSwitcher } from './LanguageSwitcher';
 
 interface NavItem {
   label: string;
@@ -9,6 +11,8 @@ interface NavItem {
   icon: keyof typeof Icon;
 }
 
+// Os rótulos ficam em português no código e são traduzidos na renderização,
+// porque a tradução depende do idioma escolhido em tempo de execução.
 const MAIN_NAV: NavItem[] = [
   { label: 'Início', route: '/discover', icon: 'Home' },
   { label: 'Explorar', route: '/explore', icon: 'Compass' },
@@ -25,6 +29,7 @@ const SECONDARY_NAV: NavItem[] = [
 ];
 
 export function Sidebar() {
+  const t = useT();
   const route = useApp((s) => s.route);
   const collapsed = useApp((s) => s.sidebarCollapsed);
   const songs = useApp((s) => s.songs);
@@ -80,7 +85,7 @@ export function Sidebar() {
                     }`}
                 >
                   <ItemIcon size={18} />
-                  {!collapsed && <span className="truncate">{item.label}</span>}
+                  {!collapsed && <span className="truncate">{t(item.label)}</span>}
                 </button>
               </li>
             );
@@ -107,7 +112,7 @@ export function Sidebar() {
                     }`}
                 >
                   <ItemIcon size={18} />
-                  {!collapsed && <span className="truncate">{item.label}</span>}
+                  {!collapsed && <span className="truncate">{t(item.label)}</span>}
                 </button>
               </li>
             );
@@ -116,26 +121,29 @@ export function Sidebar() {
 
         {!collapsed && (
           <div className="mt-4 rounded-2xl border border-ink-700 bg-ink-850 p-3">
-            <p className="text-xs font-medium text-mute-300">Tudo local e grátis</p>
+            <p className="text-xs font-medium text-mute-300">{t('Tudo local e grátis')}</p>
             <p className="mt-1 text-[11px] leading-relaxed text-mute-500">
-              As músicas são geradas no seu dispositivo. Nenhuma conta, nenhum servidor, sem plano.
+              {t(
+                'As músicas são geradas no seu dispositivo. Nenhuma conta, nenhum servidor, sem plano.',
+              )}
             </p>
             <p className="mt-2 text-[11px] text-mute-500">
-              {readyCount} música{readyCount === 1 ? '' : 's'} na biblioteca
+              {readyCount} {t('músicas na biblioteca')}
             </p>
           </div>
         )}
       </nav>
 
       {!collapsed && (
-        <div className="p-3">
+        <div className="space-y-3 p-3">
+          <LanguageSwitcher compact />
           <button
             type="button"
             onClick={() => navigate('/admin')}
             className="w-full rounded-full border border-ink-600 px-4 py-2 text-sm font-medium text-mute-100
               transition hover:border-brand-500 hover:text-brand-400"
           >
-            Conectar uma API
+            {t('Conectar uma API')}
           </button>
         </div>
       )}

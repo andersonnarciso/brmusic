@@ -25,6 +25,7 @@ import { playSong } from '../lib/store';
 import { exportMix, exportStems, uploadSongToFtp } from '../lib/export';
 import { Icon } from './Icons';
 import type { Song } from '../lib/types';
+import { useT } from '../lib/useT';
 
 function formatDuration(seconds: number): string {
   if (!seconds) return '--:--';
@@ -55,6 +56,7 @@ function groupByDate(songs: Song[]): Array<[string, Song[]]> {
 }
 
 export function SongList() {
+  const t = useT();
   const songs = useApp((s) => s.songs);
   const filters = useApp((s) => s.filters);
   const currentId = usePlayer((p) => p.songId);
@@ -102,9 +104,9 @@ export function SongList() {
       <header className="flex flex-col gap-3 border-b border-ink-700 px-5 py-4">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-1.5 text-sm text-mute-400">
-            <span>Workspaces</span>
+            <span>{t('Workspaces')}</span>
             <Icon.ChevronRight size={14} />
-            <span className="text-mute-100">Meu workspace</span>
+            <span className="text-mute-100">{t('Meu workspace')}</span>
           </div>
           <div className="flex items-center gap-2">
             {newPlaylist !== null ? (
@@ -145,7 +147,7 @@ export function SongList() {
                 text-sm text-mute-300 transition hover:border-ink-500 hover:text-mute-100"
             >
               <Icon.Sparkles size={14} />
-              Variações
+              {t('Variações')}
             </button>
             <button
               type="button"
@@ -154,7 +156,7 @@ export function SongList() {
                 text-sm text-mute-300 transition hover:border-mute-100 hover:text-mute-100"
             >
               <Icon.Share size={14} />
-              Compartilhar
+              {t('Compartilhar')}
             </button>
           </div>
         </div>
@@ -168,8 +170,8 @@ export function SongList() {
             <input
               value={filters.query}
               onChange={(e) => setFilters({ query: e.target.value })}
-              placeholder="Buscar"
-              aria-label="Buscar músicas"
+              placeholder={t('Buscar')}
+              aria-label={t('Buscar músicas')}
               className="w-full rounded-full border border-ink-700 bg-ink-850 py-2 pl-9 pr-3 text-sm
                 text-mute-100 placeholder:text-mute-500 focus:border-brand-600 focus:outline-none"
             />
@@ -192,20 +194,20 @@ export function SongList() {
             }`}
           >
             <Icon.Filter size={14} />
-            Filtros{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
+            {t('Filtros')}{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
           </button>
 
           <select
             value={filters.sort}
             onChange={(e) => setFilters({ sort: e.target.value as typeof filters.sort })}
-            aria-label="Ordenar"
+            aria-label={t('Ordenar')}
             className="rounded-full border border-ink-600 bg-ink-900 px-3 py-2 text-sm text-mute-300
               focus:border-brand-600 focus:outline-none"
           >
-            <option value="newest">Mais recentes</option>
-            <option value="oldest">Mais antigas</option>
-            <option value="plays">Mais tocadas</option>
-            <option value="likes">Curtidas</option>
+            <option value="newest">{t('Mais recentes')}</option>
+            <option value="oldest">{t('Mais antigas')}</option>
+            <option value="plays">{t('Mais tocadas')}</option>
+            <option value="likes">{t('Curtidas')}</option>
           </select>
 
           <div className="flex rounded-full border border-ink-600 p-0.5">
@@ -214,7 +216,7 @@ export function SongList() {
                 key={view}
                 type="button"
                 onClick={() => setFilters({ view })}
-                aria-label={view === 'list' ? 'Visualização em lista' : 'Visualização em grade'}
+                aria-label={view === 'list' ? t('Visualização em lista') : t('Visualização em grade')}
                 aria-pressed={filters.view === view}
                 className={`grid h-8 w-8 place-items-center rounded-full transition ${
                   filters.view === view ? 'bg-ink-700 text-mute-100' : 'text-mute-400 hover:text-mute-100'
@@ -257,9 +259,9 @@ export function SongList() {
               <Icon.Note size={22} />
             </div>
             <div>
-              <p className="text-sm font-medium text-mute-200">Nenhuma música por aqui</p>
+              <p className="text-sm font-medium text-mute-200">{t('Nenhuma música por aqui')}</p>
               <p className="mt-1 text-sm text-mute-500">
-                Crie uma faixa e ela aparece aqui automaticamente.
+                {t('Crie uma faixa e ela aparece aqui automaticamente.')}
               </p>
             </div>
             <button
@@ -267,7 +269,7 @@ export function SongList() {
               onClick={() => navigate('/create')}
               className="mt-1 rounded-full brand-gradient px-4 py-2 text-sm font-semibold text-ink-950"
             >
-              Criar música
+              {t('Criar música')}
             </button>
           </div>
         ) : filters.view === 'grid' ? (
@@ -385,6 +387,7 @@ function SongRow({
   menuOpen,
   onToggleMenu,
 }: RowProps) {
+  const t = useT();
   const playlists = useApp((s) => s.playlists);
   return (
     <div
@@ -395,7 +398,7 @@ function SongRow({
       <button
         type="button"
         onClick={() => playSong(song.id)}
-        aria-label={`Tocar ${song.title}`}
+        aria-label={t(`Tocar ${song.title}`)}
         className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-ink-700"
       >
         {song.coverUrl ? (
@@ -480,7 +483,7 @@ function SongRow({
         <button
           type="button"
           onClick={() => void shareSong(song.id)}
-          aria-label="Compartilhar"
+          aria-label={t('Compartilhar')}
           className="grid h-8 w-8 place-items-center rounded-lg text-mute-500 transition hover:text-mute-100"
         >
           <Icon.Share size={15} />
@@ -510,23 +513,23 @@ function SongRow({
               />
               <MenuItem
                 icon="Sliders"
-                label="Editar"
+                label={t('Editar')}
                 onClick={() => {
                   navigate(`/editor/${song.id}`);
                   onToggleMenu();
                 }}
                 submenu={[
-                  { icon: 'Studio', label: 'Abrir no editor', run: () => navigate(`/editor/${song.id}`) },
-                  { icon: 'Image', label: 'Capa', run: () => regenerateCover(song.id) },
-                  { icon: 'Note', label: 'Reaproveitar prompt', run: () => reusePrompt(song.id) },
-                  { icon: 'Studio', label: 'Mashup', run: () => void mashupSongs(song.id, song.id) },
-                  { icon: 'Audio', label: 'Amostrar esta música', run: () => sampleSong(song.id) },
-                  { icon: 'Sparkles', label: 'Usar como inspiração', run: () => useAsInspiration(song.id) },
+                  { icon: 'Studio', label: t('Abrir no editor'), run: () => navigate(`/editor/${song.id}`) },
+                  { icon: 'Image', label: t('Capa'), run: () => regenerateCover(song.id) },
+                  { icon: 'Note', label: t('Reaproveitar prompt'), run: () => reusePrompt(song.id) },
+                  { icon: 'Studio', label: t('Mashup'), run: () => void mashupSongs(song.id, song.id) },
+                  { icon: 'Audio', label: t('Amostrar esta música'), run: () => sampleSong(song.id) },
+                  { icon: 'Sparkles', label: t('Usar como inspiração'), run: () => useAsInspiration(song.id) },
                 ]}
               />
               <MenuItem
                 icon="Share"
-                label="Compartilhar"
+                label={t('Compartilhar')}
                 onClick={() => {
                   void shareSong(song.id);
                   onToggleMenu();
@@ -534,22 +537,22 @@ function SongRow({
               />
               <MenuItem
                 icon="Download"
-                label="Baixar"
+                label={t('Baixar')}
                 submenu={[
-                  { icon: 'Download', label: 'Mix final (WAV)', run: () => void exportMix(song) },
-                  { icon: 'Studio', label: 'Stems (ZIP)', run: () => void exportStems(song) },
+                  { icon: 'Download', label: t('Mix final (WAV)'), run: () => void exportMix(song) },
+                  { icon: 'Studio', label: t('Stems (ZIP)'), run: () => void exportStems(song) },
                 ]}
               />
               <MenuItem
                 icon="Sliders"
-                label="Gerenciar"
+                label={t('Gerenciar')}
                 submenu={[
                   ...playlists.slice(0, 3).map((playlist) => ({
                     icon: 'Library' as const,
                     label: `Playlist: ${playlist.name}`,
                     run: () => togglePlaylistSong(playlist.id, song.id),
                   })),
-                  { icon: 'Send', label: 'Enviar para o FTP', run: () => void uploadSongToFtp(song) },
+                  { icon: 'Send', label: t('Enviar para o FTP'), run: () => void uploadSongToFtp(song) },
                 ]}
               />
 
@@ -557,7 +560,7 @@ function SongRow({
 
               <MenuItem
                 icon="Play"
-                label="Adicionar à fila"
+                label={t('Adicionar à fila')}
                 onClick={() => {
                   addToQueue(song.id);
                   onToggleMenu();
@@ -565,7 +568,7 @@ function SongRow({
               />
               <MenuItem
                 icon="Next"
-                label="Tocar em seguida"
+                label={t('Tocar em seguida')}
                 onClick={() => {
                   playNext(song.id);
                   onToggleMenu();
@@ -573,7 +576,7 @@ function SongRow({
               />
               <MenuItem
                 icon="Note"
-                label="Rádio de músicas"
+                label={t('Rádio de músicas')}
                 onClick={() => {
                   void startRadio(song.id);
                   onToggleMenu();
@@ -584,7 +587,7 @@ function SongRow({
 
               <MenuItem
                 icon="Trash"
-                label="Mover para a lixeira"
+                label={t('Mover para a lixeira')}
                 onClick={() => {
                   trashSong(song.id);
                   onToggleMenu();

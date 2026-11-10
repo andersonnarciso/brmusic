@@ -11,7 +11,10 @@ import {
 import type { Playlist, Song } from '../lib/types';
 import { Icon } from '../components/Icons';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { useT } from '../lib/useT';
 
+// Os rótulos ficam em português no código e são traduzidos na renderização.
+// O estado da aba guarda sempre a chave de origem, nunca o texto traduzido.
 const TABS = [
   'Músicas',
   'Playlists',
@@ -25,6 +28,7 @@ const TABS = [
 ];
 
 export function Library() {
+  const t = useT();
   const songs = useApp((s) => s.songs);
   const playlists = useApp((s) => s.playlists);
   const filters = useApp((s) => s.filters);
@@ -52,7 +56,7 @@ export function Library() {
   return (
     <div className="scroll-thin h-full overflow-y-auto px-5 pb-16">
       <header className="flex flex-wrap items-center justify-between gap-3 pt-5">
-        <h1 className="font-display text-3xl font-extrabold tracking-tight text-mute-100">Biblioteca</h1>
+        <h1 className="font-display text-3xl font-extrabold tracking-tight text-mute-100">{t('Biblioteca')}</h1>
         <div className="flex items-center gap-2">
           <button
             type="button"
@@ -60,11 +64,11 @@ export function Library() {
               text-mute-300 transition hover:text-mute-100"
           >
             <Icon.Plus size={15} />
-            Enviar áudio
+            {t('Enviar áudio')}
           </button>
           <button
             type="button"
-            aria-label="Excluir"
+            aria-label={t('Excluir')}
             className="grid h-9 w-9 place-items-center rounded-full border border-ink-600 text-mute-400
               transition hover:text-mute-100"
           >
@@ -84,7 +88,7 @@ export function Library() {
               tab === item ? 'text-mute-100' : 'text-mute-400 hover:text-mute-200'
             }`}
           >
-            {item}
+            {t(item)}
             {tab === item && (
               <span className="absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-mute-100" />
             )}
@@ -96,7 +100,7 @@ export function Library() {
         <div className="mt-6 space-y-2">
           {trashed.length === 0 && (
             <p className="py-10 text-center text-sm text-mute-500">
-              A lixeira está vazia. Músicas excluídas ficam aqui até serem apagadas.
+              {t('A lixeira está vazia. Músicas excluídas ficam aqui até serem apagadas.')}
             </p>
           )}
           {trashed.map((song) => (
@@ -114,8 +118,8 @@ export function Library() {
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm text-mute-200">{song.title}</p>
                 <p className="truncate text-xs text-mute-500">
-                  Excluída em{' '}
-                  {song.trashedAt ? new Date(song.trashedAt).toLocaleString('pt-BR') : 'data desconhecida'}
+                  {t('Excluída em')}{' '}
+                  {song.trashedAt ? new Date(song.trashedAt).toLocaleString('pt-BR') : t('data desconhecida')}
                 </p>
               </div>
               <button
@@ -124,12 +128,12 @@ export function Library() {
                 className="rounded-full border border-ink-600 px-3 py-1.5 text-xs text-mute-200
                   transition hover:border-brand-500 hover:text-brand-400"
               >
-                Restaurar
+                {t('Restaurar')}
               </button>
               <button
                 type="button"
                 onClick={() => setSongToDelete(song)}
-                aria-label={`Excluir ${song.title} em definitivo`}
+                aria-label={`${t('Excluir em definitivo')} ${song.title}`}
                 className="grid h-8 w-8 place-items-center rounded-lg text-mute-500 transition
                   hover:text-brand-400"
               >
@@ -144,8 +148,8 @@ export function Library() {
             <input
               value={newPlaylistName}
               onChange={(e) => setNewPlaylistName(e.target.value)}
-              placeholder="Nome da nova playlist"
-              aria-label="Nome da nova playlist"
+              placeholder={t('Nome da nova playlist')}
+              aria-label={t('Nome da nova playlist')}
               className="max-w-xs flex-1 rounded-full border border-ink-700 bg-ink-850 px-4 py-2 text-sm
                 text-mute-100 placeholder:text-mute-500 focus:border-brand-600 focus:outline-none"
             />
@@ -159,7 +163,7 @@ export function Library() {
               }}
               className="rounded-full brand-gradient px-4 py-2 text-sm font-semibold text-ink-950"
             >
-              Criar
+              {t('Criar')}
             </button>
           </div>
 
@@ -170,13 +174,14 @@ export function Library() {
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium text-mute-100">{playlist.name}</p>
                     <p className="text-xs text-mute-500">
-                      {playlist.songIds.length} faixa{playlist.songIds.length === 1 ? '' : 's'}
+                      {playlist.songIds.length}{' '}
+                      {playlist.songIds.length === 1 ? t('faixa') : t('faixas')}
                     </p>
                   </div>
                   <button
                     type="button"
                     onClick={() => setPlaylistToDelete(playlist)}
-                    aria-label={`Excluir ${playlist.name}`}
+                    aria-label={`${t('Excluir')} ${playlist.name}`}
                     className="grid h-7 w-7 place-items-center rounded-lg text-mute-500 hover:text-brand-400"
                   >
                     <Icon.Trash size={14} />
@@ -194,14 +199,14 @@ export function Library() {
                       </li>
                     ))}
                   {playlist.songIds.length === 0 && (
-                    <li className="text-xs text-mute-500">Use “…” na faixa para adicionar.</li>
+                    <li className="text-xs text-mute-500">{t('Use “…” na faixa para adicionar.')}</li>
                   )}
                 </ul>
               </div>
             ))}
             {playlists.length === 0 && (
               <p className="text-sm text-mute-500">
-                Nenhuma playlist ainda. Crie a primeira acima.
+                {t('Nenhuma playlist ainda. Crie a primeira acima.')}
               </p>
             )}
           </div>
@@ -209,7 +214,7 @@ export function Library() {
       ) : tab !== 'Músicas' ? (
         <div className="flex h-64 flex-col items-center justify-center gap-2 text-center">
           <Icon.Note size={22} className="text-mute-500" />
-          <p className="text-sm text-mute-400">Esta seção entra na próxima versão.</p>
+          <p className="text-sm text-mute-400">{t('Esta seção entra na próxima versão.')}</p>
         </div>
       ) : (
         <>
@@ -222,8 +227,8 @@ export function Library() {
               <input
                 value={filters.query}
                 onChange={(e) => setFilters({ query: e.target.value })}
-                placeholder="Buscar"
-                aria-label="Buscar na biblioteca"
+                placeholder={t('Buscar')}
+                aria-label={t('Buscar na biblioteca')}
                 className="w-full rounded-full border border-ink-700 bg-ink-850 py-2 pl-9 pr-3 text-sm
                   text-mute-100 placeholder:text-mute-500 focus:border-brand-600 focus:outline-none"
               />
@@ -238,14 +243,14 @@ export function Library() {
                   : 'border-ink-600 text-mute-300 hover:text-mute-100'
               }`}
             >
-              Curtidas
+              {t('Curtidas')}
             </button>
             <button
               type="button"
               className="rounded-full border border-ink-600 px-3.5 py-2 text-sm text-mute-300 transition
                 hover:text-mute-100"
             >
-              Públicas
+              {t('Públicas')}
             </button>
           </div>
 
@@ -258,7 +263,7 @@ export function Library() {
                 <button
                   type="button"
                   onClick={() => playSong(song.id)}
-                  aria-label={`Tocar ${song.title}`}
+                  aria-label={`${t('Tocar')} ${song.title}`}
                   className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-ink-700"
                 >
                   {song.coverUrl ? (
@@ -268,7 +273,7 @@ export function Library() {
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-mute-100">{song.title}</p>
                   <p className="truncate text-xs text-mute-500">
-                    {song.prompt || song.style || 'Sem descrição'}
+                    {song.prompt || song.style || t('Sem descrição')}
                   </p>
                 </div>
                 <span className="text-xs text-mute-500">{song.plays} plays</span>
@@ -280,7 +285,7 @@ export function Library() {
             ))}
             {visible.length === 0 && (
               <p className="py-10 text-center text-sm text-mute-500">
-                Nada por aqui ainda, crie sua primeira faixa.
+                {t('Nada por aqui ainda, crie sua primeira faixa.')}
               </p>
             )}
           </div>
@@ -290,23 +295,23 @@ export function Library() {
       <ConfirmDialog
         open={songToDelete !== null}
         danger
-        title="Excluir em definitivo?"
+        title={t('Excluir em definitivo?')}
         description={
           songToDelete
-            ? `"${songToDelete.title}" será apagada deste dispositivo, junto com o áudio, a capa e os stems. Não há como desfazer.`
+            ? `"${songToDelete.title}" ${t('será apagada deste dispositivo, junto com o áudio, a capa e os stems. Não há como desfazer.')}`
             : ''
         }
         details={
           songToDelete
             ? [
-                `Faixa: ${songToDelete.title}`,
-                `${songToDelete.bpm || 'sem BPM'} BPM${songToDelete.musicalKey ? ` · ${songToDelete.musicalKey}` : ''}`,
-                'Arquivos: mix WAV, capa e 5 stems',
+                `${t('Faixa')}: ${songToDelete.title}`,
+                `${songToDelete.bpm || t('sem BPM')} BPM${songToDelete.musicalKey ? ` · ${songToDelete.musicalKey}` : ''}`,
+                t('Arquivos: mix WAV, capa e 5 stems'),
               ]
             : []
         }
-        confirmLabel="Excluir definitivamente"
-        cancelLabel="Manter na lixeira"
+        confirmLabel={t('Excluir definitivamente')}
+        cancelLabel={t('Manter na lixeira')}
         onCancel={() => setSongToDelete(null)}
         onConfirm={() => {
           if (songToDelete) deleteForever(songToDelete.id);
@@ -317,22 +322,24 @@ export function Library() {
       <ConfirmDialog
         open={playlistToDelete !== null}
         danger
-        title="Excluir esta playlist?"
+        title={t('Excluir esta playlist?')}
         description={
           playlistToDelete
-            ? `A playlist "${playlistToDelete.name}" será apagada. As músicas continuam na biblioteca.`
+            ? `${t('A playlist')} "${playlistToDelete.name}" ${t('será apagada. As músicas continuam na biblioteca.')}`
             : ''
         }
         details={
           playlistToDelete
             ? [
-                `Playlist: ${playlistToDelete.name}`,
-                `${playlistToDelete.songIds.length} faixa(s)`,
+                `${t('Playlist:')} ${playlistToDelete.name}`,
+                `${playlistToDelete.songIds.length} ${
+                  playlistToDelete.songIds.length === 1 ? t('faixa') : t('faixas')
+                }`,
               ]
             : []
         }
-        confirmLabel="Excluir"
-        cancelLabel="Manter"
+        confirmLabel={t('Excluir')}
+        cancelLabel={t('Manter')}
         onCancel={() => setPlaylistToDelete(null)}
         onConfirm={() => {
           if (playlistToDelete) deletePlaylist(playlistToDelete.id);

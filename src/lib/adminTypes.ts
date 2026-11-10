@@ -52,8 +52,12 @@ export type MusicMode = 'local' | 'llm-plan' | 'external-audio';
 
 export interface MusicProviderConfig {
   mode: MusicMode;
-  /** 'minimax' usa a API nativa /music_generation; 'custom' usa endpoint próprio. */
-  vendor: 'local' | 'minimax' | 'custom' | 'replicate';
+  /**
+   * 'minimax' usa a API hospedada de Música (legada), 'minimax-music3' usa o
+   * MiniMax Music 3 self-hosted (POST /v1/audio/speech) e 'custom' usa um
+   * endpoint próprio.
+   */
+  vendor: 'local' | 'minimax' | 'minimax-music3' | 'custom' | 'replicate';
   baseUrl: string;
   endpoint: string;
   apiKey: string;
@@ -344,9 +348,9 @@ export const MUSIC_MODES: Array<{ id: MusicMode; label: string; description: str
   },
   {
     id: 'external-audio',
-    label: 'Áudio externo (MiniMax nativo)',
+    label: 'Áudio externo (provedor configurável)',
     description:
-      'A API de Música da MiniMax gera o áudio final (POST /v1/music_generation). Retorna MP3/WAV/PCM.',
+      'Um provedor HTTP gera o áudio final: MiniMax Music hospedada (legada), MiniMax Music 3 self-hosted ou um endpoint próprio.',
   },
 ];
 
@@ -357,6 +361,62 @@ export const MINIMAX_MUSIC_MODELS = [
   'music-2.6-free',
   'music-cover',
   'music-cover-free',
+];
+
+/** Modelos do MiniMax Music 3 self-hosted (SGLang-Omni em GPU). */
+export const MINIMAX_MUSIC3_MODELS = ['MiniMaxAI/MiniMax-Music3'];
+
+/** Presets de provedor de áudio: URL, endpoint e modelos de cada opção. */
+export const MUSIC_PROVIDER_PRESETS: Array<{
+  id: MusicProviderConfig['vendor'];
+  label: string;
+  baseUrl: string;
+  endpoint: string;
+  model: string;
+  hint: string;
+}> = [
+  {
+    id: 'local',
+    label: 'Motor local (navegador)',
+    baseUrl: '',
+    endpoint: '',
+    model: '',
+    hint: 'Sem provedor: a faixa é sintetizada no navegador com Web Audio.',
+  },
+  {
+    id: 'minimax',
+    label: 'MiniMax Music (hospedada, legada)',
+    baseUrl: 'https://api.minimax.io/v1',
+    endpoint: '/music_generation',
+    model: 'music-3.0',
+    hint:
+      'A API hospedada de Música foi descontinuada para contas novas em 20/08/2026. Continua valendo para clientes pagantes antigos.',
+  },
+  {
+    id: 'minimax-music3',
+    label: 'MiniMax Music 3 (self-hosted)',
+    baseUrl: 'http://127.0.0.1:8000',
+    endpoint: '/v1/audio/speech',
+    model: 'MiniMaxAI/MiniMax-Music3',
+    hint:
+      'Servidor local com SGLang-Omni em GPU NVIDIA. O corpo usa input (letra), instructions (estilo) e response_format wav.',
+  },
+  {
+    id: 'custom',
+    label: 'Endpoint próprio',
+    baseUrl: '',
+    endpoint: '/api/generate',
+    model: '',
+    hint: 'Responde com áudio binário (WAV/MP3) ou JSON com o áudio em base64.',
+  },
+  {
+    id: 'replicate',
+    label: 'Replicate (endpoint HTTP)',
+    baseUrl: 'https://api.replicate.com/v1',
+    endpoint: '/predictions',
+    model: '',
+    hint: 'Qualquer modelo de áudio do Replicate, chamado por HTTP padrão.',
+  },
 ];
 
 export const DEFAULT_ADMIN_CONFIG: AdminConfig = {

@@ -6,6 +6,8 @@
  * para o app continuar funcionando offline.
  */
 
+import { apiFetch } from './api';
+
 const TEMPLATES = [
   {
     verse: [
@@ -97,6 +99,8 @@ export interface LyricsResult {
   lyrics: string;
   source: 'llm' | 'local';
   message?: string;
+  /** Motivo pelo qual o LLM não foi usado, quando o gerador local assume. */
+  fallbackReason?: string;
 }
 
 export async function generateLyrics(
@@ -108,21 +112,32 @@ export async function generateLyrics(
     return { ok: false, lyrics: '', source: 'local', message: 'Descreva o tema da música primeiro' };
   }
 
+  let fallbackReason = '';
+
   try {
-    const response = await fetch('/api/lyrics', {
+    const response = await apiFetch('/api/lyrics', {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ prompt, style, language }),
     });
+
     if (response.ok) {
       const data = (await response.json()) as { lyrics?: string; provider?: string };
       if (data.lyrics?.trim()) {
         return { ok: true, lyrics: data.lyrics.trim(), source: 'llm' };
       }
+      fallbackReason = 'O servidor devolveu uma letra vazia.';
+    } else {
+      const error = (await response.json().catch(() => null)) as { error?: string } | null;
+      fallbackReason = error?.error ?? `O servidor respondeu HTTP ${response.status}.`;
     }
-  } catch {
-    /* servidor fora do ar, usa o gerador local */
+  } catch (error) {
+    fallbackReason = `Servidor local indisponível: ${String((error as Error)?.message ?? error)}`;
   }
 
-  return { ok: true, lyrics: localLyrics(prompt, style), source: 'local' };
+  return {
+    ok: true,
+    lyrics: localLyrics(prompt, style),
+    source: 'local',
+    fallbackReason,
+  };
 }

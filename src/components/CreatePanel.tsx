@@ -6,6 +6,7 @@ import { varietyLabel, styleInfluenceLabel, weirdnessLabel } from '../lib/audio/
 import { PERSONAS } from '../lib/types';
 import { generateLyrics } from '../lib/lyrics';
 import { analyzeAudioFile } from '../lib/audio/analyze';
+import { useT } from '../lib/useT';
 
 const MODELS = [
   { id: 'brm-v1', label: 'BR Music v1' },
@@ -19,9 +20,11 @@ const STYLE_CHIPS = [
 ];
 
 export function CreatePanel() {
+  const t = useT();
   const params = useApp((s) => s.params);
   const generating = useApp((s) => s.generating);
   const harnessStage = useApp((s) => s.harnessStage);
+  const language = useApp((s) => s.language);
   const [mode, setMode] = useState<'songs' | 'speech'>('songs');
   const [advanced, setAdvanced] = useState(false);
   const [modelOpen, setModelOpen] = useState(false);
@@ -77,20 +80,27 @@ export function CreatePanel() {
   };
 
   const writeLyrics = async () => {
-    if (!params.prompt.trim() && !params.style.trim()) {
-      showToast('Descreva o tema antes de gerar a letra');
+    // O tema pode estar em qualquer um dos campos. No modo "escrever letra" o
+    // usuário descreve o tema direto na caixa de letra, e era esse campo que
+    // o guarda antigo ignorava: o botão apenas reclamava e nada acontecia.
+    const theme = params.lyrics.trim() || params.prompt.trim() || params.style.trim();
+    if (!theme) {
+      showToast(t('Descreva o tema antes de gerar a letra'));
       return;
     }
     setLyricsBusy(true);
-    const result = await generateLyrics(params.prompt, params.style);
+    const result = await generateLyrics(theme, params.style, language === 'pt' ? 'pt' : 'en');
     setLyricsBusy(false);
     if (result.ok) {
       setParams({ lyrics: result.lyrics });
-      showToast(
-        result.source === 'llm' ? 'Letra criada pelo modelo' : 'Letra criada no modo local',
-      );
+      if (result.source === 'llm') {
+        showToast(t('Letra criada pelo modelo'));
+      } else {
+        const reason = result.fallbackReason ? ` · ${result.fallbackReason}` : '';
+        showToast(`${t('Letra criada no modo local')}${reason}`);
+      }
     } else {
-      showToast(result.message ?? 'Não foi possível gerar a letra');
+      showToast(result.message ?? t('Não foi possível gerar a letra'));
     }
   };
 
@@ -109,7 +119,7 @@ export function CreatePanel() {
                 mode === tab ? 'text-mute-100' : 'text-mute-400 hover:text-mute-300'
               }`}
             >
-              {tab === 'songs' ? 'Músicas' : 'Fala'}
+              {tab === 'songs' ? t('Músicas') : t('Fala')}
               {mode === tab && (
                 <span className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-mute-100" />
               )}
@@ -120,12 +130,18 @@ export function CreatePanel() {
 
       <div className="flex items-center justify-between px-5 py-4">
         <div className="flex rounded-full bg-ink-800 p-1">
-          {(['Simple', 'Avançado'] as const).map((opt) => {
-            const isAv = opt === 'Avançado';
+          {(
+            [
+              { key: 'Simples', label: t('Simples') },
+              { key: 'Avançado', label: t('Avançado') },
+            ] as const
+          ).map((opt) => {
+            // a comparação usa a chave de origem, não o texto já traduzido
+            const isAv = opt.key === 'Avançado';
             const active = isAv ? advanced : !advanced;
             return (
               <button
-                key={opt}
+                key={opt.key}
                 type="button"
                 onClick={() => setAdvanced(isAv)}
                 aria-pressed={active}
@@ -133,7 +149,7 @@ export function CreatePanel() {
                   active ? 'bg-ink-600 text-mute-100' : 'text-mute-400 hover:text-mute-300'
                 }`}
               >
-                {opt}
+                {opt.label}
               </button>
             );
           })}
@@ -186,9 +202,9 @@ export function CreatePanel() {
         {advanced && (
           <div className="mb-4">
             <h2 className="font-display text-xl font-bold text-mute-100">
-              Transforme qualquer ideia em uma música
+              {t('Transforme qualquer ideia em uma música')}
             </h2>
-            <p className="mt-0.5 text-sm text-mute-400">Beat, letra, ou os dois.</p>
+            <p className="mt-0.5 text-sm text-mute-400">{t('Beat, letra, ou os dois.')}</p>
           </div>
         )}
 
@@ -224,7 +240,7 @@ export function CreatePanel() {
               <header className="flex items-center justify-between gap-2 border-b border-ink-700 px-4 py-3">
                 <span className="flex items-center gap-2 text-sm font-medium text-mute-200">
                   <Icon.Note size={15} />
-                  Descreva sua letra
+                  {t('Descreva sua letra')}
                 </span>
                 <div className="flex rounded-full bg-ink-900 p-0.5">
                   {(['auto', 'write'] as const).map((option) => (
@@ -239,7 +255,7 @@ export function CreatePanel() {
                           : 'text-mute-400 hover:text-mute-200'
                       }`}
                     >
-                      {option === 'auto' ? 'Automático' : 'Escrever letra'}
+                      {option === 'auto' ? t('Automático') : t('Escrever letra')}
                     </button>
                   ))}
                 </div>
@@ -248,14 +264,14 @@ export function CreatePanel() {
               <div className="p-4">
                 {lyricsMode === 'auto' ? (
                   <p className="py-2 text-sm text-mute-400">
-                    A letra será criada pelo modelo a partir da sua descrição e do estilo
+                    {t('A letra será criada pelo modelo a partir da sua descrição e do estilo')}
                     escolhido.
                   </p>
                 ) : (
                   <textarea
                     value={params.lyrics}
                     onChange={(e) => setParams({ lyrics: e.target.value })}
-                    placeholder="Descreva sua letra, ou peça para o modelo escrever"
+                    placeholder={t('Descreva sua letra, ou peça para o modelo escrever')}
                     rows={7}
                     className="w-full resize-none bg-transparent text-sm leading-relaxed text-mute-100
                       placeholder:text-mute-500 focus:outline-none"
@@ -272,7 +288,7 @@ export function CreatePanel() {
                       disabled:opacity-60"
                   >
                     <Icon.Sparkles size={14} />
-                    {lyricsBusy ? 'Escrevendo...' : 'Gerar letra'}
+                    {lyricsBusy ? 'Escrevendo...' : t('Gerar letra')}
                   </button>
 
                   <button
@@ -308,7 +324,7 @@ export function CreatePanel() {
               >
                 <span className="flex items-center gap-2 text-sm font-medium text-mute-200">
                   <Icon.Sliders size={15} />
-                  Estilos
+                  {t('Estilos')}
                 </span>
                 <Icon.ChevronRight
                   size={16}
@@ -358,7 +374,7 @@ export function CreatePanel() {
               >
                 <span className="flex items-center gap-2 text-sm font-medium text-mute-200">
                   <Icon.Audio size={15} />
-                  Áudio
+                  {t('Áudio')}
                 </span>
                 <Icon.ChevronRight
                   size={16}
@@ -388,7 +404,7 @@ export function CreatePanel() {
                         text-sm text-mute-200 transition hover:border-brand-500 hover:text-brand-400"
                     >
                       <Icon.Download size={14} />
-                      Enviar arquivo
+                      {t('Enviar arquivo')}
                     </button>
                     <button
                       type="button"
@@ -400,7 +416,7 @@ export function CreatePanel() {
                       }`}
                     >
                       <Icon.Mic size={14} />
-                      {recording ? 'Parar gravação' : 'Gravar'}
+                      {recording ? t('Parar gravação') : t('Gravar')}
                     </button>
                   </div>
                   <p className="mt-3 text-[11px] text-mute-500">
@@ -452,7 +468,7 @@ export function CreatePanel() {
                   <input
                     value={params.title}
                     onChange={(e) => setParams({ title: e.target.value })}
-                    placeholder="Título (opcional)"
+                    placeholder={t('Título (opcional)')}
                     className="w-full rounded-xl border border-ink-700 bg-ink-850 px-3 py-2.5 text-sm
                       text-mute-100 placeholder:text-mute-500 focus:border-brand-600 focus:outline-none"
                   />
@@ -547,12 +563,12 @@ export function CreatePanel() {
           {generating ? (
             <>
               <span className="h-4 w-4 animate-spin rounded-full border-2 border-ink-950/30 border-t-ink-950" />
-              {harnessStage ?? 'Gerando'}
+              {harnessStage ? t(harnessStage) : t('Gerando')}
             </>
           ) : (
             <>
               <Icon.Sparkles size={18} />
-              Criar música
+              {t('Criar música')}
             </>
           )}
         </button>
@@ -561,7 +577,7 @@ export function CreatePanel() {
           onClick={() => navigate('/harness')}
           className="mt-2 w-full text-center text-[11px] text-mute-500 transition hover:text-mute-300"
         >
-          ver detalhes da geração
+          {t('ver detalhes da geração')}
         </button>
       </div>
     </section>

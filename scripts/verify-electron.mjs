@@ -255,6 +255,14 @@ if (builder) {
     'files inclui server/** (backend local do app desktop)',
     files.join(', '),
   );
+  // server/data guarda o config.json local, com chaves de API e credenciais
+  // de FTP da máquina de desenvolvimento. Nunca entra no pacote.
+  const dataLeaks = files.filter((f) => f.includes('server/data'));
+  check(
+    dataLeaks.length > 0,
+    'files exclui server/data/** (config local com segredos)',
+    dataLeaks.join(', '),
+  );
   const unpack = asArray(builder.asarUnpack).map(String);
   check(
     unpack.some((f) => f.startsWith('server')),

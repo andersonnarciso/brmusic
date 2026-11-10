@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import type { AdminConfig, LlmProviderConfig, MusicProviderConfig } from '../lib/adminTypes';
 import {
+  MINIMAX_MUSIC3_MODELS,
   MINIMAX_MUSIC_MODELS,
   MUSIC_MODES,
+  MUSIC_PROVIDER_PRESETS,
   PROVIDER_PRESETS,
 } from '../lib/adminTypes';
 import {
@@ -15,6 +17,7 @@ import {
 } from '../lib/adminClient';
 import { Badge, Button, Card, Field, Select, TextInput, Toggle } from './ui';
 import { showToast } from '../lib/store';
+import { useT } from '../lib/useT';
 
 type Update = (updater: (current: AdminConfig) => AdminConfig) => void;
 
@@ -27,14 +30,17 @@ export function ProvidersSection({
   update: Update;
   focus?: 'music';
 }) {
+  const t = useT();
   if (focus === 'music') {
     return <MusicProviderSection config={config} update={update} />;
   }
   return (
     <div className="space-y-5">
       <Card
-        title="Provedores de LLM"
-        description="Conecte a API que escreve as letras, o plano musical e o estilo. Tudo OpenAI-compatible funciona."
+        title={t('Provedores de LLM')}
+        description={t(
+          'Conecte a API que escreve as letras, o plano musical e o estilo. Tudo OpenAI-compatible funciona.',
+        )}
         actions={
           <Button
             onClick={() =>
@@ -51,7 +57,7 @@ export function ProvidersSection({
                     model: 'gpt-4o-mini',
                     apiKey: '',
                     temperature: 0.8,
-                    maxTokens: 2000,
+                    maxTokens: 8000,
                     timeoutMs: 45000,
                     jsonMode: true,
                     enabled: false,
@@ -60,14 +66,16 @@ export function ProvidersSection({
               }))
             }
           >
-            + Adicionar provedor
+            {t('+ Adicionar provedor')}
           </Button>
         }
       >
         <p className="text-xs text-mute-500">
-          A chave fica gravada no servidor (<code>server/data/config.json</code>) e nunca é devolvida
-          ao navegador, o painel mostra apenas a máscara. Com o servidor offline, tudo é salvo no
-          localStorage deste navegador.
+          {t('A chave fica gravada no servidor (')}
+          <code>server/data/config.json</code>
+          {t(
+            ') e nunca é devolvida ao navegador, o painel mostra apenas a máscara. Com o servidor offline, tudo é salvo no localStorage deste navegador.',
+          )}
         </p>
       </Card>
 
@@ -105,7 +113,7 @@ export function ProvidersSection({
                 model: runtime.models[0] ?? 'local-model',
                 apiKey: '',
                 temperature: 0.8,
-                maxTokens: 2000,
+                maxTokens: 8000,
                 timeoutMs: 120000,
                 jsonMode: true,
                 enabled: true,
@@ -117,7 +125,9 @@ export function ProvidersSection({
 
       {config.llmProviders.length === 0 && (
         <p className="rounded-xl border border-dashed border-ink-700 px-5 py-8 text-center text-sm text-mute-500">
-          Nenhum provedor cadastrado. Use “+ Adicionar provedor” ou a varredura de runtimes locais.
+          {t(
+            'Nenhum provedor cadastrado. Use “+ Adicionar provedor” ou a varredura de runtimes locais.',
+          )}
         </p>
       )}
     </div>
@@ -130,6 +140,7 @@ export function ProvidersSection({
  * text-generation-webui e SGLang.
  */
 function LocalRuntimeScanner({ onUse }: { onUse: (runtime: LocalRuntime) => void }) {
+  const t = useT();
   const [scanning, setScanning] = useState(false);
   const [result, setResult] = useState<{ runtimes: LocalRuntime[]; scanned: number } | null>(null);
 
@@ -141,19 +152,25 @@ function LocalRuntimeScanner({ onUse }: { onUse: (runtime: LocalRuntime) => void
 
   return (
     <Card
-      title="Runtimes locais de LLM"
-      description="Procura servidores OpenAI-compatible rodando na sua máquina e lista os modelos de cada um."
+      title={t('Runtimes locais de LLM')}
+      description={t(
+        'Procura servidores OpenAI-compatible rodando na sua máquina e lista os modelos de cada um.',
+      )}
       actions={
         <Button onClick={() => void run()} disabled={scanning}>
-          {scanning ? 'Procurando…' : 'Descobrir runtimes locais'}
+          {scanning ? t('Procurando…') : t('Descobrir runtimes locais')}
         </Button>
       }
     >
       {result && result.runtimes.length === 0 && (
         <p className="text-sm text-mute-500">
-          Nenhum runtime encontrado em {result.scanned} portas conhecidas. Verifique se o servidor
-          está no ar (por exemplo, <code>ollama serve</code> ou{' '}
-          <code>llama-server --port 8080</code>).
+          {t('Nenhum runtime encontrado em ')}
+          {result.scanned}
+          {t(' portas conhecidas. Verifique se o servidor está no ar (por exemplo, ')}
+          <code>ollama serve</code>
+          {t(' ou ')}
+          <code>llama-server --port 8080</code>
+          {t(').')}
         </p>
       )}
 
@@ -172,10 +189,10 @@ function LocalRuntimeScanner({ onUse }: { onUse: (runtime: LocalRuntime) => void
                 <p className="truncate text-[11px] text-mute-500">
                   {runtime.models.length > 0
                     ? runtime.models.join(', ')
-                    : 'sem modelos listados pelo servidor'}
+                    : t('sem modelos listados pelo servidor')}
                 </p>
               </div>
-              <Button onClick={() => onUse(runtime)}>Usar</Button>
+              <Button onClick={() => onUse(runtime)}>{t('Usar')}</Button>
             </li>
           ))}
         </ul>
@@ -183,9 +200,9 @@ function LocalRuntimeScanner({ onUse }: { onUse: (runtime: LocalRuntime) => void
 
       {!result && (
         <p className="text-xs text-mute-500">
-          Portas verificadas: Ollama (11434), LM Studio (1234), llama.cpp (8080), Jan (1337),
-          text-generation-webui (5000), KoboldCpp (5001), GPT4All (4891), vLLM (8000) e SGLang
-          (30000).
+          {t(
+            'Portas verificadas: Ollama (11434), LM Studio (1234), llama.cpp (8080), Jan (1337), text-generation-webui (5000), KoboldCpp (5001), GPT4All (4891), vLLM (8000) e SGLang (30000).',
+          )}
         </p>
       )}
     </Card>
@@ -201,6 +218,7 @@ function ProviderCard({
   onChange: (next: LlmProviderConfig) => void;
   onRemove: () => void;
 }) {
+  const t = useT();
   const [testing, setTesting] = useState(false);
   const [result, setResult] = useState<{ ok: boolean; message: string; latencyMs: number } | null>(
     null,
@@ -236,57 +254,57 @@ function ProviderCard({
     setDiscovering(false);
     showToast(
       res.music.length
-        ? `${res.music.length} modelo(s) de música encontrado(s)`
-        : 'Nenhum modelo de música encontrado neste provedor',
+        ? `${res.music.length} ${t('modelo(s) de música encontrado(s)')}`
+        : t('Nenhum modelo de música encontrado neste provedor'),
     );
   };
 
   return (
     <Card
-      title={provider.label}
-      description={preset?.hint}
+      title={t(provider.label)}
+      description={preset ? t(preset.hint) : undefined}
       actions={
         <>
           {provider.lastTest && (
             <Badge tone={provider.lastTest.ok ? 'ok' : 'bad'}>
-              {provider.lastTest.ok ? 'conectado' : 'erro'} · {provider.lastTest.latencyMs} ms
+              {provider.lastTest.ok ? t('conectado') : t('erro')} · {provider.lastTest.latencyMs} ms
             </Badge>
           )}
           <Badge tone={provider.enabled ? 'ok' : 'neutral'}>
-            {provider.enabled ? 'ativo' : 'inativo'}
+            {provider.enabled ? t('ativo') : t('inativo')}
           </Badge>
           <Button onClick={() => void runTest()} disabled={testing}>
-            {testing ? 'Testando…' : 'Testar conexão'}
+            {testing ? t('Testando…') : t('Testar conexão')}
           </Button>
           <Button onClick={() => void runDiscovery()} disabled={discovering}>
-            {discovering ? 'Carregando…' : 'Carregar modelos de música'}
+            {discovering ? t('Carregando…') : t('Carregar modelos de música')}
           </Button>
         </>
       }
     >
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        <Field label="Nome">
+        <Field label={t('Nome')}>
           <TextInput
             value={provider.label}
             onChange={(e) => onChange({ ...provider, label: e.target.value })}
           />
         </Field>
 
-        <Field label="Compatibilidade" hint="Define URL e formato da requisição.">
+        <Field label={t('Compatibilidade')} hint={t('Define URL e formato da requisição.')}>
           <Select value={provider.preset} onChange={(e) => applyPreset(e.target.value)}>
             {PROVIDER_PRESETS.map((p) => (
               <option key={p.id} value={p.id}>
-                {p.label}
+                {t(p.label)}
               </option>
             ))}
           </Select>
         </Field>
 
         <Field
-          label="Modelo"
+          label={t('Modelo')}
           hint={
             discovered && discovered.music.length
-              ? 'Sugestões: modelos de música detectados no provedor.'
+              ? t('Sugestões: modelos de música detectados no provedor.')
               : undefined
           }
         >
@@ -319,21 +337,21 @@ function ProviderCard({
           ) : null}
         </Field>
 
-        <Field label="Base URL">
+        <Field label={t('Base URL')}>
           <TextInput
             value={provider.baseUrl}
             onChange={(e) => onChange({ ...provider, baseUrl: e.target.value })}
           />
         </Field>
 
-        <Field label="Endpoint">
+        <Field label={t('Endpoint')}>
           <TextInput
             value={provider.endpoint}
             onChange={(e) => onChange({ ...provider, endpoint: e.target.value })}
           />
         </Field>
 
-        <Field label="Chave da API" hint="Gravada apenas no servidor.">
+        <Field label={t('Chave da API')} hint={t('Gravada apenas no servidor.')}>
           <TextInput
             type="password"
             placeholder={provider.apiKey || 'sk-…'}
@@ -342,7 +360,7 @@ function ProviderCard({
           />
         </Field>
 
-        <Field label="Temperatura">
+        <Field label={t('Temperatura')}>
           <TextInput
             type="number"
             step={0.1}
@@ -353,7 +371,7 @@ function ProviderCard({
           />
         </Field>
 
-        <Field label="Tokens máx.">
+        <Field label={t('Tokens máx.')}>
           <TextInput
             type="number"
             step={100}
@@ -363,7 +381,7 @@ function ProviderCard({
           />
         </Field>
 
-        <Field label="Timeout (ms)">
+        <Field label={t('Timeout (ms)')}>
           <TextInput
             type="number"
             step={1000}
@@ -376,14 +394,14 @@ function ProviderCard({
 
       <div className="mt-4 grid gap-3 md:grid-cols-2">
         <Toggle
-          label="Provedor habilitado"
-          hint="Usado quando o modo de geração é “Plano via LLM”."
+          label={t('Provedor habilitado')}
+          hint={t('Usado quando o modo de geração é “Plano via LLM”.')}
           checked={provider.enabled}
           onChange={(enabled) => onChange({ ...provider, enabled })}
         />
         <Toggle
-          label="Resposta em JSON"
-          hint="Envia response_format=json_object quando o provedor suporta."
+          label={t('Resposta em JSON')}
+          hint={t('Envia response_format=json_object quando o provedor suporta.')}
           checked={provider.jsonMode}
           onChange={(jsonMode) => onChange({ ...provider, jsonMode })}
         />
@@ -397,13 +415,13 @@ function ProviderCard({
               : 'border-red-500/30 bg-red-500/10 text-red-300'
           }`}
         >
-          {result.ok ? 'Conexão OK' : 'Falhou'} · {result.latencyMs} ms: {result.message}
+          {result.ok ? t('Conexão OK') : t('Falhou')} · {result.latencyMs} ms: {result.message}
         </div>
       )}
 
       <div className="mt-4 flex justify-end">
         <Button variant="danger" onClick={onRemove}>
-          Remover provedor
+          {t('Remover provedor')}
         </Button>
       </div>
     </Card>
@@ -411,6 +429,7 @@ function ProviderCard({
 }
 
 function MusicProviderSection({ config, update }: { config: AdminConfig; update: Update }) {
+  const t = useT();
   const music = config.musicProvider;
   const [testing, setTesting] = useState(false);
   const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null);
@@ -419,6 +438,9 @@ function MusicProviderSection({ config, update }: { config: AdminConfig; update:
     update((c) => ({ ...c, musicProvider: { ...c.musicProvider, ...partial } }));
 
   const isMiniMax = music.vendor === 'minimax';
+  const isMusic3 = music.vendor === 'minimax-music3';
+  const isExternal = Boolean(music.vendor) && music.vendor !== 'local';
+  const vendorPreset = MUSIC_PROVIDER_PRESETS.find((p) => p.id === music.vendor);
 
   const runTest = async () => {
     setTesting(true);
@@ -430,8 +452,8 @@ function MusicProviderSection({ config, update }: { config: AdminConfig; update:
   return (
     <div className="space-y-5">
       <Card
-        title="Modo de geração"
-        description="Escolha quem gera o áudio final da música."
+        title={t('Modo de geração')}
+        description={t('Escolha quem gera o áudio final da música.')}
       >
         <div className="grid gap-3 md:grid-cols-3">
           {MUSIC_MODES.map((mode) => (
@@ -446,68 +468,92 @@ function MusicProviderSection({ config, update }: { config: AdminConfig; update:
                   : 'border-ink-700 bg-ink-850 hover:border-ink-600'
               }`}
             >
-              <p className="text-sm font-semibold text-mute-100">{mode.label}</p>
-              <p className="mt-1 text-xs leading-relaxed text-mute-500">{mode.description}</p>
+              <p className="text-sm font-semibold text-mute-100">{t(mode.label)}</p>
+              <p className="mt-1 text-xs leading-relaxed text-mute-500">{t(mode.description)}</p>
             </button>
           ))}
         </div>
       </Card>
 
       <Card
-        title="Provedor de áudio"
-        description="Inclui o modo nativo da API de Música da MiniMax (POST /v1/music_generation)."
+        title={t('Provedor de áudio')}
+        description={t(
+          'Escolha quem gera o áudio final: a API hospedada da MiniMax, o MiniMax Music 3 self-hosted ou um endpoint próprio.',
+        )}
         actions={
           <>
             <Badge tone={music.enabled ? 'ok' : 'neutral'}>
-              {music.enabled ? 'ativo' : 'inativo'}
+              {music.enabled ? t('ativo') : t('inativo')}
             </Badge>
-            {isMiniMax && (
+            {isExternal && (
               <Button onClick={() => void runTest()} disabled={testing}>
-                {testing ? 'Gerando…' : 'Testar (gera 1 faixa)'}
+                {testing ? t('Gerando…') : t('Testar (gera 1 faixa)')}
               </Button>
             )}
           </>
         }
       >
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          <Field label="Provedor">
+          <Field label={t('Provedor')}>
             <Select
               value={music.vendor}
               onChange={(e) => {
                 const vendor = e.target.value as MusicProviderConfig['vendor'];
+                const preset = MUSIC_PROVIDER_PRESETS.find((p) => p.id === vendor);
                 patch({
                   vendor,
-                  baseUrl: vendor === 'minimax' ? 'https://api.minimax.io/v1' : music.baseUrl,
-                  endpoint: vendor === 'minimax' ? '/music_generation' : music.endpoint,
-                  model: vendor === 'minimax' ? 'music-3.0' : music.model,
+                  baseUrl: preset?.baseUrl ?? '',
+                  endpoint: preset?.endpoint ?? '',
+                  model: preset?.model || music.model,
                 });
               }}
             >
-              <option value="local">Motor local (navegador)</option>
-              <option value="minimax">MiniMax Music (nativo)</option>
-              <option value="custom">Personalizado</option>
-              <option value="replicate">Replicate</option>
+              {MUSIC_PROVIDER_PRESETS.map((preset) => (
+                <option key={preset.id} value={preset.id}>
+                  {t(preset.label)}
+                </option>
+              ))}
             </Select>
+            {vendorPreset?.hint && (
+              <p className="mt-1.5 text-[11px] leading-relaxed text-mute-500">
+                {t(vendorPreset.hint)}
+              </p>
+            )}
+            {isMiniMax && (
+              <p className="mt-1.5 text-[11px] leading-relaxed text-amber-300/80">
+                {t(
+                  'A API hospedada de Música da MiniMax foi descontinuada para contas novas em 20/08/2026 (HTTP 410). Para contas novas use o MiniMax Music 3 self-hosted ou o MiniMax Audio.',
+                )}
+              </p>
+            )}
           </Field>
 
-          <Field label="Base URL">
+          <Field label={t('Base URL')}>
             <TextInput
               value={music.baseUrl}
               onChange={(e) => patch({ baseUrl: e.target.value })}
             />
           </Field>
 
-          <Field label="Endpoint">
+          <Field label={t('Endpoint')}>
             <TextInput
               value={music.endpoint}
               onChange={(e) => patch({ endpoint: e.target.value })}
             />
           </Field>
 
-          <Field label="Modelo">
+          <Field label={t('Modelo')}>
             {isMiniMax ? (
               <Select value={music.model} onChange={(e) => patch({ model: e.target.value })}>
                 {MINIMAX_MUSIC_MODELS.map((m) => (
+                  <option key={m} value={m}>
+                    {m}
+                  </option>
+                ))}
+              </Select>
+            ) : isMusic3 ? (
+              <Select value={music.model} onChange={(e) => patch({ model: e.target.value })}>
+                {MINIMAX_MUSIC3_MODELS.map((m) => (
                   <option key={m} value={m}>
                     {m}
                   </option>
@@ -518,7 +564,7 @@ function MusicProviderSection({ config, update }: { config: AdminConfig; update:
             )}
           </Field>
 
-          <Field label="Chave da API" hint="Bearer token. Ficará só no servidor.">
+          <Field label={t('Chave da API')} hint={t('Bearer token. Ficará só no servidor.')}>
             <TextInput
               type="password"
               placeholder={music.apiKey || 'sk-…'}
@@ -527,17 +573,17 @@ function MusicProviderSection({ config, update }: { config: AdminConfig; update:
             />
           </Field>
 
-          <Field label="Formato de saída" hint="hex retorna o áudio embutido na resposta.">
+          <Field label={t('Formato de saída')} hint={t('hex retorna o áudio embutido na resposta.')}>
             <Select
               value={music.outputFormat}
               onChange={(e) => patch({ outputFormat: e.target.value as 'hex' | 'url' })}
             >
-              <option value="hex">hex (embutido)</option>
-              <option value="url">url (expira em 24h)</option>
+              <option value="hex">{t('hex (embutido)')}</option>
+              <option value="url">{t('url (expira em 24h)')}</option>
             </Select>
           </Field>
 
-          <Field label="Formato de áudio">
+          <Field label={t('Formato de áudio')}>
             <Select
               value={music.audioFormat}
               onChange={(e) => patch({ audioFormat: e.target.value as 'mp3' | 'wav' | 'pcm' })}
@@ -578,7 +624,7 @@ function MusicProviderSection({ config, update }: { config: AdminConfig; update:
             </Select>
           </Field>
 
-          <Field label="Duração alvo (s)">
+          <Field label={t('Duração alvo (s)')}>
             <TextInput
               type="number"
               min={10}
@@ -591,14 +637,16 @@ function MusicProviderSection({ config, update }: { config: AdminConfig; update:
 
         <div className="mt-4 grid gap-3 md:grid-cols-2">
           <Toggle
-            label="Provedor de áudio habilitado"
-            hint="Quando desligado, o app usa o motor local mesmo com o modo configurado aqui."
+            label={t('Provedor de áudio habilitado')}
+            hint={t('Quando desligado, o app usa o motor local mesmo com o modo configurado aqui.')}
             checked={music.enabled}
             onChange={(enabled) => patch({ enabled })}
           />
           <Toggle
-            label="Otimizador de letras (MiniMax)"
-            hint="lyrics_optimizer: o modelo escreve a letra a partir do prompt quando não há letra."
+            label={t('Otimizador de letras (MiniMax)')}
+            hint={t(
+              'lyrics_optimizer: o modelo escreve a letra a partir do prompt quando não há letra.',
+            )}
             checked={music.lyricsOptimizer}
             onChange={(lyricsOptimizer) => patch({ lyricsOptimizer })}
           />
@@ -606,17 +654,25 @@ function MusicProviderSection({ config, update }: { config: AdminConfig; update:
 
         {isMiniMax && (
           <div className="mt-4 rounded-xl border border-ink-700 bg-ink-850 p-4 text-xs text-mute-400">
-            <p className="mb-1.5 font-medium text-mute-200">Modo nativo MiniMax</p>
+            <p className="mb-1.5 font-medium text-mute-200">{t('Modo nativo MiniMax')}</p>
             <p>
-              POST <code className="text-mute-200">{music.baseUrl}{music.endpoint}</code> com{' '}
-              <code className="text-mute-200">Authorization: Bearer &lt;API_KEY&gt;</code>. O corpo usa{' '}
-              <code className="text-mute-200">model</code>, <code className="text-mute-200">prompt</code>,{' '}
+              POST <code className="text-mute-200">{music.baseUrl}{music.endpoint}</code>
+              {t(' com ')}
+              <code className="text-mute-200">Authorization: Bearer &lt;API_KEY&gt;</code>
+              {t('. O corpo usa ')}
+              <code className="text-mute-200">model</code>,{' '}
+              <code className="text-mute-200">prompt</code>,{' '}
               <code className="text-mute-200">lyrics</code>,{' '}
-              <code className="text-mute-200">output_format</code> e{' '}
-              <code className="text-mute-200">audio_setting</code>. A resposta traz{' '}
-              <code className="text-mute-200">data.audio</code> em hexadecimal e{' '}
-              <code className="text-mute-200">base_resp.status_code</code> (1002 = rate limit, 1004 =
-              autenticação, 1008 = saldo, 1026 = conteúdo bloqueado).
+              <code className="text-mute-200">output_format</code>
+              {t(' e ')}
+              <code className="text-mute-200">audio_setting</code>
+              {t('. A resposta traz ')}
+              <code className="text-mute-200">data.audio</code>
+              {t(' em hexadecimal e ')}
+              <code className="text-mute-200">base_resp.status_code</code>
+              {t(
+                ' (1002 = rate limit, 1004 = autenticação, 1008 = saldo, 1026 = conteúdo bloqueado).',
+              )}
             </p>
           </div>
         )}
@@ -629,14 +685,17 @@ function MusicProviderSection({ config, update }: { config: AdminConfig; update:
                 : 'border-red-500/30 bg-red-500/10 text-red-300'
             }`}
           >
-            {result.ok ? 'Teste OK' : 'Teste falhou'}: {result.message}
+            {result.ok ? t('Teste OK') : t('Teste falhou')}: {result.message}
           </div>
         )}
       </Card>
 
-      <Card title="Parâmetros padrão de geração" description="Aplicados a toda nova criação.">
+      <Card
+        title={t('Parâmetros padrão de geração')}
+        description={t('Aplicados a toda nova criação.')}
+      >
         <div className="grid gap-4 md:grid-cols-3 xl:grid-cols-4">
-          <Field label="Modelo padrão">
+          <Field label={t('Modelo padrão')}>
             <TextInput
               value={config.generation.defaultModel}
               onChange={(e) =>
@@ -647,7 +706,7 @@ function MusicProviderSection({ config, update }: { config: AdminConfig; update:
               }
             />
           </Field>
-          <Field label="BPM padrão">
+          <Field label={t('BPM padrão')}>
             <TextInput
               type="number"
               value={config.generation.defaultBpm}
@@ -659,7 +718,7 @@ function MusicProviderSection({ config, update }: { config: AdminConfig; update:
               }
             />
           </Field>
-          <Field label="Weirdness padrão">
+          <Field label={t('Weirdness padrão')}>
             <TextInput
               type="number"
               min={0}
@@ -673,7 +732,7 @@ function MusicProviderSection({ config, update }: { config: AdminConfig; update:
               }
             />
           </Field>
-          <Field label="Influência do estilo">
+          <Field label={t('Influência do estilo')}>
             <TextInput
               type="number"
               min={0}
@@ -687,7 +746,7 @@ function MusicProviderSection({ config, update }: { config: AdminConfig; update:
               }
             />
           </Field>
-          <Field label="Variedade">
+          <Field label={t('Variedade')}>
             <TextInput
               type="number"
               min={0}
@@ -701,7 +760,7 @@ function MusicProviderSection({ config, update }: { config: AdminConfig; update:
               }
             />
           </Field>
-          <Field label="Duração máxima (s)">
+          <Field label={t('Duração máxima (s)')}>
             <TextInput
               type="number"
               value={config.generation.maxDurationSec}
@@ -713,7 +772,7 @@ function MusicProviderSection({ config, update }: { config: AdminConfig; update:
               }
             />
           </Field>
-          <Field label="Créditos mensais">
+          <Field label={t('Créditos mensais')}>
             <TextInput
               type="number"
               value={config.generation.monthlyCredits}
@@ -725,7 +784,7 @@ function MusicProviderSection({ config, update }: { config: AdminConfig; update:
               }
             />
           </Field>
-          <Field label="Concorrência da fila">
+          <Field label={t('Concorrência da fila')}>
             <TextInput
               type="number"
               min={1}
@@ -741,7 +800,7 @@ function MusicProviderSection({ config, update }: { config: AdminConfig; update:
         </div>
         <div className="mt-4 grid gap-3 md:grid-cols-2">
           <Toggle
-            label="Permitir download"
+            label={t('Permitir download')}
             checked={config.generation.allowDownload}
             onChange={(allowDownload) =>
               update((c) => ({
@@ -751,8 +810,8 @@ function MusicProviderSection({ config, update }: { config: AdminConfig; update:
             }
           />
           <Toggle
-            label="Moderação automática"
-            hint="Bloqueia prompts com termos proibidos antes da geração."
+            label={t('Moderação automática')}
+            hint={t('Bloqueia prompts com termos proibidos antes da geração.')}
             checked={config.generation.autoModeration}
             onChange={(autoModeration) =>
               update((c) => ({

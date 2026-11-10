@@ -30,6 +30,7 @@ import {
   PlansPage,
 } from './pages/Simple';
 import { AdminApp } from './admin/AdminApp';
+import { useT } from './lib/useT';
 
 function RouteView({ route }: { route: string }) {
   if (route.startsWith('/editor/')) {
@@ -73,14 +74,25 @@ function RouteView({ route }: { route: string }) {
 export function App() {
   const route = useApp((s) => s.route);
   const toast = useApp((s) => s.toast);
+  const language = useApp((s) => s.language);
   const songs = useApp((s) => s.songs);
   const currentId = usePlayer((p) => p.songId);
+  const t = useT();
   const [paletteOpen, setPaletteOpen] = useState(false);
 
   useEffect(() => {
     initRouter();
     void restoreAssets();
   }, []);
+
+  // o titulo e o idioma do documento acompanham a preferencia
+  useEffect(() => {
+    document.title =
+      language === 'en' ? 'BR Music, AI music generator' : 'BR Music, gerador de músicas com IA';
+    document.documentElement.lang = language === 'en' ? 'en' : 'pt-BR';
+    // No app desktop o menu nativo segue o mesmo idioma.
+    void window.desktop?.setLanguage?.(language);
+  }, [language]);
 
   const currentSong = useMemo(
     () => songs.find((s) => s.id === currentId) ?? null,
@@ -89,23 +101,23 @@ export function App() {
 
   const commands = useMemo<Command[]>(
     () => [
-      { id: 'go-create', label: 'Criar música', group: 'Navegar', shortcut: '⌘N', run: () => navigate('/create') },
-      { id: 'go-home', label: 'Ir para o Início', group: 'Navegar', run: () => navigate('/discover') },
-      { id: 'go-explore', label: 'Ir para Explorar', group: 'Navegar', run: () => navigate('/explore') },
-      { id: 'go-library', label: 'Ir para a Biblioteca', group: 'Navegar', shortcut: '⌘L', run: () => navigate('/me') },
-      { id: 'go-studio', label: 'Ir para o Studio', group: 'Navegar', run: () => navigate('/studio') },
-      { id: 'go-admin', label: 'Abrir Configurações', group: 'Navegar', run: () => navigate('/admin') },
+      { id: 'go-create', label: t('Criar música'), group: t('Navegar'), shortcut: '⌘N', run: () => navigate('/create') },
+      { id: 'go-home', label: t('Ir para o Início'), group: t('Navegar'), run: () => navigate('/discover') },
+      { id: 'go-explore', label: t('Ir para Explorar'), group: t('Navegar'), run: () => navigate('/explore') },
+      { id: 'go-library', label: t('Ir para a Biblioteca'), group: t('Navegar'), shortcut: '⌘L', run: () => navigate('/me') },
+      { id: 'go-studio', label: t('Ir para o Studio'), group: t('Navegar'), run: () => navigate('/studio') },
+      { id: 'go-admin', label: t('Abrir Configurações'), group: t('Navegar'), run: () => navigate('/admin') },
       {
         id: 'variations',
-        label: 'Gerar 4 variações',
-        group: 'Criar',
-        hint: 'mesma descrição, seeds diferentes',
+        label: t('Gerar 4 variações'),
+        group: t('Criar'),
+        hint: t('mesma descrição, seeds diferentes'),
         run: () => void createVariations(4),
       },
       {
         id: 'export-mix',
-        label: 'Exportar o mix final (WAV)',
-        group: 'Exportar',
+        label: t('Exportar o mix final (WAV)'),
+        group: t('Exportar'),
         hint: currentSong?.title,
         run: () => {
           if (currentSong) void exportMix(currentSong);
@@ -113,16 +125,16 @@ export function App() {
       },
       {
         id: 'export-stems',
-        label: 'Exportar stems (ZIP)',
-        group: 'Exportar',
-        hint: 'bateria, baixo, pads, melodia e voz',
+        label: t('Exportar stems (ZIP)'),
+        group: t('Exportar'),
+        hint: t('bateria, baixo, pads, melodia e voz'),
         run: () => {
           if (currentSong) void exportStems(currentSong);
         },
       },
-      { id: 'toggle-sidebar', label: 'Recolher/expandir a barra lateral', group: 'Interface', run: toggleSidebar },
+      { id: 'toggle-sidebar', label: t('Recolher/expandir a barra lateral'), group: t('Interface'), run: toggleSidebar },
     ],
-    [currentSong],
+    [currentSong, t],
   );
 
   useEffect(() => {

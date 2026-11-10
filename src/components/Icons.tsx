@@ -267,6 +267,13 @@ export const Icon = {
       <path d="M15 19.5h4.5V15" />
     </svg>
   ),
+  Globe: (p: IconProps) => (
+    <svg {...base(p)}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M3 12h18" />
+      <path d="M12 3c2.6 2.5 3.9 5.6 3.9 9S14.6 18.5 12 21c-2.6-2.5-3.9-5.6-3.9-9S9.4 5.5 12 3Z" />
+    </svg>
+  ),
   Note: (p: IconProps) => (
     <svg {...base(p)}>
       <circle cx="12" cy="12" r="8.5" />

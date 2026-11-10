@@ -1,5 +1,7 @@
 import { Icon } from '../components/Icons';
+import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { navigate } from '../lib/store';
+import { useT } from '../lib/useT';
 
 interface SimplePageProps {
   title: string;
@@ -7,20 +9,27 @@ interface SimplePageProps {
   items?: Array<{ title: string; body: string; cta?: string; route?: string }>;
 }
 
+/**
+ * Página de conteúdo simples. Os textos chegam em português e são traduzidos
+ * aqui, na renderização, porque o idioma é escolhido em tempo de execução.
+ */
 export function SimplePage({ title, description, items }: SimplePageProps) {
+  const t = useT();
   return (
     <div className="scroll-thin h-full overflow-y-auto px-5 pb-16">
       <header className="pt-5">
-        <h1 className="font-display text-3xl font-extrabold tracking-tight text-mute-100">{title}</h1>
-        <p className="mt-1 max-w-xl text-sm text-mute-400">{description}</p>
+        <h1 className="font-display text-3xl font-extrabold tracking-tight text-mute-100">
+          {t(title)}
+        </h1>
+        <p className="mt-1 max-w-xl text-sm text-mute-400">{t(description)}</p>
       </header>
 
       {items && (
         <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {items.map((item) => (
             <article key={item.title} className="surface rounded-2xl p-5">
-              <h2 className="text-base font-semibold text-mute-100">{item.title}</h2>
-              <p className="mt-1.5 text-sm leading-relaxed text-mute-400">{item.body}</p>
+              <h2 className="text-base font-semibold text-mute-100">{t(item.title)}</h2>
+              <p className="mt-1.5 text-sm leading-relaxed text-mute-400">{t(item.body)}</p>
               {item.cta && item.route && (
                 <button
                   type="button"
@@ -28,7 +37,7 @@ export function SimplePage({ title, description, items }: SimplePageProps) {
                   className="mt-4 rounded-full border border-ink-600 px-3.5 py-1.5 text-sm text-mute-100
                     transition hover:border-brand-500 hover:text-brand-400"
                 >
-                  {item.cta}
+                  {t(item.cta)}
                 </button>
               )}
             </article>
@@ -103,6 +112,7 @@ export function NotificationsPage() {
 }
 
 export function MorePage() {
+  const t = useT();
   return (
     <div className="space-y-5">
       <SimplePage
@@ -115,34 +125,43 @@ export function MorePage() {
         ]}
       />
       <div className="rounded-2xl border border-ink-700 bg-ink-900 p-5">
-        <h2 className="text-base font-semibold text-mute-100">Painel administrativo</h2>
+        <LanguageSwitcher />
+      </div>
+      <div className="rounded-2xl border border-ink-700 bg-ink-900 p-5">
+        <h2 className="text-base font-semibold text-mute-100">
+          {t('Painel administrativo')}
+        </h2>
         <p className="mt-1 text-sm text-mute-400">
-          Gerencie provedores de IA, geração de música, usuários, planos, marca e integrações.
+          {t(
+            'Gerencie provedores de IA, geração de música, usuários, planos, marca e integrações.',
+          )}
         </p>
         <button
           type="button"
           onClick={() => navigate('/admin')}
           className="mt-4 rounded-full brand-gradient px-4 py-2 text-sm font-semibold text-ink-950"
         >
-          Abrir painel administrativo
+          {t('Abrir painel administrativo')}
         </button>
       </div>
     </div>
   );
 }
 
-
 export function NotFound() {
+  const t = useT();
   return (
     <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
       <Icon.Note size={24} className="text-mute-500" />
-      <h1 className="font-display text-2xl font-bold text-mute-100">Página não encontrada</h1>
+      <h1 className="font-display text-2xl font-bold text-mute-100">
+        {t('Página não encontrada')}
+      </h1>
       <button
         type="button"
         onClick={() => navigate('/discover')}
         className="rounded-full brand-gradient px-4 py-2 text-sm font-semibold text-ink-950"
       >
-        Voltar ao início
+        {t('Voltar ao início')}
       </button>
     </div>
   );

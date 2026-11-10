@@ -1,6 +1,6 @@
 {
   "name": "brmusic",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "private": true,
   "type": "module",
   "description": "BR Music, gerador de músicas com IA, livre, local-first e open source",
@@ -12,7 +12,9 @@
     "typecheck": "tsc --noEmit",
     "desktop": "node scripts/build-desktop.mjs",
     "desktop:dir": "node scripts/build-desktop.mjs --dir",
-    "verify:desktop": "node scripts/verify-electron.mjs"
+    "verify:desktop": "node scripts/verify-electron.mjs",
+    "verify:desktop:runtime": "node scripts/verify-desktop-runtime.mjs",
+    "check:i18n": "node scripts/check-i18n.mjs"
   },
   "dependencies": {
     "basic-ftp": "^6.2.3",

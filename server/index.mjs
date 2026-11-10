@@ -21,6 +21,7 @@ import { extname, join, normalize, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DEFAULT_FTP, testFtp, uploadToFtp } from './ftp.mjs';
 import { discoverMusicModels } from './models.mjs';
+import { generateExternalAudio, isProviderGone, MUSIC_PROVIDER_PRESETS } from './music.mjs';
 
 const ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const DIST = join(ROOT, 'dist');
@@ -60,7 +61,7 @@ const DEFAULT_CONFIG = {
       model: 'gpt-4o-mini',
       apiKey: '',
       temperature: 0.8,
-      maxTokens: 2000,
+      maxTokens: 8000,
       timeoutMs: 45000,
       jsonMode: true,
       enabled: false,
@@ -74,7 +75,7 @@ const DEFAULT_CONFIG = {
       model: 'MiniMax-M3.1-Flash',
       apiKey: '',
       temperature: 0.8,
-      maxTokens: 2000,
+      maxTokens: 8000,
       timeoutMs: 60000,
       jsonMode: true,
       enabled: false,
@@ -89,7 +90,7 @@ const DEFAULT_CONFIG = {
       model: 'llama3.1',
       apiKey: '',
       temperature: 0.8,
-      maxTokens: 2000,
+      maxTokens: 8000,
       timeoutMs: 120000,
       jsonMode: false,
       enabled: false,
@@ -110,8 +111,7 @@ const DEFAULT_CONFIG = {
     sampleRate: 44100,
     bitrate: 256000,
     durationSec: 90,
-  },
-  generation: {
+  },  generation: {
     defaultModel: 'brm-v1',
     defaultBpm: 100,
     defaultWeirdness: 50,
@@ -272,7 +272,7 @@ function isAdmin(req) {
 /* provedores de LLM                                                   */
 /* ------------------------------------------------------------------ */
 
-function buildLlmRequest(provider, messages) {
+function buildLlmRequest(provider, messages, jsonMode = provider.jsonMode) {
   const url = `${provider.baseUrl.replace(/\/$/, '')}${provider.endpoint}`;
   const headers = { 'content-type': 'application/json' };
 
@@ -306,7 +306,7 @@ function buildLlmRequest(provider, messages) {
           generationConfig: {
             temperature: provider.temperature,
             maxOutputTokens: provider.maxTokens,
-            responseMimeType: provider.jsonMode ? 'application/json' : undefined,
+            responseMimeType: jsonMode ? 'application/json' : undefined,
           },
         },
       };
@@ -319,7 +319,7 @@ function buildLlmRequest(provider, messages) {
           model: provider.model,
           messages,
           stream: false,
-          format: provider.jsonMode ? 'json' : undefined,
+          format: jsonMode ? 'json' : undefined,
           options: { temperature: provider.temperature, num_predict: provider.maxTokens },
         },
       };
@@ -337,7 +337,7 @@ function buildLlmRequest(provider, messages) {
           messages,
           temperature: provider.temperature,
           max_tokens: provider.maxTokens,
-          ...(provider.jsonMode ? { response_format: { type: 'json_object' } } : {}),
+          ...(jsonMode ? { response_format: { type: 'json_object' } } : {}),
         },
       };
   }
@@ -359,8 +359,10 @@ function extractLlmText(provider, payload) {
   return payload.choices?.[0]?.message?.content ?? '';
 }
 
-async function callLlm(provider, messages) {
-  const { url, headers, body } = buildLlmRequest(provider, messages);
+async function callLlm(provider, messages, options = {}) {
+  const { jsonMode = provider.jsonMode, maxTokens } = options;
+  const request = { ...provider, maxTokens: maxTokens ?? provider.maxTokens };
+  const { url, headers, body } = buildLlmRequest(request, messages, jsonMode);
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), provider.timeoutMs || 45000);
   try {
@@ -380,9 +382,24 @@ async function callLlm(provider, messages) {
     } catch {
       throw new Error('Resposta não é JSON válido');
     }
-    return { text: extractLlmText(provider, json), raw: json };
+    const finishReason = json.choices?.[0]?.finish_reason ?? null;
+    const content = extractLlmText(provider, json);
+    return { text: content, raw: json, finishReason };
   } finally {
     clearTimeout(timer);
+  }
+}
+
+/**
+ * Modelo de raciocínio (MiniMax M3 e afins) gasta parte do orçamento de tokens
+ * pensando antes de responder. Quando o limite estoura, o conteúdo vem
+ * truncado no meio do raciocínio, o que é pior do que uma letra vazia.
+ */
+function assertNotTruncated(finishReason) {
+  if (finishReason === 'length') {
+    throw new Error(
+      'O modelo atingiu o limite de tokens antes de responder. Aumente "Tokens máx." nas configurações do provedor.',
+    );
   }
 }
 
@@ -414,74 +431,20 @@ async function generatePlan(provider, prompt, lyrics, instrumental) {
   const userPrompt = `Crie o plano de uma música com base nesta descrição: "${prompt}".
 ${instrumental ? 'A faixa é instrumental (sem voz cantada).' : ''}
 ${lyrics ? `Use esta letra como base: ${lyrics}` : 'Escreva uma letra curta com [Verse] e [Chorus].'}`;
-  const { text } = await callLlm(provider, [
+  const { text, finishReason } = await callLlmResilient(provider, [
     { role: 'system', content: PLAN_SYSTEM_PROMPT },
     { role: 'user', content: userPrompt },
-  ]);
+  ], {
+    jsonMode: true,
+    maxTokens: Math.max(provider.maxTokens ?? 0, MIN_LLM_TOKENS),
+  });
+  assertNotTruncated(finishReason);
 
   const cleaned = text.trim().replace(/^```(?:json)?/i, '').replace(/```$/, '').trim();
   const start = cleaned.indexOf('{');
   const end = cleaned.lastIndexOf('}');
   if (start < 0 || end < 0) throw new Error('O modelo não devolveu JSON válido');
   return JSON.parse(cleaned.slice(start, end + 1));
-}
-
-/* ------------------------------------------------------------------ */
-/* MiniMax: modo nativo de geração de música                              */
-/* ------------------------------------------------------------------ */
-
-function minimaxMusicRequest(music, body) {
-  const url = `${music.baseUrl.replace(/\/$/, '')}${music.endpoint}`;
-  const payload = {
-    model: music.model || 'music-3.0',
-    prompt: body.prompt ?? '',
-    ...(body.lyrics ? { lyrics: body.lyrics } : {}),
-    output_format: music.outputFormat ?? 'hex',
-    audio_setting: {
-      sample_rate: music.sampleRate ?? 44100,
-      bitrate: music.bitrate ?? 256000,
-      format: music.audioFormat ?? 'mp3',
-    },
-    ...(body.instrumental ? { is_instrumental: true } : {}),
-    ...(music.lyricsOptimizer && !body.lyrics && !body.instrumental
-      ? { lyrics_optimizer: true }
-      : {}),
-  };
-
-  return {
-    url,
-    headers: {
-      'content-type': 'application/json',
-      authorization: `Bearer ${music.apiKey}`,
-    },
-    body: payload,
-  };
-}
-
-async function generateWithMiniMax(music, body) {
-  const { url, headers, body: payload } = minimaxMusicRequest(music, body);
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 300000);
-  try {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(payload),
-      signal: controller.signal,
-    });
-    const text = await response.text();
-    if (!response.ok) {
-      throw new Error(`MiniMax respondeu HTTP ${response.status}: ${text.slice(0, 240)}`);
-    }
-    const json = JSON.parse(text);
-    const statusCode = json.base_resp?.status_code;
-    if (statusCode && statusCode !== 0) {
-      throw new Error(`MiniMax erro ${statusCode}: ${json.base_resp?.status_msg ?? 'desconhecido'}`);
-    }
-    return json;
-  } finally {
-    clearTimeout(timer);
-  }
 }
 
 /* ------------------------------------------------------------------ */
@@ -612,7 +575,7 @@ async function handleAdminApi(req, res, pathname, body) {
     try {
       const { text } = await callLlm(provider, [
         { role: 'user', content: 'Responda apenas com a palavra: ok' },
-      ]);
+      ], { jsonMode: false, maxTokens: 64 });
       const latencyMs = Date.now() - started;
       const discovered = await discoverMusicModels(provider);
       const updated = {
@@ -646,24 +609,32 @@ async function handleAdminApi(req, res, pathname, body) {
 
   if (pathname === '/api/admin/music/test' && req.method === 'POST') {
     const music = config.musicProvider;
-    if (music.vendor !== 'minimax') {
-      sendJson(res, 400, { error: 'Teste externo disponível apenas para o modo nativo MiniMax' });
+    if (!music.vendor || music.vendor === 'local') {
+      sendJson(res, 400, {
+        error: 'Escolha um provedor de áudio antes de testar (MiniMax Music ou MiniMax Music 3).',
+      });
       return;
     }
     try {
-      const json = await generateWithMiniMax(music, {
+      const result = await generateExternalAudio(music, {
         prompt: 'teste de conexão do painel, instrumental curto',
         instrumental: true,
+        seed: 1,
       });
-      const hex = json.data?.audio ?? '';
+      const bytes = Math.round((result.audioBase64.length * 3) / 4 / 1024);
       sendJson(res, 200, {
         ok: true,
-        message: `MiniMax respondeu com ${Math.round(hex.length / 2 / 1024)} KB de áudio`,
-        durationMs: json.data?.extra_info?.music_duration ?? null,
+        message: `O provedor devolveu ${bytes} KB de áudio (${result.source}, ${result.audioFormat}).`,
+        durationMs: result.durationSec ? Math.round(result.durationSec * 1000) : null,
       });
     } catch (error) {
-      sendJson(res, 200, { ok: false, message: String(error.message ?? error) });
+      sendJson(res, 200, { ok: false, message: String(error?.message ?? error) });
     }
+    return;
+  }
+
+  if (pathname === '/api/admin/music/presets' && req.method === 'GET') {
+    sendJson(res, 200, { presets: MUSIC_PROVIDER_PRESETS });
     return;
   }
 
@@ -699,33 +670,149 @@ async function handleAdminApi(req, res, pathname, body) {
   sendJson(res, 404, { error: 'Rota administrativa desconhecida' });
 }
 
-async function handleGenerate(req, res, body) {
+/** O provedor externo está ativo quando o admin liga o modo e escolhe um vendor. */
+function externalAudioActive() {
   const music = config.musicProvider;
+  return Boolean(
+    music.enabled && music.mode === 'external-audio' && music.vendor && music.vendor !== 'local',
+  );
+}
 
-  if (music.enabled && music.mode === 'external-audio' && music.vendor === 'minimax') {
-    try {
-      const json = await generateWithMiniMax(music, body);
-      config.stats = {
-        ...config.stats,
-        totalSongs: config.stats.totalSongs + 1,
-        songsToday: config.stats.songsToday + 1,
-        creditsUsed: config.stats.creditsUsed + 1,
-        apiCalls: config.stats.apiCalls + 1,
-        lastGenerationAt: Date.now(),
-      };
-      await saveConfig(config);
-      sendJson(res, 200, {
-        source: 'minimax',
-        audio: json.data?.audio ?? null,
-        outputFormat: music.outputFormat ?? 'hex',
-        audioFormat: music.audioFormat ?? 'mp3',
-        durationSec: (json.data?.extra_info?.music_duration ?? 0) / 1000,
-      });
-    } catch (error) {
-      sendJson(res, 502, { error: String(error.message ?? error) });
-    }
+/**
+ * Gera o áudio final no provedor externo configurado.
+ * Quando o provedor está desligado, devolve 200 sem áudio: o motor local do
+ * navegador assume sem alarde.
+ */
+async function handleGenerateAudio(res, body) {
+  if (!externalAudioActive()) {
+    sendJson(res, 200, { source: 'local', audioBase64: null });
     return;
   }
+
+  const music = config.musicProvider;
+  try {
+    const result = await generateExternalAudio(music, {
+      prompt: body.prompt ?? '',
+      lyrics: body.lyrics ?? '',
+      instrumental: Boolean(body.instrumental),
+      seed: body.seed,
+    });
+    config.stats = {
+      ...config.stats,
+      totalSongs: config.stats.totalSongs + 1,
+      songsToday: config.stats.songsToday + 1,
+      apiCalls: config.stats.apiCalls + 1,
+      lastGenerationAt: Date.now(),
+    };
+    logActivity('generation', `Áudio gerado pelo provedor externo (${result.source})`);
+    await saveConfig(config);
+    sendJson(res, 200, {
+      source: result.source,
+      audioBase64: result.audioBase64,
+      audioFormat: result.audioFormat,
+      durationSec: result.durationSec,
+    });
+  } catch (error) {
+    const message = String(error?.message ?? error);
+    // Provedor morto (a API de Música hospedada responde 410 para contas
+    // novas): desliga sozinho para não repetir a chamada a cada faixa.
+    if (isProviderGone(error)) {
+      config.musicProvider = { ...config.musicProvider, enabled: false };
+      logActivity(
+        'config',
+        'Provedor de áudio desligado automaticamente: a API de Música da MiniMax não está mais disponível para esta conta (HTTP 410).',
+      );
+    } else {
+      logActivity('generation', `Provedor externo falhou: ${message}`);
+    }
+    await saveConfig(config);
+    sendJson(res, 502, { error: message });
+  }
+}
+
+/**
+ * Gera o plano musical.
+ * A rota devolve somente o plano: o áudio sai pela rota /api/generate/audio,
+ * para o cliente nunca misturar as duas coisas.
+ */
+/**
+ * Limpa a resposta do modelo para deixar só a letra.
+ * Remove cercas de código e preâmbulos do tipo "Aqui está a letra:".
+ */
+function cleanLyrics(text) {
+  let out = text.trim();
+  out = out.replace(/^```[a-z]*\s*/i, '').replace(/```$/, '').trim();
+  out = out.replace(/^(aqui (está|estão|vao)[^:\n]*[:\n]|here (is|are)[^:\n]*[:\n])/i, '').trim();
+  out = out.replace(/^(a letra|lyrics|letra)\s*[:\-]\s*/i, '').trim();
+  return out;
+}
+
+/** Tokens mínimos para um modelo de raciocínio conseguir responder de verdade. */
+const MIN_LLM_TOKENS = 8000;
+
+/**
+ * Chama o LLM e, se o modelo de raciocínio estourar o limite de tokens,
+ * repete a chamada com o dobro do orçamento.
+ * Sem isso a resposta volta truncada no meio do raciocínio, que é pior do
+ * que uma letra vazia: o texto parece uma letra, mas está no meio do
+ * pensamento do modelo.
+ */
+async function callLlmResilient(provider, messages, options = {}) {
+  const base = Math.max(options.maxTokens ?? provider.maxTokens ?? 0, MIN_LLM_TOKENS);
+  let truncated = null;
+  for (const maxTokens of [base, base * 2, base * 4]) {
+    const result = await callLlm(provider, messages, { ...options, maxTokens });
+    if (result.finishReason !== 'length') return result;
+    truncated = new Error(
+      'O modelo atingiu o limite de tokens antes de responder. Aumente "Tokens máx." nas configurações do provedor.',
+    );
+  }
+  throw truncated;
+}
+
+async function handleLyrics(res, body) {
+  const { prompt = '', style = '', language = 'pt' } = body ?? {};
+  const provider = config.llmProviders.find((p) => p.enabled);
+  if (!provider) {
+    sendJson(res, 400, {
+      error: 'Nenhum provedor de LLM está habilitado no painel de configuração.',
+    });
+    return;
+  }
+  try {
+    const system =
+      language === 'pt'
+        ? 'Você é um compositor profissional. Escreva apenas a letra da música, sem comentários, usando as tags [Intro], [Verse], [Pre-Chorus], [Chorus], [Bridge] e [Outro]. Mantenha as linhas curtas e rimadas. Não explique o que você fez, entregue somente a letra.'
+        : 'You are a professional songwriter. Write only the lyrics, using [Intro], [Verse], [Pre-Chorus], [Chorus], [Bridge] and [Outro] tags. Keep the lines short and rhyming. Do not explain, deliver only the lyrics.';
+    const user = `Escreva a letra de uma música sobre: "${prompt}".${
+      style ? ` Estilo musical: ${style}.` : ''
+    }`;
+    const { text, finishReason } = await callLlmResilient(provider, [
+      { role: 'system', content: system },
+      { role: 'user', content: user },
+    ], {
+      jsonMode: false,
+      maxTokens: Math.max(provider.maxTokens ?? 0, MIN_LLM_TOKENS),
+    });
+    assertNotTruncated(finishReason);
+
+    const lyrics = cleanLyrics(text);
+    if (!lyrics) {
+      sendJson(res, 502, { error: 'O modelo devolveu uma letra vazia.' });
+      return;
+    }
+    logActivity('generation', 'Letra gerada pelo LLM');
+    await saveConfig(config);
+    sendJson(res, 200, { lyrics, provider: provider.label });
+  } catch (error) {
+    logActivity('generation', `Letra falhou: ${String(error?.message ?? error)}`);
+    await saveConfig(config);
+    sendJson(res, 502, { error: String(error?.message ?? error) });
+  }
+}
+
+async function handleGenerate(req, res, body) {
+  const music = config.musicProvider;
 
   if (music.enabled && music.mode === 'llm-plan') {
     const provider = config.llmProviders.find((p) => p.enabled);
@@ -829,37 +916,17 @@ const server = createServer(async (req, res) => {
     }
 
     if (pathname === '/api/lyrics' && req.method === 'POST') {
-      const { prompt = '', style = '', language = 'pt' } = (await readBody(req)) ?? {};
-      const provider = config.llmProviders.find((p) => p.enabled);
-      if (!provider) {
-        sendJson(res, 400, {
-          error: 'Nenhum provedor de LLM está habilitado no painel de configuração.',
-        });
-        return;
-      }
-      try {
-        const system =
-          language === 'pt'
-            ? 'Você é um compositor profissional. Escreva apenas a letra da música, sem comentários, usando as tags [Intro], [Verse], [Pre-Chorus], [Chorus], [Bridge] e [Outro]. Mantenha as linhas curtas e rimadas.'
-            : 'You are a professional songwriter. Write only the lyrics, using [Intro], [Verse], [Pre-Chorus], [Chorus], [Bridge] and [Outro] tags.';
-        const user = `Escreva a letra de uma música sobre: "${prompt}".${
-          style ? ` Estilo musical: ${style}.` : ''
-        }`;
-        const { text } = await callLlm(provider, [
-          { role: 'system', content: system },
-          { role: 'user', content: user },
-        ]);
-        logActivity('generation', 'Letra gerada pelo LLM');
-        await saveConfig(config);
-        sendJson(res, 200, { lyrics: text.trim(), provider: provider.label });
-      } catch (error) {
-        sendJson(res, 502, { error: String(error?.message ?? error) });
-      }
+      await handleLyrics(res, await readBody(req));
       return;
     }
 
     if (pathname === '/api/generate' && req.method === 'POST') {
       await handleGenerate(req, res, await readBody(req));
+      return;
+    }
+
+    if (pathname === '/api/generate/audio' && req.method === 'POST') {
+      await handleGenerateAudio(res, await readBody(req));
       return;
     }
 

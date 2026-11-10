@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createSong, setParams, useApp } from '../lib/store';
 import { Icon } from '../components/Icons';
+import { useT } from '../lib/useT';
 
 interface Track {
   id: string;
@@ -12,6 +13,7 @@ interface Track {
 const TRACK_COLORS = ['#00c97b', '#ffd23f', '#5f8bff', '#ff5f8f', '#a06bff'];
 
 export function Studio() {
+  const t = useT();
   const songs = useApp((s) => s.songs);
   const [tracks, setTracks] = useState<Track[]>([
     { id: 't1', name: 'Main', color: TRACK_COLORS[0], clips: [] },
@@ -43,7 +45,7 @@ export function Studio() {
       ...current,
       {
         id: `t${current.length + 1}`,
-        name: `Faixa ${current.length + 1}`,
+        name: `${t('Faixa')} ${current.length + 1}`,
         color: TRACK_COLORS[current.length % TRACK_COLORS.length],
         clips: [],
       },
@@ -59,7 +61,7 @@ export function Studio() {
               ...track,
               clips: [
                 ...track.clips,
-                { start: Math.floor(position), length, label: prompt || 'Nova parte' },
+                { start: Math.floor(position), length, label: prompt || t('Nova parte') },
               ],
             }
           : track,
@@ -81,19 +83,19 @@ export function Studio() {
           BR<span className="brand-text">Music</span>
         </span>
         <span className="rounded-full border border-ink-700 px-3 py-1 text-xs text-mute-300">
-          Projeto sem título
+          {t('Projeto sem título')}
         </span>
         <div className="ml-2 flex items-center gap-1">
-          <button type="button" aria-label="Desfazer" className="grid h-8 w-8 place-items-center rounded-lg text-mute-500 hover:text-mute-100">
+          <button type="button" aria-label={t('Desfazer')} className="grid h-8 w-8 place-items-center rounded-lg text-mute-500 hover:text-mute-100">
             <Icon.Undo size={15} />
           </button>
-          <button type="button" aria-label="Refazer" className="grid h-8 w-8 place-items-center rounded-lg text-mute-500 hover:text-mute-100">
+          <button type="button" aria-label={t('Refazer')} className="grid h-8 w-8 place-items-center rounded-lg text-mute-500 hover:text-mute-100">
             <Icon.Redo size={15} />
           </button>
           <button
             type="button"
             onClick={() => setPlaying((v) => !v)}
-            aria-label={playing ? 'Pausar' : 'Reproduzir'}
+            aria-label={playing ? t('Pausar') : t('Reproduzir')}
             className="grid h-8 w-8 place-items-center rounded-lg bg-mute-100 text-ink-950"
           >
             {playing ? <Icon.Pause size={15} /> : <Icon.Play size={15} />}
@@ -121,13 +123,13 @@ export function Studio() {
             type="button"
             className="rounded-full border border-ink-700 px-3.5 py-1.5 text-xs text-mute-300 hover:text-mute-100"
           >
-            Exportar
+            {t('Exportar')}
           </button>
           <button
             type="button"
             className="rounded-full border border-ink-700 px-3.5 py-1.5 text-xs text-mute-300 hover:text-mute-100"
           >
-            Biblioteca
+            {t('Biblioteca')}
           </button>
         </div>
       </header>
@@ -151,7 +153,7 @@ export function Studio() {
                 className="mt-2 w-full rounded-lg border border-ink-700 py-1 text-xs text-mute-400
                   transition hover:border-brand-600 hover:text-brand-400"
               >
-                Adicionar parte
+                {t('Adicionar parte')}
               </button>
             </div>
           ))}
@@ -161,12 +163,12 @@ export function Studio() {
             className="mt-1 w-full rounded-xl border border-dashed border-ink-700 py-2 text-xs
               text-mute-500 transition hover:border-brand-600 hover:text-brand-400"
           >
-            + Nova faixa
+            {t('+ Nova faixa')}
           </button>
 
           {songs.length > 0 && (
             <div className="mt-4 border-t border-ink-800 pt-3">
-              <p className="mb-2 text-[11px] uppercase tracking-wide text-mute-500">Geradas</p>
+              <p className="mb-2 text-[11px] uppercase tracking-wide text-mute-500">{t('Geradas')}</p>
               <ul className="space-y-1">
                 {songs.slice(0, 5).map((song) => (
                   <li key={song.id} className="truncate text-xs text-mute-400">
@@ -218,14 +220,14 @@ export function Studio() {
               <input
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
-                placeholder="Selecione um ponto na timeline e peça uma parte"
-                aria-label="Pedir uma parte para o Estúdio"
+                placeholder={t('Selecione um ponto na timeline e peça uma parte')}
+                aria-label={t('Pedir uma parte para o Estúdio')}
                 className="flex-1 bg-transparent text-sm text-mute-100 placeholder:text-mute-500
                   focus:outline-none"
               />
               <select
                 defaultValue="brm-v1"
-                aria-label="Modelo"
+                aria-label={t('Modelo')}
                 className="rounded-full border border-ink-700 bg-ink-850 px-3 py-1.5 text-xs text-mute-300
                   focus:border-brand-600 focus:outline-none"
               >
@@ -238,7 +240,7 @@ export function Studio() {
                   if (!prompt) return;
                   addPart(tracks[0].id);
                 }}
-                aria-label="Enviar"
+                aria-label={t('Enviar')}
                 className="grid h-9 w-9 place-items-center rounded-full bg-mute-100 text-ink-950"
               >
                 <Icon.Send size={16} />

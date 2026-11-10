@@ -21,6 +21,8 @@ export interface DesktopBridge {
     error?: string;
   }>;
   getInfo(): Promise<{ version: string; platform: string; electron: string; isPackaged: boolean }>;
+  /** Troca o idioma do menu nativo do app desktop. */
+  setLanguage(language: 'en' | 'pt'): Promise<'en' | 'pt'>;
   onNavigate(cb: (route: string) => void): () => void;
 }
 

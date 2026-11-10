@@ -9,8 +9,10 @@ import {
 } from '../lib/harness';
 import { Icon } from '../components/Icons';
 import { addHarnessSong, navigate, playSong, useApp } from '../lib/store';
+import { useT } from '../lib/useT';
 
 export function HarnessPage() {
+  const t = useT();
   const songs = useApp((s) => s.songs);
   const [idea, setIdea] = useState('');
   const [style, setStyle] = useState('');
@@ -34,6 +36,7 @@ export function HarnessPage() {
       idea,
       style,
       instrumental,
+      translate: t,
       onStage: (id: StageId, status: StageStatus, detail?: string) => {
         setState((s) => ({
           ...s,
@@ -72,11 +75,10 @@ export function HarnessPage() {
         <header className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h1 className="font-display text-2xl font-extrabold tracking-tight text-mute-100">
-              Harness de produção
+              {t('Harness de produção')}
             </h1>
             <p className="mt-1 max-w-2xl text-sm text-mute-400">
-              Conduz uma ideia até a faixa final em etapas: prompt, letra, plano, arranjo, render,
-              stems, master e export. Cada etapa pode ser inspecionada e repetida.
+              {t('Conduz uma ideia até a faixa final em etapas: prompt, letra, plano, arranjo, render, stems, master e export. Cada etapa pode ser inspecionada e repetida.')}
             </p>
           </div>
           <button
@@ -89,12 +91,12 @@ export function HarnessPage() {
             {running ? (
               <>
                 <span className="h-4 w-4 animate-spin rounded-full border-2 border-ink-950/30 border-t-ink-950" />
-                Rodando...
+                {t('Rodando')}...
               </>
             ) : (
               <>
                 <Icon.Sparkles size={16} />
-                Rodar pipeline
+                {t('Rodar pipeline')}
               </>
             )}
           </button>
@@ -103,7 +105,7 @@ export function HarnessPage() {
         {/* entrada */}
         <section className="mt-5 grid gap-3 lg:grid-cols-3">
           <label className="block space-y-1.5 lg:col-span-2">
-            <span className="text-xs font-medium uppercase tracking-wide text-mute-500">Ideia</span>
+            <span className="text-xs font-medium uppercase tracking-wide text-mute-500">{t('Ideia')}</span>
             <textarea
               value={idea}
               onChange={(e) => setIdea(e.target.value)}
@@ -115,7 +117,7 @@ export function HarnessPage() {
           </label>
           <div className="space-y-3">
             <label className="block space-y-1.5">
-              <span className="text-xs font-medium uppercase tracking-wide text-mute-500">Estilo</span>
+              <span className="text-xs font-medium uppercase tracking-wide text-mute-500">{t('Estilo')}</span>
               <input
                 value={style}
                 onChange={(e) => setStyle(e.target.value)}
@@ -135,7 +137,7 @@ export function HarnessPage() {
               }`}
             >
               <Icon.Note size={15} />
-              Instrumental
+              {t('Instrumental')}
             </button>
           </div>
         </section>
@@ -143,7 +145,7 @@ export function HarnessPage() {
         {/* etapas */}
         <section className="mt-6 grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
           <div className="space-y-2">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-mute-500">Etapas</h2>
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-mute-500">{t('Etapas')}</h2>
             {state.stages.map((stage, index) => (
               <div
                 key={stage.id}
@@ -155,17 +157,17 @@ export function HarnessPage() {
                   {index + 1}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium">{stage.label}</p>
-                  <p className="text-xs text-mute-500">{stage.detail ?? stage.hint}</p>
+                  <p className="text-sm font-medium">{t(stage.label)}</p>
+                  <p className="text-xs text-mute-500">{stage.detail ?? t(stage.hint)}</p>
                 </div>
                 <span className="mt-1 text-[11px] uppercase tracking-wide">
                   {stage.status === 'running'
-                    ? 'rodando'
+                    ? t('rodando')
                     : stage.status === 'done'
-                      ? 'pronto'
+                      ? t('pronto')
                       : stage.status === 'error'
-                        ? 'erro'
-                        : 'aguardando'}
+                        ? t('erro')
+                        : t('aguardando')}
                 </span>
               </div>
             ))}
@@ -173,29 +175,29 @@ export function HarnessPage() {
 
           <div className="space-y-4">
             {state.prompt && (
-              <Block title="Prompt gerado">
+              <Block title={t('Prompt gerado')}>
                 <p className="text-sm leading-relaxed text-mute-300">{state.prompt}</p>
               </Block>
             )}
 
             {state.lyrics && (
-              <Block title="Letra">
+              <Block title={t('Letra')}>
                 <pre className="scroll-thin max-h-56 overflow-y-auto whitespace-pre-wrap font-sans
                   text-sm leading-relaxed text-mute-300">{state.lyrics}</pre>
               </Block>
             )}
 
             {state.plan && (
-              <Block title="Plano">
+              <Block title={t('Plano')}>
                 <div className="grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
                   {[
                     ['Andamento', `${state.plan.bpm} BPM`],
-                    ['Tonalidade', state.plan.key ?? '—'],
-                    ['Escala', state.plan.scale ?? '—'],
+                    ['Tonalidade', state.plan.key ?? '-'],
+                    ['Escala', state.plan.scale ?? '-'],
                     ['Seções', String(state.plan.sections?.length ?? 0)],
                   ].map(([label, value]) => (
                     <div key={label} className="rounded-lg border border-ink-700 bg-ink-900 px-3 py-2">
-                      <p className="text-[10px] uppercase tracking-wide text-mute-500">{label}</p>
+                      <p className="text-[10px] uppercase tracking-wide text-mute-500">{t(label)}</p>
                       <p className="mt-0.5 text-mute-100">{value}</p>
                     </div>
                   ))}
@@ -212,7 +214,7 @@ export function HarnessPage() {
                           />
                         </div>
                         <span className="w-14 text-right text-[11px] tabular-nums text-mute-500">
-                          {section.bars} compassos
+                          {section.bars} {t('compassos')}
                         </span>
                       </div>
                     ))}
@@ -224,7 +226,7 @@ export function HarnessPage() {
             {state.report && <ReportBlock report={state.report} />}
 
             {state.song && (
-              <Block title="Faixa gerada">
+              <Block title={t('Faixa gerada')}>
                 <div className="flex items-center gap-3">
                   {state.song.coverUrl && (
                     <img
@@ -252,7 +254,7 @@ export function HarnessPage() {
                       text-sm text-mute-200 transition hover:border-brand-500 hover:text-brand-400"
                   >
                     <Icon.Play size={14} />
-                    Ouvir
+                    {t('Ouvir')}
                   </button>
                 </div>
               </Block>
@@ -260,7 +262,8 @@ export function HarnessPage() {
 
             {songs.length > 0 && (
               <p className="text-xs text-mute-500">
-                A biblioteca tem {songs.length} faixa(s). O harness cria uma nova a cada execução.
+                {t('A biblioteca tem')} {songs.length} {t('faixa(s)')}.{' '}
+                {t('O harness cria uma nova a cada execução.')}
               </p>
             )}
           </div>
@@ -280,6 +283,7 @@ function Block({ title, children }: { title: string; children: React.ReactNode }
 }
 
 function ReportBlock({ report }: { report: QualityReport }) {
+  const t = useT();
   const metrics: Array<[string, string]> = [
     ['Duração', `${report.durationSec.toFixed(1)}s`],
     ['Pico', `${report.peakDb.toFixed(1)} dB`],
@@ -287,20 +291,20 @@ function ReportBlock({ report }: { report: QualityReport }) {
     ['Loudness', `${report.lufs.toFixed(1)} LUFS`],
     ['Dinâmica', `${report.dynamicRangeDb.toFixed(1)} dB`],
     ['Estéreo', `${Math.round(report.stereoWidth * 100)}%`],
-    ['Clipping', `${report.clippedSamples} amostras`],
+    ['Clipping', `${report.clippedSamples} ${t('amostras')}`],
   ];
 
   return (
-    <Block title="Laudo de qualidade">
+    <Block title={t('Laudo de qualidade')}>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         {metrics.map(([label, value]) => (
           <div key={label} className="rounded-lg border border-ink-700 bg-ink-850 px-3 py-2">
-            <p className="text-[10px] uppercase tracking-wide text-mute-500">{label}</p>
+            <p className="text-[10px] uppercase tracking-wide text-mute-500">{t(label)}</p>
             <p className="mt-0.5 text-sm text-mute-100">{value}</p>
           </div>
         ))}
       </div>
-      <p className="mt-3 text-sm text-mute-300">{report.verdict}</p>
+      <p className="mt-3 text-sm text-mute-300">{t(report.verdict)}</p>
     </Block>
   );
 }
