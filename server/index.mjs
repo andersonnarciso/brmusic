@@ -61,7 +61,7 @@ const DEFAULT_CONFIG = {
       model: 'gpt-4o-mini',
       apiKey: '',
       temperature: 0.8,
-      maxTokens: 8000,
+      maxTokens: 16000,
       timeoutMs: 45000,
       jsonMode: true,
       enabled: false,
@@ -75,7 +75,7 @@ const DEFAULT_CONFIG = {
       model: 'MiniMax-M3.1-Flash',
       apiKey: '',
       temperature: 0.8,
-      maxTokens: 8000,
+      maxTokens: 16000,
       timeoutMs: 60000,
       jsonMode: true,
       enabled: false,
@@ -90,7 +90,7 @@ const DEFAULT_CONFIG = {
       model: 'llama3.1',
       apiKey: '',
       temperature: 0.8,
-      maxTokens: 8000,
+      maxTokens: 16000,
       timeoutMs: 120000,
       jsonMode: false,
       enabled: false,
@@ -436,15 +436,25 @@ ${lyrics ? `Use esta letra como base: ${lyrics}` : 'Escreva uma letra curta com 
     { role: 'user', content: userPrompt },
   ], {
     jsonMode: true,
-    maxTokens: Math.max(provider.maxTokens ?? 0, MIN_LLM_TOKENS),
+    floor: MIN_LLM_TOKENS,
   });
   assertNotTruncated(finishReason);
 
-  const cleaned = text.trim().replace(/^```(?:json)?/i, '').replace(/```$/, '').trim();
-  const start = cleaned.indexOf('{');
-  const end = cleaned.lastIndexOf('}');
-  if (start < 0 || end < 0) throw new Error('O modelo não devolveu JSON válido');
-  return JSON.parse(cleaned.slice(start, end + 1));
+  // o rascunho do modelo pode vir antes do JSON ou dentro de <think>
+  const cleaned = text
+    .replace(/<think>[\s\S]*?(<\/think>|$)/gi, '')
+    .trim()
+    .replace(/^```(?:json)?/i, '')
+    .replace(/```$/, '')
+    .trim();
+  try {
+    return JSON.parse(cleaned);
+  } catch {
+    const start = cleaned.indexOf('{');
+    const end = cleaned.lastIndexOf('}');
+    if (start < 0 || end < 0) throw new Error('O modelo não devolveu JSON válido');
+    return JSON.parse(cleaned.slice(start, end + 1));
+  }
 }
 
 /* ------------------------------------------------------------------ */
@@ -737,30 +747,69 @@ async function handleGenerateAudio(res, body) {
  */
 /**
  * Limpa a resposta do modelo para deixar só a letra.
- * Remove cercas de código e preâmbulos do tipo "Aqui está a letra:".
+ *
+ * Alguns modelos devolvem o rascunho junto com a resposta: bloco <think>,
+ * comentários do tipo "Oops, need to fix that" ou até palavras em outro
+ * idioma. Nada disso pode chegar na letra.
  */
 function cleanLyrics(text) {
   let out = text.trim();
+
+  // bloco de raciocínio entre <think> e </think> (inclusive sem fechamento)
+  out = out.replace(/<think>[\s\S]*?(<\/think>|$)/gi, '').trim();
+
+  // cercas de código
   out = out.replace(/^```[a-z]*\s*/i, '').replace(/```$/, '').trim();
+
+  // preâmbulo do modelo
   out = out.replace(/^(aqui (está|estão|vao)[^:\n]*[:\n]|here (is|are)[^:\n]*[:\n])/i, '').trim();
   out = out.replace(/^(a letra|lyrics|letra)\s*[:\-]\s*/i, '').trim();
+
+  // linhas de rascunho: o modelo escrevendo para si mesmo
+  const draft =
+    /\b(oops|accidental|potential:|let'?s (write|craft|make|do)|need (to |avoid |ensure |write |craft |keep )|needs (to |avoid |ensure |write |craft )|we need|write only|deliver only|in (portuguese|english)|do not explain|no explanations)\b/i;
+  // caracteres de outros sistemas de escrita nunca fazem parte da letra
+  const otherScript = /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]/;
+
+  out = out
+    .split('\n')
+    .filter((line) => {
+      const text = line.trim();
+      if (!text) return true;
+      if (/^\[/.test(text)) return true;
+      if (otherScript.test(text)) return false;
+      if (draft.test(text)) return false;
+      return true;
+    })
+    .join('\n')
+    .trim();
+
   return out;
 }
 
-/** Tokens mínimos para um modelo de raciocínio conseguir responder de verdade. */
-const MIN_LLM_TOKENS = 8000;
+/**
+ * Piso de tokens para o LLM.
+ *
+ * Modelos de raciocínio (MiniMax M3 e afins) gastam parte do orçamento
+ * pensando antes de responder, e o quanto gastam varia muito: uma mesma
+ * letra chegou a usar 26 mil tokens de raciocínio. Com o piso baixo a
+ * resposta volta truncada no meio do pensamento, o que parece uma letra
+ * mas nao é.
+ */
+const MIN_LLM_TOKENS = 16000;
+/** A letra precisa de mais folga que o plano: o texto é longo. */
+const LYRICS_MIN_TOKENS = 32000;
 
 /**
  * Chama o LLM e, se o modelo de raciocínio estourar o limite de tokens,
- * repete a chamada com o dobro do orçamento.
- * Sem isso a resposta volta truncada no meio do raciocínio, que é pior do
- * que uma letra vazia: o texto parece uma letra, mas está no meio do
- * pensamento do modelo.
+ * repete a chamada com mais orçamento.
  */
 async function callLlmResilient(provider, messages, options = {}) {
-  const base = Math.max(options.maxTokens ?? provider.maxTokens ?? 0, MIN_LLM_TOKENS);
+  const floor = options.floor ?? MIN_LLM_TOKENS;
+  const base = Math.max(options.maxTokens ?? provider.maxTokens ?? 0, floor);
+  const steps = options.steps ?? [base, base * 2];
   let truncated = null;
-  for (const maxTokens of [base, base * 2, base * 4]) {
+  for (const maxTokens of steps) {
     const result = await callLlm(provider, messages, { ...options, maxTokens });
     if (result.finishReason !== 'length') return result;
     truncated = new Error(
@@ -792,13 +841,19 @@ async function handleLyrics(res, body) {
       { role: 'user', content: user },
     ], {
       jsonMode: false,
-      maxTokens: Math.max(provider.maxTokens ?? 0, MIN_LLM_TOKENS),
+      floor: LYRICS_MIN_TOKENS,
+      steps: [LYRICS_MIN_TOKENS, LYRICS_MIN_TOKENS * 2],
     });
     assertNotTruncated(finishReason);
 
     const lyrics = cleanLyrics(text);
-    if (!lyrics) {
-      sendJson(res, 502, { error: 'O modelo devolveu uma letra vazia.' });
+    const hasStructure = /\[[^\]]+\]/.test(lyrics);
+    const lineCount = lyrics.split('\n').filter((line) => line.trim()).length;
+    if (!lyrics || (!hasStructure && lineCount < 6)) {
+      sendJson(res, 502, {
+        error:
+          'O modelo não devolveu uma letra estruturada. Tente de novo ou ajuste o provedor no painel.',
+      });
       return;
     }
     logActivity('generation', 'Letra gerada pelo LLM');
