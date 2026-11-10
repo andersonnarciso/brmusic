@@ -12,7 +12,7 @@ English is now the primary language and Portuguese (pt-BR) the secondary one, on
 
 - **The desktop app never talked to its own backend.** The interface runs under `file://`, so `fetch('/api/...')` resolved to `file:///api/...` and failed silently. Everything that needs the server (lyrics, audio provider, settings) now resolves the right origin.
 - **"Generate lyrics" only showed an error.** The guard ignored the theme typed in the lyrics field. That field is a valid theme now, and the reason for a local fallback is shown instead of failing quietly.
-- **The model answered with a truncated letter.** Reasoning models burned the whole token budget and the content came back cut mid-thought. The lyrics route now uses a plain text mode, a token floor and a retry with a larger budget.
+- **The model answered with a truncated letter.** Reasoning models spend a large and unpredictable part of the token budget thinking first (one run used 26k tokens of reasoning), so the reply came back cut mid-thought or with the model's own scratchpad mixed in. The lyrics route now asks for a bigger budget and retries when the model reports a truncation, and the response is cleaned before it reaches the app.
 - **The external audio provider was never called.** The app always rendered locally. It now uses the configured provider, and when the provider fails the local engine takes over with an explanation.
 
 ### Audio provider
@@ -37,7 +37,7 @@ Inglês é agora o idioma principal e português (pt-BR) o secundário, em todas
 
 - **O app desktop nunca falava com o próprio backend.** A interface roda em `file://`, então `fetch('/api/...')` virava `file:///api/...` e falhava em silêncio. Tudo que depende do servidor (letra, provedor de áudio, configurações) agora resolve a origem certa.
 - **"Gerar letra" só mostrava um erro.** A validação ignorava o tema digitado no campo de letra. Esse campo agora vale como tema, e o motivo do fallback local aparece em vez de sumir sem explicação.
-- **O modelo devolvia a letra truncada.** Modelos de raciocínio gastavam todo o orçamento de tokens e o conteúdo voltava cortado no meio do pensamento. A rota de letra usa texto puro, um piso de tokens e uma repetição com orçamento maior.
+- **O modelo devolvia a letra truncada.** Modelos de raciocínio gastam uma parte grande e variável do orçamento de tokens pensando antes (uma chamada usou 26 mil tokens de raciocínio), então a resposta voltava cortada no meio do pensamento ou com o rascunho do modelo misturado dentro. A rota de letra agora pede um orçamento maior, repete quando o modelo avisa truncamento e limpa a resposta antes de entregar.
 - **O provedor de áudio externo nunca era chamado.** O app sempre renderizava local. Agora usa o provedor configurado e, se ele falhar, o motor local assume com a explicação.
 
 ### Provedor de áudio
