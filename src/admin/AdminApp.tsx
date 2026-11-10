@@ -16,6 +16,8 @@ import {
   IntegrationsSection,
 } from './Manage';
 import { Badge, Button, Card, Stat } from './ui';
+import logoMark from '../assets/logo-mark.png';
+import logoWordmark from '../assets/logo-wordmark.png';
 
 type SectionId =
   | 'overview'
@@ -103,9 +105,9 @@ export function AdminApp() {
     <div className="flex h-full min-h-0 bg-ink-950">
       <aside className="flex w-60 shrink-0 flex-col border-r border-ink-700 bg-ink-900">
         <div className="flex items-center gap-2 border-b border-ink-700 px-4 py-4">
-          <img src="/logo-mark.png" alt="" className="h-8 w-8 shrink-0" />
+          <img src={logoMark} alt="" className="h-8 w-8 shrink-0" />
           <div>
-            <img src="/logo-wordmark.png" alt="BR Music" className="h-[14px] w-auto" />
+            <img src={logoWordmark} alt="BR Music" className="h-[14px] w-auto" />
             <p className="mt-0.5 text-[10px] uppercase tracking-widest text-mute-500">Admin</p>
           </div>
         </div>

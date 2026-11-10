@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { navigate, setParams } from '../lib/store';
 import { Icon } from '../components/Icons';
+import logoMark from '../assets/logo-mark.png';
+import logoWordmark from '../assets/logo-wordmark.png';
 
 const FEATURES = [
   {
@@ -93,8 +95,8 @@ export function Landing() {
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
             className="flex items-center gap-2"
           >
-            <img src="/logo-mark.png" alt="" className="h-9 w-9 shrink-0" />
-            <img src="/logo-wordmark.png" alt="BR Music" className="h-6 w-auto" />
+            <img src={logoMark} alt="" className="h-9 w-9 shrink-0" />
+            <img src={logoWordmark} alt="BR Music" className="h-6 w-auto" />
           </button>
           <nav className="flex items-center gap-2">
             <button
@@ -273,7 +275,7 @@ export function Landing() {
       <footer className="border-t border-ink-800 px-5 py-8">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 text-xs text-mute-500 sm:flex-row">
           <span className="flex items-center gap-2">
-            <img src="/logo-mark.png" alt="" className="h-4 w-4" />
+            <img src={logoMark} alt="" className="h-4 w-4" />
             BR Music, gerador de música livre, local e open source.
           </span>
           <span>Gerador procedural local · nenhuma faixa é pré-gravada</span>

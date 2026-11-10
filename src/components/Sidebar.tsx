@@ -1,5 +1,7 @@
 import { Icon } from './Icons';
 import { navigate, toggleSidebar, useApp } from '../lib/store';
+import logoMark from '../assets/logo-mark.png';
+import logoWordmark from '../assets/logo-wordmark.png';
 
 interface NavItem {
   label: string;
@@ -44,9 +46,9 @@ export function Sidebar() {
           className="flex items-center gap-2"
           aria-label="Ir para o início do BR Music"
         >
-          <img src="/logo-mark.png" alt="" className="h-8 w-8 shrink-0" />
+          <img src={logoMark} alt="" className="h-8 w-8 shrink-0" />
           {!collapsed && (
-            <img src="/logo-wordmark.png" alt="BR Music" className="h-[18px] w-auto" />
+            <img src={logoWordmark} alt="BR Music" className="h-[18px] w-auto" />
           )}
         </button>
         <button
