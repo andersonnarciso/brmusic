@@ -21,6 +21,30 @@ import { useT } from '../lib/useT';
 
 type Update = (updater: (current: AdminConfig) => AdminConfig) => void;
 
+/**
+ * Texto de ajuda do campo de chave.
+ *
+ * Quando a chave ja esta gravada no servidor o campo mostra so a mascara, e
+ * nao da para ver o valor. O painel informa o tamanho real da chave salva
+ * para deixar claro que ela entrou inteira, e nao truncada.
+ */
+function keyHint(
+  value: string,
+  length: number | undefined,
+  t: (text: string) => string,
+): string {
+  if (!value) return t('Gravada apenas no servidor.');
+  if (value.startsWith('••')) {
+    return length
+      ? t('Chave salva no servidor ({n} caracteres). Digite uma nova para substituir.').replace(
+          '{n}',
+          String(length),
+        )
+      : t('Chave salva no servidor. Digite uma nova para substituir.');
+  }
+  return t('Será gravada no servidor ao salvar.');
+}
+
 export function ProvidersSection({
   config,
   update,
@@ -351,7 +375,10 @@ function ProviderCard({
           />
         </Field>
 
-        <Field label={t('Chave da API')} hint={t('Gravada apenas no servidor.')}>
+        <Field
+          label={t('Chave da API')}
+          hint={keyHint(provider.apiKey, provider.apiKeyLength, t)}
+        >
           <TextInput
             type="password"
             placeholder={provider.apiKey || 'sk-…'}
@@ -564,7 +591,10 @@ function MusicProviderSection({ config, update }: { config: AdminConfig; update:
             )}
           </Field>
 
-          <Field label={t('Chave da API')} hint={t('Bearer token. Ficará só no servidor.')}>
+          <Field
+            label={t('Chave da API')}
+            hint={keyHint(music.apiKey, music.apiKeyLength, t)}
+          >
             <TextInput
               type="password"
               placeholder={music.apiKey || 'sk-…'}

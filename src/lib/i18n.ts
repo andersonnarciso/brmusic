@@ -184,6 +184,11 @@ const EN: Record<string, string> = {
   'Gerando a música': 'Generating the song',
   'Etapa': 'Stage',
   'Escrevendo...': 'Writing...',
+  'Chave salva no servidor ({n} caracteres). Digite uma nova para substituir.':
+    'Key saved on the server ({n} characters). Type a new one to replace it.',
+  'Chave salva no servidor. Digite uma nova para substituir.':
+    'Key saved on the server. Type a new one to replace it.',
+  'Será gravada no servidor ao salvar.': 'It will be saved on the server when you save.',
 
   // menu da faixa
   'Remix': 'Remix',
