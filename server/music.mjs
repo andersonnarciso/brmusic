@@ -11,6 +11,9 @@
  *                      com o audio em base64/hex.
  */
 
+import http from 'node:http';
+import https from 'node:https';
+
 const LEGACY_MUSIC_MODELS = [
   'music-3.0',
   'music-2.6',
@@ -139,6 +142,47 @@ export function isProviderGone(error) {
 }
 
 /**
+ * POST HTTP sem timeout de resposta.
+ *
+ * O fetch do Node (undici) aborta em 300 segundos esperando os headers. Um
+ * modelo de musica local leva varios minutos para gerar a faixa inteira e so
+ * entao responde, entao a chamada era cortada no meio com "fetch failed".
+ * Aqui a conexao fica aberta ate o provedor responder.
+ */
+function postJson(url, headers, body) {
+  return new Promise((resolve, reject) => {
+    const target = new URL(url);
+    const transport = target.protocol === 'http:' ? http : https;
+    const payload = Buffer.from(JSON.stringify(body), 'utf8');
+    const request = transport.request(
+      target,
+      {
+        method: 'POST',
+        headers: {
+          ...headers,
+          'content-type': 'application/json',
+          'content-length': payload.length,
+        },
+        timeout: 0,
+      },
+      (response) => {
+        const chunks = [];
+        response.on('data', (chunk) => chunks.push(chunk));
+        response.on('end', () =>
+          resolve({
+            status: response.statusCode,
+            headers: response.headers,
+            body: Buffer.concat(chunks),
+          }),
+        );
+      },
+    );
+    request.on('error', reject);
+    request.end(payload);
+  });
+}
+
+/**
  * Gera o audio no provedor externo.
  * @param {{vendor:string,baseUrl:string,endpoint:string,model:string,apiKey:string,outputFormat?:string,audioFormat?:string,sampleRate?:number,bitrate?:number,durationSec?:number,lyricsOptimizer?:boolean}} music
  * @param {{prompt:string, lyrics?:string, instrumental?:boolean, seed?:number}} body
@@ -164,16 +208,13 @@ export async function generateExternalAudio(music, body) {
       response_format: 'wav',
       stream: false,
     };
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        ...(music.apiKey ? { authorization: `Bearer ${music.apiKey}` } : {}),
-      },
-      body: JSON.stringify(payload),
-    });
-    if (!response.ok) {
-      const text = await response.text().catch(() => '');
+    const response = await postJson(
+      url,
+      music.apiKey ? { authorization: `Bearer ${music.apiKey}` } : {},
+      payload,
+    );
+    if (response.status < 200 || response.status >= 300) {
+      const text = response.body.toString('utf8');
       let parsed = null;
       try {
         parsed = JSON.parse(text);
@@ -182,7 +223,7 @@ export async function generateExternalAudio(music, body) {
       }
       throw musicError(describeMusicError(response.status, parsed), response.status, parsed?.base_resp?.status_code);
     }
-    const buffer = Buffer.from(await response.arrayBuffer());
+    const buffer = response.body;
     if (buffer.length < 1024) {
       throw musicError('O servidor de musica devolveu um audio vazio.', 502, null);
     }
@@ -212,22 +253,23 @@ export async function generateExternalAudio(music, body) {
         ? { lyrics_optimizer: true }
         : {}),
     };
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        ...(music.apiKey ? { authorization: `Bearer ${music.apiKey}` } : {}),
-      },
-      body: JSON.stringify(payload),
-    });
-    const text = await response.text();
+    const response = await postJson(
+      url,
+      music.apiKey ? { authorization: `Bearer ${music.apiKey}` } : {},
+      payload,
+    );
+    const text = response.body.toString('utf8');
     let parsed = null;
     try {
       parsed = JSON.parse(text);
     } catch {
       /* resposta nao JSON */
     }
-    if (!response.ok || (parsed && parsed.base_resp && parsed.base_resp.status_code !== 0)) {
+    if (
+      response.status < 200 ||
+      response.status >= 300 ||
+      (parsed && parsed.base_resp && parsed.base_resp.status_code !== 0)
+    ) {
       throw musicError(describeMusicError(response.status, parsed), response.status, parsed?.base_resp?.status_code);
     }
     const hex = parsed?.data?.audio ?? '';
@@ -244,22 +286,19 @@ export async function generateExternalAudio(music, body) {
 
   /* --- endpoint proprio --- */
   const url = `${base}${music.endpoint || '/api/generate'}`;
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      ...(music.apiKey ? { authorization: `Bearer ${music.apiKey}` } : {}),
-    },
-    body: JSON.stringify({
+  const response = await postJson(
+    url,
+    music.apiKey ? { authorization: `Bearer ${music.apiKey}` } : {},
+    {
       prompt: body.prompt,
       lyrics: body.lyrics,
       instrumental: body.instrumental,
       model: music.model,
       response_format: 'wav',
-    }),
-  });
-  if (!response.ok) {
-    const text = await response.text().catch(() => '');
+    },
+  );
+  if (response.status < 200 || response.status >= 300) {
+    const text = response.body.toString('utf8');
     let parsed = null;
     try {
       parsed = JSON.parse(text);
@@ -272,9 +311,14 @@ export async function generateExternalAudio(music, body) {
       parsed?.base_resp?.status_code,
     );
   }
-  const contentType = response.headers.get('content-type') ?? '';
+  const contentType = String(response.headers['content-type'] ?? '');
   if (contentType.includes('application/json')) {
-    const parsed = await response.json();
+    let parsed = null;
+    try {
+      parsed = JSON.parse(response.body.toString('utf8'));
+    } catch {
+      throw musicError('O provedor nao devolveu JSON valido.', response.status, null);
+    }
     const audio = parsed.audio ?? parsed.audioBase64 ?? parsed.data?.audio;
     if (!audio) throw musicError('O provedor nao devolveu audio.', response.status, null);
     return {
@@ -284,7 +328,7 @@ export async function generateExternalAudio(music, body) {
       source: 'custom',
     };
   }
-  const buffer = Buffer.from(await response.arrayBuffer());
+  const buffer = response.body;
   return {
     audioBase64: toBase64(buffer),
     audioFormat: contentType.includes('mpeg') ? 'mp3' : 'wav',
