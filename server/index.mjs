@@ -22,6 +22,7 @@ import { fileURLToPath } from 'node:url';
 import { DEFAULT_FTP, testFtp, uploadToFtp } from './ftp.mjs';
 import { discoverMusicModels } from './models.mjs';
 import { generateExternalAudio, isProviderGone, MUSIC_PROVIDER_PRESETS } from './music.mjs';
+import * as localModels from './localmodels.mjs';
 
 const ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const DIST = join(ROOT, 'dist');
@@ -97,6 +98,12 @@ const DEFAULT_CONFIG = {
       musicModels: [],
     },
   ],
+  localModels: {
+    /** Pasta onde os modelos locais sao instalados. Vazio usa ~/.brmusic/models */
+    dir: process.env.BRMUSIC_LOCAL_MODELS_DIR ?? '',
+    /** Servico systemd do usuario que sobe o modelo */
+    service: process.env.BRMUSIC_LOCAL_MUSIC_SERVICE ?? 'brmusic-local-music',
+  },
   musicProvider: {
     mode: 'local',
     vendor: 'local',
@@ -187,10 +194,21 @@ async function loadConfig() {
       brand: { ...DEFAULT_CONFIG.brand, ...(parsed.brand ?? {}) },
       integrations: { ...DEFAULT_CONFIG.integrations, ...(parsed.integrations ?? {}) },
       stats: { ...DEFAULT_CONFIG.stats, ...(parsed.stats ?? {}) },
+      localModels: { ...DEFAULT_CONFIG.localModels, ...(parsed.localModels ?? {}) },
     };
   } catch {
     return structuredClone(DEFAULT_CONFIG);
   }
+}
+
+/**
+ * Aponta a central de modelos locais para a pasta e o servio configurados.
+ */
+function syncLocalModels() {
+  localModels.configureLocalModels({
+    dir: config.localModels?.dir || undefined,
+    service: config.localModels?.service || undefined,
+  });
 }
 
 async function saveConfig(config) {
@@ -248,6 +266,7 @@ function mergeSecrets(incoming, current) {
 }
 
 let config = await loadConfig();
+syncLocalModels();
 
 function logActivity(kind, message, actor = 'admin') {
   config.activity = [
@@ -543,6 +562,7 @@ async function handleAdminApi(req, res, pathname, body) {
   if (pathname === '/api/admin/config' && req.method === 'PUT') {
     const merged = mergeSecrets(body ?? {}, config);
     config = { ...config, ...merged };
+    syncLocalModels();
     logActivity('config', 'Configuração da plataforma atualizada');
     await saveConfig(config);
     sendJson(res, 200, maskSecrets(config));
@@ -663,6 +683,68 @@ async function handleAdminApi(req, res, pathname, body) {
 
   if (pathname === '/api/admin/music/presets' && req.method === 'GET') {
     sendJson(res, 200, { presets: MUSIC_PROVIDER_PRESETS });
+    return;
+  }
+
+  /* ---------------------------------------------------------------- */
+  /* Central de modelos locais                                          */
+  /* ---------------------------------------------------------------- */
+
+  if (pathname === '/api/local-models' && req.method === 'GET') {
+    try {
+      sendJson(res, 200, await localModels.snapshot());
+    } catch (error) {
+      sendJson(res, 500, { error: String(error?.message ?? error) });
+    }
+    return;
+  }
+
+  if (pathname === '/api/local-models/state' && req.method === 'GET') {
+    sendJson(res, 200, await localModels.quickState());
+    return;
+  }
+
+  if (pathname === '/api/local-models/install' && req.method === 'POST') {
+    try {
+      sendJson(res, 200, localModels.startInstall(body?.modelId));
+    } catch (error) {
+      sendJson(res, 400, { error: String(error?.message ?? error) });
+    }
+    return;
+  }
+
+  if (pathname === '/api/local-models/cancel' && req.method === 'POST') {
+    sendJson(res, 200, localModels.cancelInstall());
+    return;
+  }
+
+  if (pathname === '/api/local-models/load' && req.method === 'POST') {
+    try {
+      sendJson(res, 200, await localModels.loadModel(body?.modelId));
+    } catch (error) {
+      sendJson(res, 500, { error: String(error?.message ?? error) });
+    }
+    return;
+  }
+
+  if (pathname === '/api/local-models/unload' && req.method === 'POST') {
+    try {
+      sendJson(res, 200, await localModels.unloadModel());
+    } catch (error) {
+      sendJson(res, 500, { error: String(error?.message ?? error) });
+    }
+    return;
+  }
+
+  if (pathname === '/api/local-models/apply' && req.method === 'POST') {
+    try {
+      const provider = localModels.applyToProvider(config, body?.modelId);
+      await saveConfig(config);
+      logActivity('config', `Provedor de audio apontado para o modelo local (${body?.modelId})`);
+      sendJson(res, 200, { ok: true, musicProvider: provider });
+    } catch (error) {
+      sendJson(res, 400, { error: String(error?.message ?? error) });
+    }
     return;
   }
 
@@ -956,7 +1038,7 @@ const server = createServer(async (req, res) => {
   }
 
   try {
-    if (pathname.startsWith('/api/admin/')) {
+    if (pathname.startsWith('/api/admin/') || pathname.startsWith('/api/local-models')) {
       const body = req.method === 'GET' ? {} : await readBody(req);
       await handleAdminApi(req, res, pathname, body);
       return;
