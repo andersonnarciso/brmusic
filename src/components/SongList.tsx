@@ -65,7 +65,9 @@ export function SongList() {
   const [newPlaylist, setNewPlaylist] = useState<string | null>(null);
 
   const visible = useMemo(() => {
-    let list = songs.filter((s) => s.status !== 'failed');
+    // Faixa na lixeira some da lista: ela continua na aba "Lixeira" da
+    // biblioteca, com restauracao e exclusao definitiva.
+    let list = songs.filter((s) => s.status !== 'failed' && !s.trashed);
     if (filters.onlyLiked) list = list.filter((s) => s.liked);
     if (filters.onlyPublic) list = list.filter((s) => s.prompt.length > 0);
     if (filters.onlyUploads) list = list.filter((s) => s.instrumental);

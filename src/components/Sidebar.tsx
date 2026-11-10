@@ -37,7 +37,7 @@ export function Sidebar() {
   const isActive = (target: string) =>
     route === target || (target === '/me' && route.startsWith('/song/'));
 
-  const readyCount = songs.filter((s) => s.status === 'ready').length;
+  const readyCount = songs.filter((s) => s.status === 'ready' && !s.trashed).length;
 
   return (
     <aside

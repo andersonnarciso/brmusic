@@ -788,7 +788,7 @@ export function playSong(id: string): void {
 export function togglePlay(): void {
   const { songId, playing } = playerStore.get();
   if (!songId) {
-    const first = appStore.get().songs.find((s) => s.status === 'ready');
+    const first = appStore.get().songs.find((s) => s.status === 'ready' && !s.trashed);
     if (first) playSong(first.id);
     return;
   }
@@ -804,7 +804,7 @@ export function togglePlay(): void {
 export async function handleNext(auto = false): Promise<void> {
   const { songs } = appStore.get();
   const { songId, shuffle, repeat } = playerStore.get();
-  const ready = songs.filter((s) => s.status === 'ready' && s.audioUrl);
+  const ready = songs.filter((s) => s.status === 'ready' && s.audioUrl && !s.trashed);
   if (ready.length === 0) return;
 
   if (auto && repeat === 'one') {
@@ -832,7 +832,7 @@ export async function handleNext(auto = false): Promise<void> {
 export function handlePrev(): void {
   const { songs } = appStore.get();
   const { songId, shuffle } = playerStore.get();
-  const ready = songs.filter((s) => s.status === 'ready' && s.audioUrl);
+  const ready = songs.filter((s) => s.status === 'ready' && s.audioUrl && !s.trashed);
   if (ready.length === 0) return;
   let index = ready.findIndex((s) => s.id === songId);
   if (shuffle) {

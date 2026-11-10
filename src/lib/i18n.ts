@@ -181,6 +181,9 @@ const EN: Record<string, string> = {
   'Beat, letra, ou os dois.': 'A beat, lyrics, or both.',
   'Feito por': 'Made by',
   'Licença MIT': 'MIT License',
+  'Gerando a música': 'Generating the song',
+  'Etapa': 'Stage',
+  'Escrevendo...': 'Writing...',
 
   // menu da faixa
   'Remix': 'Remix',

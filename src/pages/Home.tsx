@@ -33,7 +33,7 @@ export function Home() {
   const t = useT();
   const songs = useApp((s) => s.songs);
   const [prompt, setPrompt] = useState('');
-  const recent = songs.filter((s) => s.status === 'ready').slice(0, 6);
+  const recent = songs.filter((s) => s.status === 'ready' && !s.trashed).slice(0, 6);
 
   return (
     <div className="scroll-thin h-full overflow-y-auto">

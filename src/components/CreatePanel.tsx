@@ -288,7 +288,7 @@ export function CreatePanel() {
                       disabled:opacity-60"
                   >
                     <Icon.Sparkles size={14} />
-                    {lyricsBusy ? 'Escrevendo...' : t('Gerar letra')}
+                    {lyricsBusy ? t('Escrevendo...') : t('Gerar letra')}
                   </button>
 
                   <button
@@ -563,7 +563,7 @@ export function CreatePanel() {
           {generating ? (
             <>
               <span className="h-4 w-4 animate-spin rounded-full border-2 border-ink-950/30 border-t-ink-950" />
-              {harnessStage ? t(harnessStage) : t('Gerando')}
+              {t('Gerando a música')}
             </>
           ) : (
             <>
@@ -572,6 +572,11 @@ export function CreatePanel() {
             </>
           )}
         </button>
+        {generating && harnessStage && (
+          <p className="mt-2 text-center text-[11px] text-mute-500">
+            {t('Etapa')}: {t(harnessStage)}
+          </p>
+        )}
         <button
           type="button"
           onClick={() => navigate('/harness')}
