@@ -54,8 +54,21 @@ jobs:
       - name: Dependências do AppImage (libfuse2)
         if: matrix.platform == 'linux'
         run: |
-          sudo apt-get update
-          sudo apt-get install -y libfuse2
+          # O mirror do Ubuntu oscila no runner e derruba o build inteiro.
+          # O libfuse so e necessario para EXECUTAR o AppImage gerado, nao
+          # para Builds ele, entao a falha nao pode parar a release.
+          for attempt in 1 2 3; do
+            if sudo apt-get update -o Acquire::Retries=5; then
+              break
+            fi
+            echo "tentativa $attempt de atualizar o apt falhou, repetindo"
+            sleep 15
+          done
+          sudo apt-get install -y --no-install-recommends libfuse2t64 || \
+            sudo apt-get install -y --no-install-recommends libfuse2 || \
+            sudo apt-get install -y --no-install-recommends libfuse-dev || true
+          dpkg -s libfuse2t64 >/dev/null 2>&1 || dpkg -s libfuse2 >/dev/null 2>&1 || \
+            echo "aviso: libfuse nao instalado, o AppImage foi gerado mas pode nao rodar neste runner"
 
       - name: Build do app desktop
         run: npx electron-builder --config electron-builder.yml ${{ matrix.targets }} --publish never
