@@ -188,6 +188,8 @@ const EN: Record<string, string> = {
     'Key saved on the server ({n} characters). Type a new one to replace it.',
   'Chave salva no servidor. Digite uma nova para substituir.':
     'Key saved on the server. Type a new one to replace it.',
+  'Derrubar o modelo depois de gerar. Ele segura 22 GB de VRAM enquanto roda, e a máquina trava com o app aberto.':
+    'Unload the model after generating. It holds 22 GB of VRAM while running, and the machine slows down with the app open.',
   'Será gravada no servidor ao salvar.': 'It will be saved on the server when you save.',
 
   // menu da faixa
@@ -756,6 +758,87 @@ const EN: Record<string, string> = {
     ' (1002 = rate limit, 1004 = authentication, 1008 = balance, 1026 = blocked content).',
   'Teste OK': 'Test OK',
   'Teste falhou': 'Test failed',
+
+  // admin: modelos locais
+  'Modelos locais': 'Local models',
+  'Modelos de musica na sua maquina': 'Music models on your machine',
+  'Esta máquina': 'This machine',
+  'O hardware detectado aqui. O veredito de cada modelo do catálogo sai destes números.':
+    'The hardware detected here. The verdict for each model in the catalog comes from these numbers.',
+  'GPU': 'GPU',
+  'CPU': 'CPU',
+  'CUDA': 'CUDA',
+  'de VRAM': 'of VRAM',
+  'núcleos': 'cores',
+  'sim': 'yes',
+  'não': 'no',
+  'não informado': 'not reported',
+  'Nenhuma GPU detectada': 'No GPU detected',
+  'Memória RAM': 'RAM',
+  'Disco livre': 'Free disk',
+  'A instalação automática está disponível nesta máquina.':
+    'Automatic setup is available on this machine.',
+  'A instalação automática precisa de Linux com uma GPU NVIDIA. No macOS e no Windows o caminho é manual.':
+    'Automatic setup needs Linux with an NVIDIA GPU. On macOS and Windows the path is manual.',
+  'Auto setup': 'Auto setup',
+  'Auto setup baixa o modelo certo para esta máquina e aponta o provedor de áudio do app para ele.':
+    'Auto setup downloads the right model for this machine and points the app audio provider at it.',
+  'Auto setup concluído, o app já usa este modelo': 'Auto setup finished, the app already uses this model',
+  'Preparando o modelo…': 'Preparing the model…',
+  'Procurando modelos locais…': 'Looking for local models…',
+  'Catálogo de modelos': 'Model catalog',
+  'Modelos que o BR Music sabe preparar, com o veredito para esta máquina e os botões de instalação.':
+    'Models BR Music knows how to prepare, with the verdict for this machine and the install buttons.',
+  'Nenhum modelo no catálogo.': 'No model in the catalog.',
+  'Cabe na sua máquina': 'Fits your machine',
+  'Cabe, mas apertado': 'Fits, but tight',
+  'Não cabe nesta máquina': 'Does not fit this machine',
+  'Não suportado nesta máquina': 'Not supported on this machine',
+  'Validado': 'Validated',
+  'Não validado': 'Not validated',
+  'Legado': 'Legacy',
+  'Disponível': 'Available',
+  'Tamanho': 'Size',
+  'Repositório': 'Repository',
+  'VRAM necessária': 'VRAM needed',
+  'Disco necessário': 'Disk needed',
+  'Roda por HTTP e não precisa instalar nada.':
+    'Runs over HTTP and needs nothing installed.',
+  'Baixar e instalar': 'Download and install',
+  'Carregar': 'Load',
+  'Derrubar': 'Unload',
+  'Usar este modelo': 'Use this model',
+  'Carregando o modelo, pode levar alguns minutos':
+    'Loading the model, it can take a few minutes',
+  'Modelo carregado': 'Model loaded',
+  'Modelo derrubado, a VRAM foi liberada': 'Model unloaded, the VRAM was freed',
+  'O app agora usa este modelo para gerar o áudio':
+    'The app now uses this model to generate the audio',
+  'Nenhum modelo local cabe nesta máquina': 'No local model fits this machine',
+  'Instalando…': 'Installing…',
+  'Runtime pronto': 'Runtime ready',
+  'Pesos prontos': 'Weights ready',
+  'Serviço pronto': 'Service ready',
+  'Log da instalação': 'Install log',
+  'Sem logs ainda.': 'No logs yet.',
+  'Erro na central de modelos': 'Error in the local model hub',
+  'Cabe com folga nesta maquina.': 'Fits comfortably on this machine.',
+  'Requer CUDA. No macOS nao ha GPU NVIDIA.': 'Requires CUDA. There is no NVIDIA GPU on macOS.',
+  'Requer GPU NVIDIA com CUDA.': 'Requires an NVIDIA GPU with CUDA.',
+  'Roda pela API, sem instalar nada.': 'Runs over the API, nothing to install.',
+  'Precisa de {vram} MB de VRAM somando as GPUs e a maquina tem {livre} MB.':
+    'Needs {vram} MB of VRAM across the GPUs and this machine has {livre} MB.',
+  'Precisa de {vram} MB de VRAM em uma GPU e a maior daqui tem {livre} MB.':
+    'Needs {vram} MB of VRAM on one GPU and the largest here has {livre} MB.',
+  'Precisa de {ram} MB de RAM e a maquina tem {livre} MB.':
+    'Needs {ram} MB of RAM and this machine has {livre} MB.',
+  'Precisa de {disco} GB de disco e ha {livre} GB livres.':
+    'Needs {disco} GB of disk and there are {livre} GB free.',
+  'Cabe, mas apertado: {vram} MB de VRAM com {livre} MB disponiveis.':
+    'Fits, but tight: {vram} MB of VRAM with {livre} MB available.',
+  'MiniMax Music 3 (local)': 'MiniMax Music 3 (local)',
+  'MiniMax Music (API)': 'MiniMax Music (API)',
+  'Replicate': 'Replicate',
 
   // admin: parametros padrao de geracao
   'Parâmetros padrão de geração': 'Default generation parameters',

@@ -103,6 +103,8 @@ const DEFAULT_CONFIG = {
     dir: process.env.BRMUSIC_LOCAL_MODELS_DIR ?? '',
     /** Servico systemd do usuario que sobe o modelo */
     service: process.env.BRMUSIC_LOCAL_MUSIC_SERVICE ?? 'brmusic-local-music',
+    /** Derruba o modelo sozinho depois de gerar, para liberar a VRAM */
+    autoUnload: true,
   },
   musicProvider: {
     mode: 'local',
@@ -822,6 +824,14 @@ async function handleGenerateAudio(res, body) {
       audioFormat: result.audioFormat,
       durationSec: result.durationSec,
     });
+    // O modelo local segura 22 GB de VRAM enquanto roda. Se o usuario deixou
+    // a opcao ligada, ele volta a ser derrubado assim que a faixa sai, para
+    // a maquina nao ficar travada com o app aberto.
+    if (config.localModels?.autoUnload && result.source === 'minimax-music-3') {
+      setTimeout(() => {
+        void localModels.unloadModel().catch(() => {});
+      }, 5000);
+    }
   } catch (error) {
     const message = String(error?.message ?? error);
     // Provedor morto (a API de Música hospedada responde 410 para contas

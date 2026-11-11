@@ -7,7 +7,7 @@
  */
 
 import { DEFAULT_ADMIN_CONFIG, type AdminConfig, type AdminStats } from './adminTypes';
-import { apiUrl } from './api';
+import { apiFetch, apiUrl } from './api';
 
 const STORAGE_KEY = 'brmusic.admin.config.v1';
 
@@ -267,4 +267,137 @@ export async function generateViaServer(payload: {
   } catch {
     return null;
   }
+}
+
+/* ------------------------------------------------------------------ */
+/* Central de modelos locais                                           */
+/* ------------------------------------------------------------------ */
+
+export interface LocalHardwareGpu {
+  index: number;
+  name: string;
+  vramMb: number;
+  driver: string;
+  cuda: boolean;
+}
+
+export interface LocalHardware {
+  platform: 'linux' | 'darwin' | 'win32';
+  cuda: boolean;
+  /** Só o Linux com GPU NVIDIA tem install automatico. */
+  canAutoInstall: boolean;
+  gpus: LocalHardwareGpu[];
+  cpu: { cores: number; model: string };
+  ramMb: number;
+  diskFreeMb: number;
+  dataPath: string;
+}
+
+export type LocalModelVerdict = 'fits' | 'tight' | 'no' | 'unsupported';
+export type LocalModelStatus = 'validated' | 'unvalidated' | 'legacy' | 'available';
+export type LocalModelPhase = 'idle' | 'installing' | 'installed' | 'loading' | 'ready' | 'error';
+
+export interface LocalModelItem {
+  id: string;
+  name: string;
+  kind: 'local' | 'api';
+  vendor: string;
+  status: LocalModelStatus;
+  notes: string;
+  repo?: string;
+  revision?: string;
+  sizeGb?: number;
+  requires: {
+    vramMb?: number;
+    ramMb?: number;
+    diskGb?: number;
+    cuda?: boolean;
+    multiGpu?: boolean;
+  };
+  runtime?: { kind: string; package: string; python: string; uv: boolean; serve?: string };
+  api?: { path: string; format: string; baseUrl?: string; model?: string };
+  /** Veredito do modelo para a maquina atual. */
+  fit: { verdict: LocalModelVerdict; reason: string };
+  installed: boolean;
+}
+
+export interface LocalModelsState {
+  modelId: string | null;
+  phase: LocalModelPhase;
+  step: string | null;
+  percent: number;
+  message: string;
+  error: string | null;
+  log: string[];
+  server: { running: boolean; url: string | null; port: number | null; startedAt: number | null };
+  install: { runtimeReady: boolean; weightsReady: boolean; serviceReady: boolean };
+}
+
+export interface LocalModelsSnapshot {
+  hardware: LocalHardware;
+  items: LocalModelItem[];
+  state: LocalModelsState;
+  servicePath: string | null;
+}
+
+/** Chama a central de modelos locais e devolve o erro em caso de falha. */
+async function localRequest<T>(path: string, init?: RequestInit): Promise<T> {
+  const response = await apiFetch(path, init);
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`HTTP ${response.status}: ${text.slice(0, 200)}`);
+  }
+  return (await response.json()) as T;
+}
+
+/** Hardware, catalogo e estado da central de modelos locais. */
+export async function loadLocalModels(): Promise<LocalModelsSnapshot | null> {
+  try {
+    return await localRequest<LocalModelsSnapshot>('/api/local-models');
+  } catch {
+    return null;
+  }
+}
+
+/** Estado vivo da central, sem a deteccao pesada de hardware. */
+export async function loadLocalModelsState(): Promise<LocalModelsState | null> {
+  try {
+    return await localRequest<LocalModelsState>('/api/local-models/state');
+  } catch {
+    return null;
+  }
+}
+
+/** Comeca a instalacao do modelo (runtime, pesos e servico) em segundo plano. */
+export async function installLocalModel(modelId: string): Promise<void> {
+  await localRequest('/api/local-models/install', {
+    method: 'POST',
+    body: JSON.stringify({ modelId }),
+  });
+}
+
+/** Cancela a instalacao que estiver em andamento. */
+export async function cancelLocalModelInstall(): Promise<void> {
+  await localRequest('/api/local-models/cancel', { method: 'POST' });
+}
+
+/** Sobe o servidor do modelo. Pode levar varios minutos. */
+export async function loadLocalModel(modelId: string): Promise<void> {
+  await localRequest('/api/local-models/load', {
+    method: 'POST',
+    body: JSON.stringify({ modelId }),
+  });
+}
+
+/** Derruba o servidor do modelo e libera a VRAM. */
+export async function unloadLocalModel(): Promise<void> {
+  await localRequest('/api/local-models/unload', { method: 'POST' });
+}
+
+/** Aponta o provedor de audio do app para o modelo local. */
+export async function applyLocalModel(modelId: string): Promise<void> {
+  await localRequest('/api/local-models/apply', {
+    method: 'POST',
+    body: JSON.stringify({ modelId }),
+  });
 }

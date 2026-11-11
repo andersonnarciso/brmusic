@@ -264,13 +264,18 @@ export async function buildServeCommand(model, hardware, port) {
   return { command: path.join(venvDir(), 'bin', 'python'), args: ['-m', 'brmusic_model_server'], env: {}, offload: 0 };
 }
 
-/** Escreve o servico systemd do usuario e habilita no boot. */
+/** Escreve o servico systemd do usuario, sem autostart. */
 async function writeService(model, hardware, port) {
   const serve = await buildServeCommand(model, hardware, port);
+  // Sem [Install] WantedBy: o modelo sobe quando o usuario pede, no botao
+  // Carregar, e nunca no boot. Com Linger ligado, um servico enabled sobe
+  // sozinho e ocupa a VRAM da maquina mesmo com ninguem usando o app.
   const unit = `[Unit]
 Description=BR Music - modelo local de musica (${model.name})
 After=network-online.target
 Wants=network-online.target
+StartLimitIntervalSec=300
+StartLimitBurst=2
 
 [Service]
 Type=simple
@@ -283,14 +288,12 @@ Restart=on-failure
 RestartSec=15
 StandardOutput=append:${path.join(baseDir(), 'server.log')}
 StandardError=append:${path.join(baseDir(), 'server.log')}
-
-[Install]
-WantedBy=default.target
 `;
   await fsp.mkdir(path.dirname(servicePath()), { recursive: true });
   await fsp.writeFile(servicePath(), unit, 'utf8');
   await run('systemctl', ['--user', 'daemon-reload'], { timeout: 30000 });
-  await run('systemctl', ['--user', 'enable', `${settings.service}.service`], { timeout: 30000 });
+  // garante que nenhuma execucao anterior deixou o servico ligado no boot
+  await run('systemctl', ['--user', 'disable', `${settings.service}.service`], { timeout: 30000 });
   state.install.serviceReady = true;
   return port;
 }
@@ -418,7 +421,7 @@ export function applyToProvider(config, modelId) {
 }
 
 /** Descobre se o servico do modelo esta rodando e em que porta. */
-export async function detectRunning() {
+export async function detectRunning(fallbackModelId = null) {
   if (process.platform !== 'linux') return false;
   try {
     await run('systemctl', ['--user', 'is-active', `${settings.service}.service`], { timeout: 8000 });
@@ -442,13 +445,36 @@ export async function detectRunning() {
     /* porta desconhecida */
   }
   state.server.running = true;
-  state.phase = 'ready';
+  // o servico pode ter subido fora do app: o painel precisa saber qual modelo
+  // esta no ar para oferecer o botao de derrubar, mesmo durante o carregamento
+  if (!state.modelId && fallbackModelId) state.modelId = fallbackModelId;
+  // servico no ar nao e o mesmo que modelo pronto: o carregamento dos pesos
+  // na GPU leva minutos depois que o processo sobe
+  const answering = state.server.port
+    ? await new Promise((resolve) => {
+        const socket = net.connect({ host: '127.0.0.1', port: state.server.port }, () => {
+          socket.end();
+          resolve(true);
+        });
+        socket.on('error', () => resolve(false));
+        socket.setTimeout(2000, () => {
+          socket.destroy();
+          resolve(false);
+        });
+      })
+    : false;
+  if (answering) {
+    state.phase = 'ready';
+    state.message = 'Modelo carregado';
+  } else {
+    state.phase = 'loading';
+    state.message = 'Carregando o modelo, pode levar alguns minutos';
+  }
   return true;
 }
 
 /** Snapshot do estado, com o hardware e o catalogo ja avaliados. */
 export async function snapshot() {
-  await detectRunning();
   const hardware = await detectHardware(baseDir());
   const items = MODEL_CATALOG.map((model) => {
     if (model.kind === 'api') {
@@ -467,6 +493,8 @@ export async function snapshot() {
     }
     return { ...model, fit, installed };
   });
+  const installedLocal = items.find((item) => item.installed && item.kind === 'local');
+  await detectRunning(installedLocal?.id ?? null);
   return {
     hardware,
     items,
@@ -477,6 +505,21 @@ export async function snapshot() {
 
 /** Estado simples, sem a deteccao pesada do catalogo. */
 export async function quickState() {
-  await detectRunning();
+  if (!state.modelId) {
+    // descobre qual modelo local esta instalado, para o botao de derrubar
+    // aparecer mesmo quando o servico subiu fora do app
+    for (const model of MODEL_CATALOG) {
+      if (model.kind !== 'local') continue;
+      try {
+        if (fs.existsSync(path.join(resolveModelDir(model.id), 'config.json'))) {
+          state.modelId = model.id;
+          break;
+        }
+      } catch {
+        /* segue para o proximo */
+      }
+    }
+  }
+  await detectRunning(state.modelId);
   return { ...state, log: state.log.slice(-40) };
 }

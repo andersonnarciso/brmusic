@@ -184,7 +184,7 @@ export interface AdminConfig {
   llmProviders: LlmProviderConfig[];
   musicProvider: MusicProviderConfig;
   /** Pasta e servico usados pela central de modelos locais. */
-  localModels?: { dir?: string; service?: string };
+  localModels?: { dir?: string; service?: string; autoUnload?: boolean };
   generation: GenerationSettings;
   app: AppSettings;
   ftp: FtpConfig;

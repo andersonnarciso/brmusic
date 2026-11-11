@@ -10,6 +10,7 @@ import type { AdminConfig, AdminStats } from '../lib/adminTypes';
 import { navigate } from '../lib/store';
 import { useT } from '../lib/useT';
 import { ProvidersSection } from './Providers';
+import { LocalModelsSection } from './LocalModels';
 import {
   ActivitySection,
   AppSection,
@@ -24,6 +25,7 @@ type SectionId =
   | 'overview'
   | 'providers'
   | 'music'
+  | 'localmodels'
   | 'app'
   | 'brand'
   | 'integrations'
@@ -33,6 +35,7 @@ const SECTIONS: Array<{ id: SectionId; label: string; hint: string }> = [
   { id: 'overview', label: 'Visão geral', hint: 'KPIs e saúde da plataforma' },
   { id: 'providers', label: 'Provedores de IA', hint: 'Conecte suas APIs de LLM' },
   { id: 'music', label: 'Geração de música', hint: 'MiniMax nativo, motor local ou LLM' },
+  { id: 'localmodels', label: 'Modelos locais', hint: 'Modelos de musica na sua maquina' },
   { id: 'app', label: 'Aplicativo', hint: 'Padrões, exportação e diagnóstico' },
   { id: 'brand', label: 'Marca', hint: 'Nome, cores e domínio' },
   { id: 'integrations', label: 'Integrações', hint: 'Storage, CDN e analytics' },
@@ -90,6 +93,8 @@ export function AdminApp() {
         return <ProvidersSection config={config} update={update} />;
       case 'music':
         return <ProvidersSection config={config} update={update} focus="music" />;
+      case 'localmodels':
+        return <LocalModelsSection onApplied={refresh} />;
       case 'app':
         return <AppSection config={config} update={update} />;
       case 'brand':
@@ -101,7 +106,7 @@ export function AdminApp() {
       default:
         return null;
     }
-  }, [config, section, stats, server, update]);
+  }, [config, section, stats, server, update, refresh]);
 
   return (
     <div className="flex h-full min-h-0 bg-ink-950">

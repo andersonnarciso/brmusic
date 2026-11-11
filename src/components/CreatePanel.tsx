@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { createSong, navigate, setParams, showToast, useApp } from '../lib/store';
 import { Icon } from './Icons';
 import { Slider } from './Slider';
@@ -7,12 +7,30 @@ import { PERSONAS } from '../lib/types';
 import { generateLyrics } from '../lib/lyrics';
 import { analyzeAudioFile } from '../lib/audio/analyze';
 import { useT } from '../lib/useT';
+import { apiFetch } from '../lib/api';
 
-const MODELS = [
+/** Presets procedurais: rodam no navegador, sem servidor e sem download. */
+const PRESET_MODELS = [
   { id: 'brm-v1', label: 'BR Music v1' },
   { id: 'brm-v1-mini', label: 'BR Music v1 mini' },
   { id: 'brm-lite', label: 'BR Music lite' },
 ];
+
+/**
+ * Modelos de verdade: os que geram audio agora, via o provedor configurado.
+ * O id e o identificador do modelo no provedor e vai para params.model.
+ */
+const PROVIDER_MODEL_IDS: Record<string, string> = {
+  'minimax-music3': 'minimax-music-3',
+  minimax: 'music-3.0',
+};
+
+const PROVIDER_LABELS: Record<string, string> = {
+  'minimax-music3': 'MiniMax Music 3 (local)',
+  minimax: 'MiniMax Music (API)',
+  custom: 'Endpoint próprio',
+  replicate: 'Replicate',
+};
 
 const STYLE_CHIPS = [
   'sertanejo', 'mpb', 'funk brasileiro', 'trap', 'rock', 'pop', 'lo-fi', 'jazz',
@@ -32,11 +50,48 @@ export function CreatePanel() {
   const [openSection, setOpenSection] = useState<'styles' | 'audio' | null>(null);
   const [lyricsBusy, setLyricsBusy] = useState(false);
   const [recording, setRecording] = useState(false);
+  const [providerModel, setProviderModel] = useState<{ id: string; label: string } | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
 
-  const activeModel = MODELS.find((m) => m.id === params.model) ?? MODELS[0];
+  // O provedor de audio do app diz qual modelo gera a faixa agora. A
+  // consulta e feita em segundo plano: enquanto ela nao volta, o dropdown
+  // mostra so os presets, sem quebrar.
+  useEffect(() => {
+    let alive = true;
+    void (async () => {
+      try {
+        const response = await apiFetch('/api/admin/config');
+        if (!response.ok) return;
+        const config = (await response.json()) as {
+          musicProvider?: { vendor?: string; model?: string; enabled?: boolean };
+        };
+        const provider = config.musicProvider;
+        if (!alive || !provider?.vendor || provider.vendor === 'local') return;
+        const enabled = provider.enabled !== false;
+        const isMusic3 = provider.vendor === 'minimax-music3';
+        if (!isMusic3 && !enabled) return;
+        const fallback = provider.model?.trim() || provider.vendor;
+        setProviderModel({
+          id: PROVIDER_MODEL_IDS[provider.vendor] ?? fallback,
+          label: PROVIDER_LABELS[provider.vendor] ?? fallback,
+        });
+      } catch {
+        // servidor offline: o dropdown fica so com os presets
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const models = useMemo(
+    () => (providerModel ? [...PRESET_MODELS, providerModel] : PRESET_MODELS),
+    [providerModel],
+  );
+
+  const activeModel = models.find((m) => m.id === params.model) ?? models[0];
 
   const handleFile = async (file: File) => {
     try {
@@ -164,7 +219,7 @@ export function CreatePanel() {
             className="flex items-center gap-1.5 rounded-full border border-ink-600 px-3.5 py-1.5
               text-sm text-mute-300 transition hover:border-ink-500 hover:text-mute-100"
           >
-            {activeModel.label}
+            {t(activeModel.label)}
             <Icon.ChevronDown size={14} />
           </button>
           {modelOpen && (
@@ -173,7 +228,7 @@ export function CreatePanel() {
               className="absolute right-0 z-30 mt-2 w-52 overflow-hidden rounded-xl border border-ink-600
                 bg-ink-800 py-1 shadow-xl"
             >
-              {MODELS.map((m) => (
+              {models.map((m) => (
                 <li key={m.id}>
                   <button
                     type="button"
@@ -188,7 +243,7 @@ export function CreatePanel() {
                         m.id === params.model ? 'text-brand-400' : 'text-mute-300'
                       }`}
                   >
-                    {m.label}
+                    {t(m.label)}
                     {m.id === params.model && <Icon.Note size={14} />}
                   </button>
                 </li>
