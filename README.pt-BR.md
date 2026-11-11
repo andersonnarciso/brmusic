@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/andersonnarciso/brmusic/releases/tag/v1.0.3"><img src="https://img.shields.io/badge/download-Linux%20%7C%20Windows%20%7C%20macOS-00c97b?style=flat-square" alt="Download" /></a>
+  <a href="https://github.com/andersonnarciso/brmusic/releases/tag/v1.0.4"><img src="https://img.shields.io/badge/download-Linux%20%7C%20Windows%20%7C%20macOS-00c97b?style=flat-square" alt="Download" /></a>
   <img src="https://img.shields.io/badge/licen%C3%A7a-MIT-00c97b?style=flat-square" alt="MIT" />
   <img src="https://img.shields.io/badge/plataforma-Linux%20%7C%20Windows%20%7C%20macOS%20%7C%20Web-00c97b?style=flat-square" alt="Plataformas" />
 </p>
