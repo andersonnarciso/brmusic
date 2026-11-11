@@ -182,6 +182,14 @@ const EN: Record<string, string> = {
   'Feito por': 'Made by',
   'Licença MIT': 'MIT License',
   'Gerando a música': 'Generating the song',
+  'O motor de áudio agora é {model}': 'The audio engine is now {model}',
+  'MiniMax Music 3 (local)': 'MiniMax Music 3 (local)',
+  'MiniMax Music (hospedada)': 'MiniMax Music (hosted)',
+  'Replicate (modelos da comunidade)': 'Replicate (community models)',
+  'ElevenLabs Music': 'ElevenLabs Music',
+  'Stability AI (Stable Audio)': 'Stability AI (Stable Audio)',
+  'Mubert': 'Mubert',
+  'Endpoint proprio': 'Own endpoint',
   'Etapa': 'Stage',
   'Escrevendo...': 'Writing...',
   'Chave salva no servidor ({n} caracteres). Digite uma nova para substituir.':
@@ -836,7 +844,6 @@ const EN: Record<string, string> = {
     'Needs {disco} GB of disk and there are {livre} GB free.',
   'Cabe, mas apertado: {vram} MB de VRAM com {livre} MB disponiveis.':
     'Fits, but tight: {vram} MB of VRAM with {livre} MB available.',
-  'MiniMax Music 3 (local)': 'MiniMax Music 3 (local)',
   'MiniMax Music (API)': 'MiniMax Music (API)',
   'Replicate': 'Replicate',
 

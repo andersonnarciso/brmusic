@@ -8,6 +8,7 @@ import { generateLyrics } from '../lib/lyrics';
 import { analyzeAudioFile } from '../lib/audio/analyze';
 import { useT } from '../lib/useT';
 import { apiFetch } from '../lib/api';
+import { interpolate } from '../lib/i18n';
 
 /** Presets procedurais: rodam no navegador, sem servidor e sem download. */
 const PRESET_MODELS = [
@@ -17,20 +18,26 @@ const PRESET_MODELS = [
 ];
 
 /**
- * Modelos de verdade: os que geram audio agora, via o provedor configurado.
+ * Provedor de audio disponivel, vindo do servidor.
  * O id e o identificador do modelo no provedor e vai para params.model.
  */
-const PROVIDER_MODEL_IDS: Record<string, string> = {
-  'minimax-music3': 'minimax-music-3',
-  minimax: 'music-3.0',
-};
-
-const PROVIDER_LABELS: Record<string, string> = {
-  'minimax-music3': 'MiniMax Music 3 (local)',
-  minimax: 'MiniMax Music (API)',
-  custom: 'Endpoint próprio',
-  replicate: 'Replicate',
-};
+interface MusicProviderOption {
+  id: string;
+  label: string;
+  vendor: string;
+  kind: 'local' | 'api';
+  status: string;
+  note?: string;
+  active: boolean;
+  config: {
+    mode: string;
+    vendor: string;
+    baseUrl: string;
+    endpoint: string;
+    model: string;
+    enabled: boolean;
+  };
+}
 
 const STYLE_CHIPS = [
   'sertanejo', 'mpb', 'funk brasileiro', 'trap', 'rock', 'pop', 'lo-fi', 'jazz',
@@ -50,33 +57,23 @@ export function CreatePanel() {
   const [openSection, setOpenSection] = useState<'styles' | 'audio' | null>(null);
   const [lyricsBusy, setLyricsBusy] = useState(false);
   const [recording, setRecording] = useState(false);
-  const [providerModel, setProviderModel] = useState<{ id: string; label: string } | null>(null);
+  const [providers, setProviders] = useState<MusicProviderOption[]>([]);
   const fileInput = useRef<HTMLInputElement>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
 
-  // O provedor de audio do app diz qual modelo gera a faixa agora. A
-  // consulta e feita em segundo plano: enquanto ela nao volta, o dropdown
-  // mostra so os presets, sem quebrar.
+  // O seletor de modelo mostra os presets procedurais e todos os provedores de
+  // audio disponiveis, para voce escolher aqui mesmo qual motor gera a faixa.
+  // Trocar de provedor grava a escolha na configuracao do servidor.
   useEffect(() => {
     let alive = true;
     void (async () => {
       try {
-        const response = await apiFetch('/api/admin/config');
+        const response = await apiFetch('/api/admin/music/providers');
         if (!response.ok) return;
-        const config = (await response.json()) as {
-          musicProvider?: { vendor?: string; model?: string; enabled?: boolean };
-        };
-        const provider = config.musicProvider;
-        if (!alive || !provider?.vendor || provider.vendor === 'local') return;
-        const enabled = provider.enabled !== false;
-        const isMusic3 = provider.vendor === 'minimax-music3';
-        if (!isMusic3 && !enabled) return;
-        const fallback = provider.model?.trim() || provider.vendor;
-        setProviderModel({
-          id: PROVIDER_MODEL_IDS[provider.vendor] ?? fallback,
-          label: PROVIDER_LABELS[provider.vendor] ?? fallback,
-        });
+        const data = (await response.json()) as { providers?: MusicProviderOption[] };
+        if (!alive || !data.providers?.length) return;
+        setProviders(data.providers);
       } catch {
         // servidor offline: o dropdown fica so com os presets
       }
@@ -87,11 +84,30 @@ export function CreatePanel() {
   }, []);
 
   const models = useMemo(
-    () => (providerModel ? [...PRESET_MODELS, providerModel] : PRESET_MODELS),
-    [providerModel],
+    () => [...PRESET_MODELS, ...providers.map((p) => ({ id: p.id, label: p.label }))],
+    [providers],
   );
 
   const activeModel = models.find((m) => m.id === params.model) ?? models[0];
+
+  /** Liga o provedor escolhido no servidor e usa o modelo dele. */
+  const chooseProvider = async (option: MusicProviderOption) => {
+    try {
+      const current = await apiFetch('/api/admin/config');
+      if (!current.ok) throw new Error('sem servidor');
+      const config = (await current.json()) as { musicProvider?: Record<string, unknown> };
+      await apiFetch('/api/admin/config', {
+        method: 'PUT',
+        body: JSON.stringify({
+          musicProvider: { ...(config.musicProvider ?? {}), ...option.config },
+        }),
+      });
+      setParams({ model: option.id });
+      showToast(interpolate(t('O motor de áudio agora é {model}'), { model: option.label }));
+    } catch {
+      showToast('Não foi possível trocar o provedor de áudio');
+    }
+  };
 
   const handleFile = async (file: File) => {
     try {
@@ -235,8 +251,13 @@ export function CreatePanel() {
                     role="option"
                     aria-selected={m.id === params.model}
                     onClick={() => {
-                      setParams({ model: m.id });
+                      const option = providers.find((p) => p.id === m.id);
                       setModelOpen(false);
+                      if (option) {
+                        void chooseProvider(option);
+                        return;
+                      }
+                      setParams({ model: m.id });
                     }}
                     className={`flex w-full items-center justify-between px-4 py-2 text-left text-sm
                       transition hover:bg-ink-700 ${

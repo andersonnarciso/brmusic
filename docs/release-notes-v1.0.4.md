@@ -17,7 +17,7 @@ In `#/admin` there is a new **Local models** tab:
 - **Download and install**: the app installs the runtime, downloads the weights and writes the service, with progress and a log.
 - **Load** and **Unload**: the model starts only when you ask, and the button to give the VRAM back is right there.
 - **Auto setup**: picks the model that fits the machine, installs it, loads it and points the app's audio provider at it.
-- The creator's model list now shows the model that will actually generate the audio, not only the procedural presets.
+- The creator's model list now shows every audio engine you can pick, not only the procedural presets: the local MiniMax Music 3, the hosted MiniMax Music, Replicate, ElevenLabs Music, Stability, Mubert and your own endpoint. Picking one switches the engine right there, and the app says which one is in use.
 
 Automatic install needs Linux with an NVIDIA GPU. On macOS and Windows the tab shows the machine and the manual path.
 
@@ -45,7 +45,7 @@ Em `#/admin` tem uma aba nova, **Modelos locais**:
 - **Baixar e instalar**: o app instala o runtime, baixa os pesos e escreve o serviço, com progresso e log.
 - **Carregar** e **Derrubar**: o modelo só sobe quando você pede, e o botão que devolve a VRAM está ali.
 - **Auto setup**: escolhe o modelo que cabe na máquina, instala, carrega e aponta o provedor de áudio do app para ele.
-- A lista de modelos do criador agora mostra o modelo que realmente vai gerar o áudio, e não só os presets do motor procedural.
+- A lista de modelos do criador agora mostra todos os motores de áudio que dá para escolher, e não só os presets do motor procedural: o MiniMax Music 3 local, o MiniMax Music hospedado, Replicate, ElevenLabs Music, Stability, Mubert e o seu endpoint. Escolher um troca o motor na hora, e o app diz qual está em uso.
 
 A instalação automática precisa de Linux com GPU NVIDIA. No macOS e no Windows a aba mostra a máquina e o caminho manual.
 

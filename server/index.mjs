@@ -23,6 +23,7 @@ import { DEFAULT_FTP, testFtp, uploadToFtp } from './ftp.mjs';
 import { discoverMusicModels } from './models.mjs';
 import { generateExternalAudio, isProviderGone, MUSIC_PROVIDER_PRESETS } from './music.mjs';
 import * as localModels from './localmodels.mjs';
+import { MODEL_CATALOG } from './catalog.mjs';
 
 const ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const DIST = join(ROOT, 'dist');
@@ -685,6 +686,54 @@ async function handleAdminApi(req, res, pathname, body) {
 
   if (pathname === '/api/admin/music/presets' && req.method === 'GET') {
     sendJson(res, 200, { presets: MUSIC_PROVIDER_PRESETS });
+    return;
+  }
+
+  /**
+   * Provedores de audio que o criador pode escolher, com o que esta ativo.
+   * O seletor de modelo do app usa esta lista para mostrar as opcoes de
+   * verdade, e nao so quem ja esta configurado.
+   */
+  if (pathname === '/api/admin/music/providers' && req.method === 'GET') {
+    const active = config.musicProvider ?? {};
+    const providers = [
+      {
+        id: 'minimax-music-3',
+        label: 'MiniMax Music 3 (local)',
+        vendor: 'minimax-music3',
+        kind: 'local',
+        status: 'validated',
+        note: 'MiniMax Music 3 rodando na sua maquina (SGLang-Omni).',
+        active: active.vendor === 'minimax-music3',
+        config: {
+          mode: 'external-audio',
+          vendor: 'minimax-music3',
+          baseUrl: active.vendor === 'minimax-music3' ? active.baseUrl : 'http://127.0.0.1:8010',
+          endpoint: '/v1/audio/speech',
+          model: 'MiniMaxAI/MiniMax-Music3',
+          enabled: true,
+        },
+      },
+      ...MODEL_CATALOG.filter((model) => model.kind === 'api').map((model) => ({
+        id: model.id,
+        label: model.name,
+        vendor: model.providerVendor ?? 'custom',
+        displayVendor: model.vendor,
+        kind: 'api',
+        status: model.status,
+        note: model.notes,
+        active: active.vendor === (model.providerVendor ?? 'custom'),
+        config: {
+          mode: 'external-audio',
+          vendor: model.providerVendor ?? 'custom',
+          baseUrl: model.api?.baseUrl ?? '',
+          endpoint: model.api?.path ?? '/music_generation',
+          model: model.api?.model ?? 'music-3.0',
+          enabled: true,
+        },
+      })),
+    ];
+    sendJson(res, 200, { providers, active: active.vendor ?? 'local' });
     return;
   }
 
