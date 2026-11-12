@@ -679,7 +679,12 @@ async function handleAdminApi(req, res, pathname, body) {
         durationMs: result.durationSec ? Math.round(result.durationSec * 1000) : null,
       });
     } catch (error) {
-      sendJson(res, 200, { ok: false, message: String(error?.message ?? error) });
+      const message = String(error?.message ?? error);
+      // o detalhe (o que a MiniMax quis dizer e como conferir) fica no log
+      if (error?.detail) logActivity('config', String(error.detail));
+      logActivity('config', `Teste do provedor de audio: falhou, ${message}`);
+      await saveConfig(config);
+      sendJson(res, 200, { ok: false, message });
     }
     return;
   }
