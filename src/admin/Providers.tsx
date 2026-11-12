@@ -549,7 +549,7 @@ function MusicProviderSection({ config, update }: { config: AdminConfig; update:
             {isMiniMax && (
               <p className="mt-1.5 text-[11px] leading-relaxed text-amber-300/80">
                 {t(
-                  'A API hospedada de Música da MiniMax foi descontinuada para contas novas em 20/08/2026 (HTTP 410). Para contas novas use o MiniMax Music 3 self-hosted ou o MiniMax Audio.',
+                  'A API hospedada de Música da MiniMax foi fechada em 20/08/2026 para quem não tem o produto de Música pago. Não depende da idade da conta, e sim do produto contratado e do tipo de chave: a chave M Plan (sk-cp-...) cobre texto, vídeo, imagem e fala, mas não música. Se a sua conta já pagou pelo produto Música, teste uma chave pay-as-you-go (sk-api-...) criada em API Keys: cliente pagante do produto continua com acesso.',
                 )}
               </p>
             )}

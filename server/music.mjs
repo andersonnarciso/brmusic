@@ -65,10 +65,15 @@ export function describeMusicError(status, payload) {
   const message = payload?.base_resp?.status_msg ?? '';
 
   if (status === 410 || code === 2153) {
+    // A mensagem da MiniMax e ambigua de proposito: "not available to new
+    // users" quer dizer conta SEM o produto de Musica pago, e nao conta
+    // recem-criada. Por isso o aviso nao fala em idade de conta, e sim em
+    // produto contratado e tipo de chave.
     return (
-      'A API de Musica da MiniMax nao esta disponivel para novas contas (HTTP 410). ' +
-      'Use o modo local do BR Music, o MiniMax Audio ou o MiniMax Music 3 self-hosted ' +
-      '(POST /v1/audio/speech em um servidor com GPU).'
+      'A MiniMax fechou a API de Musica hospedada para contas sem o produto de Musica pago. ' +
+      'Nao depende da idade da conta: depende do produto e do tipo de chave. A chave configurada e do ' +
+      'tipo M Plan (sk-cp-...), que nao cobre musica. Teste uma chave pay-as-you-go (sk-api-...) para ' +
+      'confirmar se a conta tem o produto.'
     );
   }
   if (status === 401 || code === 1004 || code === 2049) {
@@ -121,6 +126,27 @@ function wavDurationSec(buffer) {
   const bytesPerSecond = sampleRate * channels * bytesPerSample;
   if (!bytesPerSecond) return null;
   return Math.round((buffer.length - 44) / bytesPerSecond);
+}
+
+/**
+ * Detalhe do erro 410, para o log de atividade.
+ * Explica o que a MiniMax quer dizer e como conferir, com a mensagem original
+ * do provedor.
+ */
+export function describeMusicErrorDetail(status, payload) {
+  if (status !== 410 && payload?.base_resp?.status_code !== 2153) return null;
+  const original = String(payload?.base_resp?.status_msg ?? '');
+  return (
+    'A MiniMax fechou a API de Musica hospedada em 20/08/2026 para quem nao tem o produto de Musica ' +
+    'pago. Isso NAO depende da idade da conta: depende do produto contratado e do tipo de chave. ' +
+    'A chave em uso e do tipo M Plan (sk-cp-...), e o M Plan cobre texto, video, imagem e fala, ' +
+    'mas nao musica. Para conferir se a conta tem o produto de Musica, crie uma chave pay-as-you-go ' +
+    '(sk-api-...) em platform.minimax.io/user-center/basic-information/interface-key e teste por ela: ' +
+    'cliente pagante do produto Musica continua com acesso. ' +
+    'Resposta original do provedor: "' +
+    original.slice(0, 400) +
+    '"'
+  );
 }
 
 /**
@@ -270,7 +296,13 @@ export async function generateExternalAudio(music, body) {
       response.status >= 300 ||
       (parsed && parsed.base_resp && parsed.base_resp.status_code !== 0)
     ) {
-      throw musicError(describeMusicError(response.status, parsed), response.status, parsed?.base_resp?.status_code);
+      const error = musicError(
+        describeMusicError(response.status, parsed),
+        response.status,
+        parsed?.base_resp?.status_code,
+      );
+      error.detail = describeMusicErrorDetail(response.status, parsed);
+      throw error;
     }
     const hex = parsed?.data?.audio ?? '';
     if (!hex) throw musicError('O provedor nao devolveu audio.', response.status, parsed?.base_resp?.status_code);
@@ -305,11 +337,13 @@ export async function generateExternalAudio(music, body) {
     } catch {
       /* resposta nao JSON */
     }
-    throw musicError(
+    const error = musicError(
       describeMusicError(response.status, parsed),
       response.status,
       parsed?.base_resp?.status_code,
     );
+    error.detail = describeMusicErrorDetail(response.status, parsed);
+    throw error;
   }
   const contentType = String(response.headers['content-type'] ?? '');
   if (contentType.includes('application/json')) {

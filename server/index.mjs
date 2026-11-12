@@ -894,6 +894,7 @@ async function handleGenerateAudio(res, body) {
     } else {
       logActivity('generation', `Provedor externo falhou: ${message}`);
     }
+    if (error?.detail) logActivity('generation', String(error.detail));
     await saveConfig(config);
     sendJson(res, 502, { error: message });
   }
