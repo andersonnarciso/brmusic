@@ -285,6 +285,8 @@ export async function createSong(): Promise<void> {
       lyrics: result.lyrics,
       style: params.style,
       plan: result.plan,
+      engine: result.source === 'external' ? 'ai' : 'procedural',
+      engineNote: result.externalWarning,
       instrumental: params.instrumental,
       wav: result.wav,
       duration: result.duration,
@@ -640,6 +642,10 @@ export async function addHarnessSong(input: {
   wav: Blob;
   duration: number;
   report?: QualityReport | null;
+  /** Qual motor gerou o audio: 'ai' ou o sintetizador procedural. */
+  engine?: 'ai' | 'procedural';
+  /** Por que o procedural assumiu, quando o provedor falhou. */
+  engineNote?: string;
 }): Promise<Song | null> {
   const id = `brm-${Date.now().toString(36)}-${(generationCounter += 1)}`;
   const seed = hashText(`${input.prompt}|${input.lyrics}|${Date.now()}`);
@@ -657,6 +663,8 @@ export async function addHarnessSong(input: {
     lyrics: input.lyrics,
     style: input.style,
     model: 'brm-v1',
+    engine: input.engine ?? 'procedural',
+    engineNote: input.engineNote,
     instrumental: input.instrumental,
     vocal: 'auto',
     weirdness: 50,

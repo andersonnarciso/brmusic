@@ -8,6 +8,7 @@ import { generateLyrics } from '../lib/lyrics';
 import { analyzeAudioFile } from '../lib/audio/analyze';
 import { useT } from '../lib/useT';
 import { apiFetch } from '../lib/api';
+import { EngineDialog } from './EngineDialog';
 import { interpolate } from '../lib/i18n';
 
 /** Presets procedurais: rodam no navegador, sem servidor e sem download. */
@@ -83,6 +84,38 @@ export function CreatePanel() {
     };
   }, []);
 
+  // Qual motor de audio vai ser usado agora. O servidor checa se o provedor
+  // responde, para avisar antes de gerar em vez de so descobrir depois que a
+  // geracao caiu no sintetizador procedural.
+  const [engineDialog, setEngineDialog] = useState(false);
+  const [engineLoading, setEngineLoading] = useState(false);
+  const [engineHealth, setEngineHealth] = useState<{
+    ok: boolean;
+    engine: 'ai' | 'procedural';
+    label: string;
+    detail: string;
+  } | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    const check = () => {
+      void apiFetch('/api/admin/music/health')
+        .then((response) => (response.ok ? response.json() : null))
+        .then((data: { ok: boolean; engine: 'ai' | 'procedural'; label: string; detail: string } | null) => {
+          if (alive && data) setEngineHealth(data);
+        })
+        .catch(() => {
+          /* servidor offline: o app usa o motor local */
+        });
+    };
+    check();
+    const timer = window.setInterval(check, 10000);
+    return () => {
+      alive = false;
+      window.clearInterval(timer);
+    };
+  }, []);
+
   const models = useMemo(
     () => [...PRESET_MODELS, ...providers.map((p) => ({ id: p.id, label: p.label }))],
     [providers],
@@ -106,6 +139,24 @@ export function CreatePanel() {
       showToast(interpolate(t('O motor de áudio agora é {model}'), { model: option.label }));
     } catch {
       showToast('Não foi possível trocar o provedor de áudio');
+    }
+  };
+
+  /** Carrega o modelo local e so depois gera. */
+  const loadAndGenerate = async () => {
+    setEngineLoading(true);
+    try {
+      const response = await apiFetch('/api/local-models/load', {
+        method: 'POST',
+        body: JSON.stringify({ modelId: 'minimax-music-3' }),
+      });
+      if (!response.ok) throw new Error('falhou ao carregar');
+      setEngineDialog(false);
+      await createSong();
+    } catch {
+      showToast('Não foi possível carregar o modelo local');
+    } finally {
+      setEngineLoading(false);
     }
   };
 
@@ -629,9 +680,30 @@ export function CreatePanel() {
       </div>
 
       <div className="border-t border-ink-700 p-5">
+        {engineHealth && !engineHealth.ok && (
+          <div className="mb-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-xs text-amber-200">
+            <p className="font-medium">
+              {t('O motor de áudio não está pronto. Esta geração vai usar o sintetizador procedural, que soa como MIDI.')}
+            </p>
+            <p className="mt-1 text-[11px] text-amber-200/80">{engineHealth.detail}</p>
+          </div>
+        )}
+        {engineHealth?.ok && engineHealth.engine === 'procedural' && (
+          <div className="mb-3 rounded-xl border border-ink-700 bg-ink-850 px-4 py-3 text-xs text-mute-400">
+            <p>{t('Motor em uso')}: <span className="text-mute-200">{engineHealth.label}</span></p>
+            <p className="mt-1 text-[11px] text-mute-500">{engineHealth.detail}</p>
+          </div>
+        )}
         <button
           type="button"
-          onClick={() => void createSong()}
+          onClick={() => {
+            // o app nunca sobe o modelo local sem perguntar
+            if (engineHealth && !engineHealth.ok) {
+              setEngineDialog(true);
+              return;
+            }
+            void createSong();
+          }}
           disabled={generating}
           className="flex w-full items-center justify-center gap-2 rounded-full brand-gradient px-5 py-3
             text-base font-semibold text-ink-950 transition disabled:opacity-60"
@@ -661,6 +733,19 @@ export function CreatePanel() {
           {t('ver detalhes da geração')}
         </button>
       </div>
+
+      <EngineDialog
+        open={engineDialog}
+        engineLabel={engineHealth?.label ?? t('Provedor de áudio')}
+        detail={engineHealth?.detail ?? ''}
+        loading={engineLoading}
+        onLoadAndGenerate={() => void loadAndGenerate()}
+        onProcedural={() => {
+          setEngineDialog(false);
+          void createSong();
+        }}
+        onCancel={() => setEngineDialog(false)}
+      />
     </section>
   );
 }

@@ -447,6 +447,19 @@ function SongRow({
               {song.quality.lufs.toFixed(1)} LUFS
             </span>
           )}
+          {song.engine === 'procedural' && (
+            <span
+              title={
+                song.engineNote
+                  ? `${t('Motor procedural: o provedor de áudio não respondeu')} · ${song.engineNote}`
+                  : t('Motor procedural: o provedor de áudio não respondeu')
+              }
+              className="shrink-0 rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium uppercase
+                tracking-wide text-amber-300/90"
+            >
+              {t('procedural')}
+            </span>
+          )}
         </div>
         <p className="truncate text-xs text-mute-500">
           {song.status === 'generating'

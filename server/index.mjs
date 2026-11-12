@@ -16,6 +16,7 @@
  */
 
 import { createServer } from 'node:http';
+import net from 'node:net';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { extname, join, normalize, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -686,6 +687,87 @@ async function handleAdminApi(req, res, pathname, body) {
       await saveConfig(config);
       sendJson(res, 200, { ok: false, message });
     }
+    return;
+  }
+
+  /**
+   * Saude do provedor de audio configurado.
+   * O criador usa isso para avisar ANTES de gerar qual motor vai ser usado,
+   * em vez de so descobrir depois que caiu no sintetizador procedural.
+   */
+  if (pathname === '/api/admin/music/health' && req.method === 'GET') {
+    const music = config.musicProvider ?? {};
+    const vendor = music.vendor ?? 'local';
+    const base = String(music.baseUrl ?? '').trim();
+
+    if (vendor === 'local' || !vendor) {
+      sendJson(res, 200, {
+        vendor,
+        ok: true,
+        engine: 'procedural',
+        label: 'Motor procedural do BR Music',
+        detail: 'Nao ha provedor de audio externo configurado.',
+      });
+      return;
+    }
+
+    if (!base) {
+      sendJson(res, 200, {
+        vendor,
+        ok: false,
+        engine: 'procedural',
+        label: music.model || vendor,
+        detail: 'O provedor de audio esta sem URL base. A geracao vai usar o motor procedural.',
+      });
+      return;
+    }
+
+    // o modelo local responde em /health
+    if (vendor === 'minimax-music3') {
+      const alive = await new Promise((resolve) => {
+        const socket = net.connect({ host: '127.0.0.1', port: Number(new URL(base).port || 80) }, () => {
+          socket.end();
+          resolve(true);
+        });
+        socket.on('error', () => resolve(false));
+        socket.setTimeout(2000, () => {
+          socket.destroy();
+          resolve(false);
+        });
+      });
+      sendJson(res, 200, {
+        vendor,
+        ok: alive,
+        engine: alive ? 'ai' : 'procedural',
+        label: 'MiniMax Music 3 (local)',
+        detail: alive
+          ? 'O modelo local esta carregado.'
+          : 'O modelo local nao esta carregado. Abra Modelos locais e aperte Carregar, ou a geracao vai usar o motor procedural.',
+      });
+      return;
+    }
+
+    // provedores via API:reachable confere, a chave so o teste real prova
+    const reachable = await new Promise((resolve) => {
+      const socket = net.connect({ host: new URL(base).hostname, port: Number(new URL(base).port || 443) }, () => {
+        socket.end();
+        resolve(true);
+      });
+      socket.on('error', () => resolve(false));
+      socket.setTimeout(3000, () => {
+        socket.destroy();
+        resolve(false);
+      });
+    });
+    sendJson(res, 200, {
+      vendor,
+      ok: reachable,
+      engine: 'ai',
+      label: music.model || vendor,
+      detail: reachable
+        ? 'O provedor esta acessivel. Use Testar para confirmar a chave.'
+        : 'O provedor nao respondeu. A geracao vai usar o motor procedural.',
+    });
     return;
   }
 

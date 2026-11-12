@@ -182,6 +182,12 @@ const EN: Record<string, string> = {
   'Feito por': 'Made by',
   'Licença MIT': 'MIT License',
   'Gerando a música': 'Generating the song',
+  'procedural': 'procedural',
+  'Motor procedural: o provedor de áudio não respondeu':
+    'Procedural engine: the audio provider did not answer',
+  'O motor de áudio não está pronto. Esta geração vai usar o sintetizador procedural, que soa como MIDI.':
+    'The audio engine is not ready. This generation will use the procedural synthesizer, which sounds like MIDI.',
+  'Motor em uso': 'Engine in use',
   'A API hospedada de Música da MiniMax foi fechada em 20/08/2026 para quem não tem o produto de Música pago. Não depende da idade da conta, e sim do produto contratado e do tipo de chave: a chave M Plan (sk-cp-...) cobre texto, vídeo, imagem e fala, mas não música. Se a sua conta já pagou pelo produto Música, teste uma chave pay-as-you-go (sk-api-...) criada em API Keys: cliente pagante do produto continua com acesso.':
     'The hosted MiniMax Music API was closed on 20/08/2026 for accounts without the paid Music product. It does not depend on the age of the account, it depends on the product you bought and the key type: the M Plan key (sk-cp-...) covers text, video, image and speech, but not music. If your account already paid for the Music product, test a pay-as-you-go key (sk-api-...) from API Keys: a paying customer of the product keeps access.',
   'O motor de áudio agora é {model}': 'The audio engine is now {model}',

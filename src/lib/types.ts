@@ -41,6 +41,14 @@ export interface Song extends GenParams {
   /** Faixa de origem, quando esta música é variação/remix/extensão. */
   sourceId?: string;
   relation?: 'variation' | 'remix' | 'extend' | 'mashup' | 'sample' | 'inspiration';
+  /**
+   * Qual motor gerou o áudio de verdade.
+   * 'ai' e um modelo de musica (local ou API), 'procedural' e o sintetizador
+   * interno. Sem isso a faixa procedural passa por musica de IA na lista.
+   */
+  engine?: 'ai' | 'procedural';
+  /** Por que o motor procedural assumiu, quando o provedor falhou. */
+  engineNote?: string;
   /** Enviada para a lixeira (exclusão reversível). */
   trashed?: boolean;
   /** Data da exclusão, quando está na lixeira. */

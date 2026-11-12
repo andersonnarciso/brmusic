@@ -271,7 +271,22 @@ export function Library() {
                   ) : null}
                 </button>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-mute-100">{song.title}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="truncate text-sm font-medium text-mute-100">{song.title}</p>
+                    {song.engine === 'procedural' && (
+                      <span
+                        title={
+                          song.engineNote
+                            ? `${t('Motor procedural: o provedor de áudio não respondeu')} · ${song.engineNote}`
+                            : t('Motor procedural: o provedor de áudio não respondeu')
+                        }
+                        className="shrink-0 rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium
+                          uppercase tracking-wide text-amber-300/90"
+                      >
+                        {t('procedural')}
+                      </span>
+                    )}
+                  </div>
                   <p className="truncate text-xs text-mute-500">
                     {song.prompt || song.style || t('Sem descrição')}
                   </p>
