@@ -94,6 +94,7 @@ export function CreatePanel() {
     engine: 'ai' | 'procedural';
     label: string;
     detail: string;
+    targetSec?: number;
   } | null>(null);
 
   useEffect(() => {
@@ -101,7 +102,7 @@ export function CreatePanel() {
     const check = () => {
       void apiFetch('/api/admin/music/health')
         .then((response) => (response.ok ? response.json() : null))
-        .then((data: { ok: boolean; engine: 'ai' | 'procedural'; label: string; detail: string } | null) => {
+        .then((data: { ok: boolean; engine: 'ai' | 'procedural'; label: string; detail: string; targetSec?: number } | null) => {
           if (alive && data) setEngineHealth(data);
         })
         .catch(() => {
@@ -690,7 +691,15 @@ export function CreatePanel() {
         )}
         {engineHealth?.ok && engineHealth.engine === 'procedural' && (
           <div className="mb-3 rounded-xl border border-ink-700 bg-ink-850 px-4 py-3 text-xs text-mute-400">
-            <p>{t('Motor em uso')}: <span className="text-mute-200">{engineHealth.label}</span></p>
+            <p>
+              {t('Motor em uso')}: <span className="text-mute-200">{engineHealth.label}</span>
+              {engineHealth.targetSec ? (
+                <span className="text-mute-400">
+                  {' · '}
+                  {t('Duração alvo')}: {engineHealth.targetSec}s
+                </span>
+              ) : null}
+            </p>
             <p className="mt-1 text-[11px] text-mute-500">{engineHealth.detail}</p>
           </div>
         )}

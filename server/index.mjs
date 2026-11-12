@@ -735,13 +735,15 @@ async function handleAdminApi(req, res, pathname, body) {
           resolve(false);
         });
       });
+      const target = Math.min(300, Math.max(10, Number(music.durationSec) || 30));
       sendJson(res, 200, {
         vendor,
         ok: alive,
         engine: alive ? 'ai' : 'procedural',
         label: 'MiniMax Music 3 (local)',
+        targetSec: target,
         detail: alive
-          ? 'O modelo local esta carregado.'
+          ? `O modelo local esta carregado. Duracao alvo: ${target}s. Com offload de RAM para a GPU, ele leva cerca de 40 segundos para gerar cada segundo de musica.`
           : 'O modelo local nao esta carregado. Abra Modelos locais e aperte Carregar, ou a geracao vai usar o motor procedural.',
       });
       return;
