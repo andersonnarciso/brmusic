@@ -249,23 +249,36 @@ function maskSecrets(config) {
   };
 }
 
-/** Mantém as chaves reais quando o cliente devolve a máscara. */
-function mergeSecrets(incoming, current) {
+/**
+ * Junta o que o cliente mandou com o que ja esta gravado.
+ *
+ * O fallback nunca pode ser um valor vazio: uma atualizacao parcial (por
+ * exemplo so o provedor de audio) apagava os provedores de LLM e quebrava a
+ * geracao de letra. Quando o campo nao vem, vale o que ja estava salvo.
+ */
+function mergeSecrets(incoming = {}, current) {
   const keep = (next, prev) => (!next || next.startsWith('••') ? prev : next);
   return {
+    ...current,
     ...incoming,
-    llmProviders: (incoming.llmProviders ?? []).map((p) => {
-      const prev = current.llmProviders.find((x) => x.id === p.id);
+    llmProviders: (incoming.llmProviders ?? current.llmProviders ?? []).map((p) => {
+      const prev = current.llmProviders?.find((x) => x.id === p.id);
       return { ...p, apiKey: keep(p.apiKey, prev?.apiKey ?? '') };
     }),
     musicProvider: {
+      ...current.musicProvider,
       ...incoming.musicProvider,
       apiKey: keep(incoming.musicProvider?.apiKey, current.musicProvider.apiKey),
     },
     integrations: {
+      ...current.integrations,
       ...incoming.integrations,
-      stripeSecretKey: keep(incoming.integrations?.stripeSecretKey, current.integrations.stripeSecretKey),
+      stripeSecretKey: keep(
+        incoming.integrations?.stripeSecretKey,
+        current.integrations.stripeSecretKey,
+      ),
     },
+    localModels: { ...current.localModels, ...incoming.localModels },
   };
 }
 
