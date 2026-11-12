@@ -28,6 +28,7 @@ Automatic install needs Linux with an NVIDIA GPU. On macOS and Windows the tab s
 - The panel now shows the length of the saved API key, so a full key is not mistaken for a truncated one.
 - The app no longer passes the procedural engine off as real music. When the audio provider does not answer, the track records which engine made it and the library shows a PROCEDURAL badge with the reason. The creator warns before you generate, and pressing Create offers three choices: load the model and generate, generate with the procedural engine, or cancel. The app never loads the local model on its own.
 - The creator shows the target duration of the local model and how slow it is on your hardware.
+- Saving only one section of the settings no longer erases the others. A partial update kept an empty list of LLM providers, which broke the lyrics generator.
 - The hosted MiniMax Music warning no longer reads like "your account is new". The hosted Music API closed for accounts without the paid Music product, which depends on the product and the key type, not on the age of the account. The warning names the key type in use and says how to settle it: test a pay-as-you-go key.
 - The trash action removes the track from the creator list, the library counter and the player queue.
 
@@ -59,6 +60,7 @@ A instalação automática precisa de Linux com GPU NVIDIA. No macOS e no Window
 - O painel mostra o tamanho da chave de API salva, para uma chave inteira não ser confundida com uma truncada.
 - O app não passa mais o motor procedural por música de verdade. Quando o provedor de áudio não responde, a faixa registra o motor que a fez e a biblioteca mostra a etiqueta PROCEDURAL com o motivo. O criador avisa antes de gerar, e o botão Criar oferece três escolhas: carregar o modelo e gerar, gerar com o motor procedural, ou cancelar. O app nunca sobe o modelo local sozinho.
 - O criador mostra a duração alvo do modelo local e o quanto ele demora na sua máquina.
+- Salvar só uma seção das configurações não apaga mais as outras. Uma atualização parcial mantinha a lista de provedores de LLM vazia, o que quebrava a geração de letra.
 - O aviso da MiniMax hospedada não parece mais dizer "sua conta é nova". A API de Música fechou para contas sem o produto de Música pago, o que depende do produto e do tipo de chave, não da idade da conta. O aviso diz qual chave está em uso e como conferir: testar uma chave pay-as-you-go.
 - Mover para a lixeira tira a faixa da lista do criador, do contador da biblioteca e da fila do player.
 
