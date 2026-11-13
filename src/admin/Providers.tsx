@@ -253,6 +253,15 @@ function ProviderCard({
 
   const runTest = async () => {
     setTesting(true);
+    // Grava antes de testar, para dar para colar uma chave nova e testar
+    // em um clique so.
+    if (onSaveNow) {
+      try {
+        await onSaveNow();
+      } catch {
+        /* se nao gravou, o teste abaixo ainda roda com o que esta no servidor */
+      }
+    }
     const res = await testLlmProvider(provider.id);
     setResult(res);
     setTesting(false);
