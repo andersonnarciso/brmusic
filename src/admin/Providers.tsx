@@ -10,6 +10,7 @@ import {
 import {
   discoverLocalRuntimes,
   discoverProviderModels,
+  saveAdminConfig,
   testLlmProvider,
   testMusicProvider,
   type DiscoveredModels,
@@ -471,6 +472,13 @@ function MusicProviderSection({ config, update }: { config: AdminConfig; update:
 
   const runTest = async () => {
     setTesting(true);
+    // Grava antes de testar. Assim da para colar uma chave nova no campo e
+    // apertar Testar uma vez so, sem salvar antes na mao.
+    try {
+      await saveAdminConfig(config);
+    } catch {
+      /* se nao gravou, o teste abaixo ainda roda com o que esta no servidor */
+    }
     const res = await testMusicProvider();
     setResult({ ok: res.ok, message: res.message });
     setTesting(false);
