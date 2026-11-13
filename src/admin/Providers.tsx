@@ -17,47 +17,27 @@ import {
   type LocalRuntime,
 } from '../lib/adminClient';
 import { Badge, Button, Card, Field, Select, TextInput, Toggle } from './ui';
+import { SecretField } from '../components/SecretField';
 import { showToast } from '../lib/store';
 import { useT } from '../lib/useT';
 
 type Update = (updater: (current: AdminConfig) => AdminConfig) => void;
 
-/**
- * Texto de ajuda do campo de chave.
- *
- * Quando a chave ja esta gravada no servidor o campo mostra so a mascara, e
- * nao da para ver o valor. O painel informa o tamanho real da chave salva
- * para deixar claro que ela entrou inteira, e nao truncada.
- */
-function keyHint(
-  value: string,
-  length: number | undefined,
-  t: (text: string) => string,
-): string {
-  if (!value) return t('Gravada apenas no servidor.');
-  if (value.startsWith('••')) {
-    return length
-      ? t('Chave salva no servidor ({n} caracteres). Digite uma nova para substituir.').replace(
-          '{n}',
-          String(length),
-        )
-      : t('Chave salva no servidor. Digite uma nova para substituir.');
-  }
-  return t('Será gravada no servidor ao salvar.');
-}
-
 export function ProvidersSection({
   config,
   update,
   focus,
+  onSaveNow,
 }: {
   config: AdminConfig;
   update: Update;
   focus?: 'music';
+  /** Grava a configuracao agora, sem passar pelo botao do topo. */
+  onSaveNow?: () => Promise<void>;
 }) {
   const t = useT();
   if (focus === 'music') {
-    return <MusicProviderSection config={config} update={update} />;
+    return <MusicProviderSection config={config} update={update} onSaveNow={onSaveNow} />;
   }
   return (
     <div className="space-y-5">
@@ -108,6 +88,8 @@ export function ProvidersSection({
         <ProviderCard
           key={provider.id}
           provider={provider}
+          configPath={config.configPath}
+          onSaveNow={onSaveNow}
           onChange={(next) =>
             update((c) => ({
               ...c,
@@ -238,10 +220,14 @@ function ProviderCard({
   provider,
   onChange,
   onRemove,
+  configPath,
+  onSaveNow,
 }: {
   provider: LlmProviderConfig;
   onChange: (next: LlmProviderConfig) => void;
   onRemove: () => void;
+  configPath?: string;
+  onSaveNow?: () => Promise<void>;
 }) {
   const t = useT();
   const [testing, setTesting] = useState(false);
@@ -376,17 +362,15 @@ function ProviderCard({
           />
         </Field>
 
-        <Field
+        <SecretField
           label={t('Chave da API')}
-          hint={keyHint(provider.apiKey, provider.apiKeyLength, t)}
-        >
-          <TextInput
-            type="password"
-            placeholder={provider.apiKey || 'sk-…'}
-            value={provider.apiKey}
-            onChange={(e) => onChange({ ...provider, apiKey: e.target.value })}
-          />
-        </Field>
+          value={provider.apiKey}
+          onChange={(value) => onChange({ ...provider, apiKey: value })}
+          savedLength={provider.apiKeyLength}
+          savedPath={configPath}
+          onSave={onSaveNow}
+          placeholder="sk-…"
+        />
 
         <Field label={t('Temperatura')}>
           <TextInput
@@ -456,7 +440,15 @@ function ProviderCard({
   );
 }
 
-function MusicProviderSection({ config, update }: { config: AdminConfig; update: Update }) {
+function MusicProviderSection({
+  config,
+  update,
+  onSaveNow,
+}: {
+  config: AdminConfig;
+  update: Update;
+  onSaveNow?: () => Promise<void>;
+}) {
   const t = useT();
   const music = config.musicProvider;
   const [testing, setTesting] = useState(false);
@@ -599,17 +591,16 @@ function MusicProviderSection({ config, update }: { config: AdminConfig; update:
             )}
           </Field>
 
-          <Field
+          <SecretField
             label={t('Chave da API')}
-            hint={keyHint(music.apiKey, music.apiKeyLength, t)}
-          >
-            <TextInput
-              type="password"
-              placeholder={music.apiKey || 'sk-…'}
-              value={music.apiKey}
-              onChange={(e) => patch({ apiKey: e.target.value })}
-            />
-          </Field>
+            value={music.apiKey}
+            onChange={(value) => patch({ apiKey: value })}
+            savedLength={music.apiKeyLength}
+            savedPath={config.configPath}
+            onSave={onSaveNow}
+            saving={testing}
+            placeholder="sk-…"
+          />
 
           <Field label={t('Formato de saída')} hint={t('hex retorna o áudio embutido na resposta.')}>
             <Select

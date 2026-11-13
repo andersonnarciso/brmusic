@@ -183,6 +183,8 @@ export interface AppSettings {
 export interface AdminConfig {
   llmProviders: LlmProviderConfig[];
   musicProvider: MusicProviderConfig;
+  /** Caminho do arquivo onde a configuracao e gravada no servidor. */
+  configPath?: string;
   /** Pasta e servico usados pela central de modelos locais. */
   localModels?: { dir?: string; service?: string; autoUnload?: boolean };
   generation: GenerationSettings;

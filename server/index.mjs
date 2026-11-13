@@ -572,7 +572,7 @@ async function handleAdminApi(req, res, pathname, body) {
   }
 
   if (pathname === '/api/admin/config' && req.method === 'GET') {
-    sendJson(res, 200, maskSecrets(config));
+    sendJson(res, 200, { ...maskSecrets(config), configPath: CONFIG_PATH });
     return;
   }
 

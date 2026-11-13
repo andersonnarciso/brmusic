@@ -201,6 +201,14 @@ const EN: Record<string, string> = {
   'Endpoint proprio': 'Own endpoint',
   'Etapa': 'Stage',
   'Escrevendo...': 'Writing...',
+  'Chave nova no campo,': 'New key in the field,',
+  'ainda não gravada': 'not saved yet',
+  'Clique em Salvar (aqui do lado ou em Salvar alterações, no topo) para gravar no servidor.':
+    'click Save (here or Save changes at the top) to store it on the server.',
+  'Configuração salva em': 'Configuration saved to',
+  'Configuração salva': 'Configuration saved',
+  'Ocultar a chave': 'Hide the key',
+  'Mostrar a chave': 'Show the key',
   'Chave salva no servidor ({n} caracteres). Digite uma nova para substituir.':
     'Key saved on the server ({n} characters). Type a new one to replace it.',
   'Chave salva no servidor. Digite uma nova para substituir.':

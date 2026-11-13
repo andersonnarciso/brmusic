@@ -7,7 +7,7 @@ import {
   type AdminServerInfo,
 } from '../lib/adminClient';
 import type { AdminConfig, AdminStats } from '../lib/adminTypes';
-import { navigate } from '../lib/store';
+import { navigate, showToast } from '../lib/store';
 import { useT } from '../lib/useT';
 import { ProvidersSection } from './Providers';
 import { LocalModelsSection } from './LocalModels';
@@ -84,15 +84,36 @@ export function AdminApp() {
     }
   }, [config]);
 
+  /**
+   * Grava a configuracao e avisa onde ela foi gravada, para ninguem ficar
+   * procurando o token no software sem achar.
+   */
+  const saveNow = useCallback(async () => {
+    if (!config) return;
+    try {
+      const saved = await saveAdminConfig(config);
+      setConfig(saved);
+      setStatus('saved');
+      window.setTimeout(() => setStatus('idle'), 2400);
+      const path = saved.configPath ?? config.configPath;
+      showToast(path ? `${t('Configuração salva em')} ${path}` : t('Configuração salva'));
+    } catch (e) {
+      setStatus('error');
+      setError(String(e));
+    }
+  }, [config, t]);
+
   const sectionBody = useMemo(() => {
     if (!config) return null;
     switch (section) {
       case 'overview':
         return <Overview config={config} stats={stats} server={server} />;
       case 'providers':
-        return <ProvidersSection config={config} update={update} />;
+        return <ProvidersSection config={config} update={update} onSaveNow={saveNow} />;
       case 'music':
-        return <ProvidersSection config={config} update={update} focus="music" />;
+        return (
+          <ProvidersSection config={config} update={update} focus="music" onSaveNow={saveNow} />
+        );
       case 'localmodels':
         return <LocalModelsSection onApplied={refresh} />;
       case 'app':
